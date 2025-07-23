@@ -176,7 +176,7 @@ class KitchenAPITester:
                 # Test status transition: pending -> in_progress
                 response = self.session.put(
                     f"{BASE_URL}/production-items/{item_id}/status",
-                    json="in_progress"
+                    params={"status": "in_progress"}
                 )
                 if response.status_code == 200:
                     self.log_result(f"Update {item_name} to in_progress", True)
