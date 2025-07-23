@@ -322,9 +322,7 @@ class KitchenAPITester:
                 
                 for status in statuses:
                     response = self.session.put(
-                        f"{BASE_URL}/orders/{order_id}/status",
-                        json=status,
-                        headers={"Content-Type": "application/json"}
+                        f"{BASE_URL}/orders/{order_id}/status?status={status}"
                     )
                     if response.status_code == 200:
                         self.log_result(f"Update {venue_name} order to {status}", True)
