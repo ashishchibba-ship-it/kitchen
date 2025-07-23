@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Comprehensive Backend API Testing for Production Kitchen Management System
-Tests all endpoints and business logic including 15% markup calculation and status workflows
+Updated Backend API Testing for Production Kitchen Management System
+Tests the new changes: categories, unit_of_measure, removed cost, venue addresses, delivery dates
 """
 
 import requests
 import json
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import time
 import sys
 
@@ -31,9 +31,9 @@ class KitchenAPITester:
             self.test_results["errors"].append(f"{test_name}: {message}")
             print(f"❌ {test_name}: FAILED - {message}")
     
-    def test_user_authentication(self):
-        """Test user authentication endpoints and predefined users"""
-        print("\n=== Testing User Authentication ===")
+    def test_user_authentication_with_addresses(self):
+        """Test user authentication endpoints and verify venue users have addresses"""
+        print("\n=== Testing User Authentication with Venue Addresses ===")
         
         try:
             # Test GET /api/users
@@ -51,66 +51,118 @@ class KitchenAPITester:
                     "uptown_restaurant": "venue_staff"
                 }
                 
-                found_users = {user["username"]: user["role"] for user in users}
+                found_users = {user["username"]: user for user in users}
                 
                 for username, expected_role in expected_users.items():
                     if username in found_users:
-                        if found_users[username] == expected_role:
+                        user = found_users[username]
+                        if user["role"] == expected_role:
                             self.log_result(f"User {username} role verification", True, f"Role: {expected_role}")
+                            
+                            # Test venue users have addresses
+                            if expected_role == "venue_staff":
+                                if "address" in user and user["address"]:
+                                    self.log_result(f"Venue {username} address field", True, f"Address: {user['address']}")
+                                else:
+                                    self.log_result(f"Venue {username} address field", False, "Address field missing or empty")
                         else:
                             self.log_result(f"User {username} role verification", False, 
-                                          f"Expected {expected_role}, got {found_users[username]}")
+                                          f"Expected {expected_role}, got {user['role']}")
                     else:
                         self.log_result(f"User {username} existence", False, "User not found")
                 
-                # Test GET /api/users/{username}
-                test_username = "manager"
+                # Test GET /api/users/{username} for venue user
+                test_username = "downtown_cafe"
                 response = self.session.get(f"{BASE_URL}/users/{test_username}")
                 if response.status_code == 200:
                     user = response.json()
-                    if user["username"] == test_username and user["role"] == "manager":
-                        self.log_result("GET /api/users/{username}", True, f"Retrieved user {test_username}")
+                    if user["username"] == test_username and user["role"] == "venue_staff":
+                        self.log_result("GET /api/users/{username} for venue", True, f"Retrieved venue user {test_username}")
+                        if "address" in user and user["address"]:
+                            self.log_result("Venue user address in individual fetch", True, f"Address: {user['address']}")
+                        else:
+                            self.log_result("Venue user address in individual fetch", False, "Address missing")
                     else:
-                        self.log_result("GET /api/users/{username}", False, "User data mismatch")
+                        self.log_result("GET /api/users/{username} for venue", False, "User data mismatch")
                 else:
-                    self.log_result("GET /api/users/{username}", False, f"Status: {response.status_code}")
+                    self.log_result("GET /api/users/{username} for venue", False, f"Status: {response.status_code}")
                     
             else:
                 self.log_result("GET /api/users", False, f"Status: {response.status_code}")
                 
         except Exception as e:
-            self.log_result("User Authentication", False, f"Exception: {str(e)}")
+            self.log_result("User Authentication with Addresses", False, f"Exception: {str(e)}")
     
-    def test_production_management(self):
-        """Test production item management endpoints"""
-        print("\n=== Testing Production Management ===")
+    def test_categories_endpoint(self):
+        """Test the new categories endpoint"""
+        print("\n=== Testing Categories Endpoint ===")
         
         try:
-            # Create test production items
+            response = self.session.get(f"{BASE_URL}/categories")
+            if response.status_code == 200:
+                categories_data = response.json()
+                if "categories" in categories_data and isinstance(categories_data["categories"], list):
+                    categories = categories_data["categories"]
+                    self.log_result("GET /api/categories", True, f"Retrieved {len(categories)} categories")
+                    
+                    # Verify default categories exist
+                    expected_defaults = ["Main Course", "Appetizer", "Dessert", "Beverage", "Side Dish", "Salad"]
+                    found_defaults = [cat for cat in expected_defaults if cat in categories]
+                    
+                    if len(found_defaults) >= 3:  # At least some defaults should be present
+                        self.log_result("Default categories present", True, f"Found: {', '.join(found_defaults)}")
+                    else:
+                        self.log_result("Default categories present", False, f"Only found: {', '.join(found_defaults)}")
+                        
+                else:
+                    self.log_result("GET /api/categories", False, "Invalid response structure")
+            else:
+                self.log_result("GET /api/categories", False, f"Status: {response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Categories Endpoint", False, f"Exception: {str(e)}")
+    
+    def test_production_management_with_categories(self):
+        """Test production item management with new category and unit_of_measure fields"""
+        print("\n=== Testing Production Management with Categories and Units ===")
+        
+        try:
+            # Create test production items with new required fields
             today = date.today().isoformat()
             
             production_items = [
                 {
-                    "name": "Fresh Pasta Marinara",
-                    "quantity": 50,
+                    "name": "Grilled Salmon with Herbs",
+                    "category": "Main Course",
+                    "quantity": 25,
+                    "unit_of_measure": "portions",
                     "target_time": "10:00",
                     "production_date": today,
-                    "cost": 8.50,
                     "assigned_staff": "chef_alice"
                 },
                 {
-                    "name": "Grilled Chicken Caesar Salad", 
-                    "quantity": 30,
+                    "name": "Caesar Salad Mix", 
+                    "category": "Salad",
+                    "quantity": 40,
+                    "unit_of_measure": "servings",
                     "target_time": "11:30",
                     "production_date": today,
-                    "cost": 12.75,
                     "assigned_staff": "chef_bob"
+                },
+                {
+                    "name": "Chocolate Mousse",
+                    "category": "Dessert",
+                    "quantity": 20,
+                    "unit_of_measure": "cups",
+                    "target_time": "09:00",
+                    "production_date": today,
+                    "assigned_staff": "chef_alice"
                 }
             ]
             
             created_items = []
             
-            # Test POST /api/production-items
+            # Test POST /api/production-items with new fields
             for item_data in production_items:
                 response = self.session.post(
                     f"{BASE_URL}/production-items?created_by=manager",
@@ -119,8 +171,25 @@ class KitchenAPITester:
                 if response.status_code == 200:
                     item = response.json()
                     created_items.append(item)
-                    self.log_result(f"Create production item: {item_data['name']}", True, 
-                                  f"ID: {item['id']}")
+                    
+                    # Verify new fields are present
+                    if "category" in item and item["category"] == item_data["category"]:
+                        self.log_result(f"Category field for {item_data['name']}", True, f"Category: {item['category']}")
+                    else:
+                        self.log_result(f"Category field for {item_data['name']}", False, "Category missing or incorrect")
+                    
+                    if "unit_of_measure" in item and item["unit_of_measure"] == item_data["unit_of_measure"]:
+                        self.log_result(f"Unit of measure for {item_data['name']}", True, f"Unit: {item['unit_of_measure']}")
+                    else:
+                        self.log_result(f"Unit of measure for {item_data['name']}", False, "Unit of measure missing or incorrect")
+                    
+                    # Verify cost field is NOT present (removed functionality)
+                    if "cost" not in item:
+                        self.log_result(f"Cost field removed for {item_data['name']}", True, "Cost field not present")
+                    else:
+                        self.log_result(f"Cost field removed for {item_data['name']}", False, "Cost field still present")
+                        
+                    self.log_result(f"Create production item: {item_data['name']}", True, f"ID: {item['id']}")
                 else:
                     self.log_result(f"Create production item: {item_data['name']}", False, 
                                   f"Status: {response.status_code}, Response: {response.text}")
@@ -130,6 +199,16 @@ class KitchenAPITester:
             if response.status_code == 200:
                 items = response.json()
                 self.log_result("GET /api/production-items", True, f"Retrieved {len(items)} items")
+                
+                # Test filtering by category
+                response = self.session.get(f"{BASE_URL}/production-items?category=Main Course")
+                if response.status_code == 200:
+                    main_course_items = response.json()
+                    main_course_count = len([item for item in main_course_items if item.get("category") == "Main Course"])
+                    self.log_result("Filter by category", True, 
+                                  f"Retrieved {main_course_count} Main Course items")
+                else:
+                    self.log_result("Filter by category", False, f"Status: {response.status_code}")
                 
                 # Test filtering by date
                 response = self.session.get(f"{BASE_URL}/production-items?production_date={today}")
@@ -155,7 +234,7 @@ class KitchenAPITester:
             return created_items
             
         except Exception as e:
-            self.log_result("Production Management", False, f"Exception: {str(e)}")
+            self.log_result("Production Management with Categories", False, f"Exception: {str(e)}")
             return []
     
     def test_production_status_workflow(self, created_items):
@@ -209,25 +288,30 @@ class KitchenAPITester:
             self.log_result("Production Status Workflow", False, f"Exception: {str(e)}")
             return []
     
-    def test_order_management(self, completed_items):
-        """Test inter-venue ordering system with 15% markup"""
-        print("\n=== Testing Order Management ===")
+    def test_order_management_with_delivery(self, completed_items):
+        """Test order management with delivery_address and delivery_date fields"""
+        print("\n=== Testing Order Management with Delivery Information ===")
         
         if not completed_items:
-            self.log_result("Order Management", False, "No completed items to order")
+            self.log_result("Order Management with Delivery", False, "No completed items to order")
             return []
             
         try:
-            # Create test orders
+            # Create test orders with delivery information
+            tomorrow = (date.today() + timedelta(days=1)).isoformat()
+            day_after = (date.today() + timedelta(days=2)).isoformat()
+            
             orders_data = [
                 {
                     "venue_name": "Downtown Cafe",
+                    "delivery_address": "123 Main St, Downtown, City 12345",
+                    "delivery_date": tomorrow,
                     "items": [
                         {
                             "production_item_id": completed_items[0]["id"],
                             "production_item_name": completed_items[0]["name"],
                             "quantity": 10,
-                            "unit_cost": completed_items[0]["cost"]
+                            "unit_of_measure": completed_items[0]["unit_of_measure"]
                         }
                     ]
                 }
@@ -236,42 +320,42 @@ class KitchenAPITester:
             if len(completed_items) > 1:
                 orders_data.append({
                     "venue_name": "Uptown Restaurant",
+                    "delivery_address": "456 Oak Ave, Uptown, City 67890",
+                    "delivery_date": day_after,
                     "items": [
                         {
                             "production_item_id": completed_items[1]["id"],
                             "production_item_name": completed_items[1]["name"],
                             "quantity": 15,
-                            "unit_cost": completed_items[1]["cost"]
+                            "unit_of_measure": completed_items[1]["unit_of_measure"]
                         }
                     ]
                 })
             
             created_orders = []
             
-            # Test POST /api/orders with 15% markup calculation
+            # Test POST /api/orders with delivery information
             for order_data in orders_data:
-                expected_total = sum(item["quantity"] * item["unit_cost"] for item in order_data["items"])
-                expected_final = expected_total * 1.15  # 15% markup
-                
                 response = self.session.post(f"{BASE_URL}/orders", json=order_data)
                 if response.status_code == 200:
                     order = response.json()
                     created_orders.append(order)
                     
-                    # Verify 15% markup calculation
-                    if abs(order["total_cost"] - expected_total) < 0.01:
-                        self.log_result(f"Order total calculation for {order_data['venue_name']}", True,
-                                      f"Total: ${order['total_cost']:.2f}")
+                    # Verify delivery_address field
+                    if "delivery_address" in order and order["delivery_address"] == order_data["delivery_address"]:
+                        self.log_result(f"Delivery address for {order_data['venue_name']}", True,
+                                      f"Address: {order['delivery_address']}")
                     else:
-                        self.log_result(f"Order total calculation for {order_data['venue_name']}", False,
-                                      f"Expected ${expected_total:.2f}, got ${order['total_cost']:.2f}")
+                        self.log_result(f"Delivery address for {order_data['venue_name']}", False,
+                                      "Delivery address missing or incorrect")
                     
-                    if abs(order["final_cost"] - expected_final) < 0.01 and order["markup"] == 15.0:
-                        self.log_result(f"15% markup calculation for {order_data['venue_name']}", True,
-                                      f"Final: ${order['final_cost']:.2f} (15% markup)")
+                    # Verify delivery_date field
+                    if "delivery_date" in order and order["delivery_date"] == order_data["delivery_date"]:
+                        self.log_result(f"Delivery date for {order_data['venue_name']}", True,
+                                      f"Date: {order['delivery_date']}")
                     else:
-                        self.log_result(f"15% markup calculation for {order_data['venue_name']}", False,
-                                      f"Expected ${expected_final:.2f}, got ${order['final_cost']:.2f}")
+                        self.log_result(f"Delivery date for {order_data['venue_name']}", False,
+                                      "Delivery date missing or incorrect")
                         
                     self.log_result(f"Create order for {order_data['venue_name']}", True, 
                                   f"Order ID: {order['id']}")
@@ -301,8 +385,36 @@ class KitchenAPITester:
             return created_orders
             
         except Exception as e:
-            self.log_result("Order Management", False, f"Exception: {str(e)}")
+            self.log_result("Order Management with Delivery", False, f"Exception: {str(e)}")
             return []
+    
+    def test_delivery_date_update(self, created_orders):
+        """Test the new delivery date update endpoint"""
+        print("\n=== Testing Delivery Date Update ===")
+        
+        if not created_orders:
+            self.log_result("Delivery Date Update", False, "No orders to test with")
+            return
+            
+        try:
+            for order in created_orders:
+                order_id = order["id"]
+                venue_name = order["venue_name"]
+                new_delivery_date = (date.today() + timedelta(days=3)).isoformat()
+                
+                # Test PUT /api/orders/{order_id}/delivery-date
+                response = self.session.put(
+                    f"{BASE_URL}/orders/{order_id}/delivery-date?delivery_date={new_delivery_date}"
+                )
+                if response.status_code == 200:
+                    self.log_result(f"Update delivery date for {venue_name}", True, 
+                                  f"New date: {new_delivery_date}")
+                else:
+                    self.log_result(f"Update delivery date for {venue_name}", False,
+                                  f"Status: {response.status_code}")
+                        
+        except Exception as e:
+            self.log_result("Delivery Date Update", False, f"Exception: {str(e)}")
     
     def test_order_status_workflow(self, created_orders):
         """Test order status workflow"""
@@ -344,7 +456,7 @@ class KitchenAPITester:
                 
                 # Verify structure
                 required_keys = ["production", "orders"]
-                production_keys = ["total_items_today", "completed_items_today", "pending_items_today", "completion_rate"]
+                production_keys = ["total_items_today", "completed_items_today", "pending_items_today", "completion_rate", "categories"]
                 order_keys = ["total_orders_today", "pending_orders"]
                 
                 structure_valid = True
@@ -381,6 +493,13 @@ class KitchenAPITester:
                     else:
                         self.log_result("Completion rate calculation", False,
                                       f"Expected {expected_rate:.1f}%, got {rate:.1f}%")
+                    
+                    # Verify categories breakdown exists
+                    if "categories" in prod_stats and isinstance(prod_stats["categories"], dict):
+                        self.log_result("Categories breakdown in stats", True, 
+                                      f"Categories: {list(prod_stats['categories'].keys())}")
+                    else:
+                        self.log_result("Categories breakdown in stats", False, "Categories breakdown missing")
                         
                     self.log_result("GET /api/dashboard/stats", True, 
                                   f"Production: {total} items, Orders: {stats['orders']['total_orders_today']} today")
@@ -394,22 +513,29 @@ class KitchenAPITester:
             self.log_result("Dashboard Statistics", False, f"Exception: {str(e)}")
     
     def run_all_tests(self):
-        """Run comprehensive backend API tests"""
-        print("🧪 Starting Comprehensive Backend API Testing")
+        """Run comprehensive backend API tests for updated functionality"""
+        print("🧪 Starting Updated Backend API Testing")
         print(f"🔗 Testing against: {BASE_URL}")
-        print("=" * 60)
+        print("Testing new features: categories, unit_of_measure, removed cost, venue addresses, delivery dates")
+        print("=" * 80)
         
-        # Test user authentication
-        self.test_user_authentication()
+        # Test user authentication with venue addresses
+        self.test_user_authentication_with_addresses()
         
-        # Test production management
-        created_items = self.test_production_management()
+        # Test new categories endpoint
+        self.test_categories_endpoint()
+        
+        # Test production management with categories and units
+        created_items = self.test_production_management_with_categories()
         
         # Test production status workflow
         completed_items = self.test_production_status_workflow(created_items)
         
-        # Test order management with 15% markup
-        created_orders = self.test_order_management(completed_items)
+        # Test order management with delivery information
+        created_orders = self.test_order_management_with_delivery(completed_items)
+        
+        # Test delivery date update endpoint
+        self.test_delivery_date_update(created_orders)
         
         # Test order status workflow
         self.test_order_status_workflow(created_orders)
@@ -418,9 +544,9 @@ class KitchenAPITester:
         self.test_dashboard_statistics()
         
         # Print summary
-        print("\n" + "=" * 60)
+        print("\n" + "=" * 80)
         print("🏁 TEST SUMMARY")
-        print("=" * 60)
+        print("=" * 80)
         print(f"✅ Passed: {self.test_results['passed']}")
         print(f"❌ Failed: {self.test_results['failed']}")
         
