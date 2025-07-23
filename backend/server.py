@@ -126,7 +126,13 @@ async def create_production_item(item: ProductionItemCreate, created_by: str):
     item_dict = item.dict()
     item_dict["created_by"] = created_by
     production_item = ProductionItem(**item_dict)
-    await db.production_items.insert_one(production_item.dict())
+    
+    # Convert date objects to strings for MongoDB storage
+    item_data = production_item.dict()
+    if isinstance(item_data.get("production_date"), date):
+        item_data["production_date"] = item_data["production_date"].isoformat()
+    
+    await db.production_items.insert_one(item_data)
     return production_item
 
 @api_router.get("/production-items", response_model=List[ProductionItem])
