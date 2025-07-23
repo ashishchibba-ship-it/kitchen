@@ -48,48 +48,52 @@ class User(BaseModel):
     name: str
     role: UserRole
     username: str
+    address: Optional[str] = None  # For venue staff
 
 class ProductionItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
+    category: str
     quantity: int
+    unit_of_measure: str
     target_time: str  # Format: "HH:MM"
     production_date: date
     status: ProductionStatus = ProductionStatus.PENDING
     assigned_staff: Optional[str] = None
-    cost: Optional[float] = None
     created_by: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
     completed_at: Optional[datetime] = None
 
 class ProductionItemCreate(BaseModel):
     name: str
+    category: str
     quantity: int
+    unit_of_measure: str
     target_time: str
     production_date: date
     assigned_staff: Optional[str] = None
-    cost: Optional[float] = None
 
 class OrderItem(BaseModel):
     production_item_id: str
     production_item_name: str
     quantity: int
-    unit_cost: float
+    unit_of_measure: str
 
 class Order(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     venue_name: str
+    delivery_address: str
     items: List[OrderItem]
     status: OrderStatus = OrderStatus.PENDING
-    total_cost: float
-    markup: float = 15.0  # 15% markup
-    final_cost: float
     order_date: datetime = Field(default_factory=datetime.utcnow)
-    delivery_date: Optional[datetime] = None
+    delivery_date: Optional[date] = None
+    delivered_at: Optional[datetime] = None
 
 class OrderCreate(BaseModel):
     venue_name: str
+    delivery_address: str
     items: List[OrderItem]
+    delivery_date: Optional[date] = None
 
 # Initialize predefined users
 async def init_predefined_users():
@@ -97,8 +101,10 @@ async def init_predefined_users():
         User(name="Kitchen Manager", role=UserRole.MANAGER, username="manager"),
         User(name="Chef Alice", role=UserRole.KITCHEN_STAFF, username="chef_alice"),
         User(name="Chef Bob", role=UserRole.KITCHEN_STAFF, username="chef_bob"),
-        User(name="Downtown Cafe", role=UserRole.VENUE_STAFF, username="downtown_cafe"),
-        User(name="Uptown Restaurant", role=UserRole.VENUE_STAFF, username="uptown_restaurant"),
+        User(name="Downtown Cafe", role=UserRole.VENUE_STAFF, username="downtown_cafe", 
+             address="123 Main St, Downtown, City 12345"),
+        User(name="Uptown Restaurant", role=UserRole.VENUE_STAFF, username="uptown_restaurant",
+             address="456 Oak Ave, Uptown, City 67890"),
     ]
     
     # Check if users already exist
@@ -136,12 +142,14 @@ async def create_production_item(item: ProductionItemCreate, created_by: str):
     return production_item
 
 @api_router.get("/production-items", response_model=List[ProductionItem])
-async def get_production_items(production_date: Optional[str] = None, status: Optional[str] = None):
+async def get_production_items(production_date: Optional[str] = None, status: Optional[str] = None, category: Optional[str] = None):
     filter_dict = {}
     if production_date:
         filter_dict["production_date"] = production_date
     if status:
         filter_dict["status"] = status
+    if category:
+        filter_dict["category"] = category
     
     items = await db.production_items.find(filter_dict).sort("target_time", 1).to_list(1000)
     return [ProductionItem(**item) for item in items]
@@ -167,21 +175,27 @@ async def get_completed_items():
     items = await db.production_items.find({"status": "completed"}).to_list(1000)
     return [ProductionItem(**item) for item in items]
 
+@api_router.get("/categories")
+async def get_categories():
+    """Get distinct categories from production items"""
+    categories = await db.production_items.distinct("category")
+    # Add some default categories if none exist
+    default_categories = ["Main Course", "Appetizer", "Dessert", "Beverage", "Side Dish", "Salad"]
+    all_categories = list(set(categories + default_categories))
+    return {"categories": sorted(all_categories)}
+
 # Order management endpoints
 @api_router.post("/orders", response_model=Order)
 async def create_order(order: OrderCreate):
-    # Calculate total cost and final cost with markup
-    total_cost = sum(item.quantity * item.unit_cost for item in order.items)
-    markup = 15.0
-    final_cost = total_cost * (1 + markup / 100)
-    
     order_dict = order.dict()
-    order_dict["total_cost"] = total_cost
-    order_dict["markup"] = markup
-    order_dict["final_cost"] = final_cost
-    
     new_order = Order(**order_dict)
-    await db.orders.insert_one(new_order.dict())
+    
+    # Convert date objects to strings for MongoDB storage
+    order_data = new_order.dict()
+    if isinstance(order_data.get("delivery_date"), date):
+        order_data["delivery_date"] = order_data["delivery_date"].isoformat()
+    
+    await db.orders.insert_one(order_data)
     return new_order
 
 @api_router.get("/orders", response_model=List[Order])
@@ -197,7 +211,7 @@ async def get_orders(venue_name: Optional[str] = None):
 async def update_order_status(order_id: str, status: OrderStatus):
     update_data = {"status": status}
     if status == OrderStatus.DELIVERED:
-        update_data["delivery_date"] = datetime.utcnow()
+        update_data["delivered_at"] = datetime.utcnow()
     
     result = await db.orders.update_one(
         {"id": order_id},
@@ -208,6 +222,18 @@ async def update_order_status(order_id: str, status: OrderStatus):
         raise HTTPException(status_code=404, detail="Order not found")
     
     return {"message": "Order status updated successfully"}
+
+@api_router.put("/orders/{order_id}/delivery-date")
+async def update_delivery_date(order_id: str, delivery_date: date):
+    result = await db.orders.update_one(
+        {"id": order_id},
+        {"$set": {"delivery_date": delivery_date.isoformat()}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    return {"message": "Delivery date updated successfully"}
 
 # Dashboard endpoints
 @api_router.get("/dashboard/stats")
@@ -231,12 +257,20 @@ async def get_dashboard_stats():
     })
     pending_orders = await db.orders.count_documents({"status": "pending"})
     
+    # Category breakdown
+    category_pipeline = [
+        {"$match": {"production_date": today}},
+        {"$group": {"_id": "$category", "count": {"$sum": 1}}}
+    ]
+    category_stats = await db.production_items.aggregate(category_pipeline).to_list(100)
+    
     return {
         "production": {
             "total_items_today": total_items_today,
             "completed_items_today": completed_items_today,
             "pending_items_today": pending_items_today,
-            "completion_rate": (completed_items_today / total_items_today * 100) if total_items_today > 0 else 0
+            "completion_rate": (completed_items_today / total_items_today * 100) if total_items_today > 0 else 0,
+            "categories": {stat["_id"]: stat["count"] for stat in category_stats}
         },
         "orders": {
             "total_orders_today": total_orders_today,
