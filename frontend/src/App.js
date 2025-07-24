@@ -1204,8 +1204,428 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
   );
 };
 
-// Venue Staff Dashboard
+// Enhanced Venue Staff Dashboard with Visual Ordering
 const VenueStaffDashboard = ({ user, appSettings }) => {
+  const [orderableItems, setOrderableItems] = useState({});
+  const [categories, setCategories] = useState([]);
+  const [activeCategory, setActiveCategory] = useState('');
+  const [cart, setCart] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [orderHistory, setOrderHistory] = useState({ most_ordered: [], recently_ordered: [] });
+  const [activeTab, setActiveTab] = useState('recently-ordered');
+  const [deliveryAddress, setDeliveryAddress] = useState(user.address || '');
+  const [deliveryDate, setDeliveryDate] = useState('');
+
+  useEffect(() => {
+    fetchOrderableItems();
+    fetchOrders();
+    fetchOrderHistory();
+  }, []);
+
+  const fetchOrderableItems = async () => {
+    try {
+      const response = await axios.get(`${API}/orderable-items/by-category`);
+      setOrderableItems(response.data);
+      setCategories(Object.keys(response.data));
+      if (Object.keys(response.data).length > 0 && !activeCategory) {
+        setActiveCategory(Object.keys(response.data)[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching orderable items:', error);
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      const response = await axios.get(`${API}/orders?venue_id=${user.id}`);
+      setOrders(response.data);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    }
+  };
+
+  const fetchOrderHistory = async () => {
+    try {
+      const response = await axios.get(`${API}/order-history/${user.id}`);
+      setOrderHistory(response.data);
+    } catch (error) {
+      console.error('Error fetching order history:', error);
+    }
+  };
+
+  const addToCart = (item, quantity = 1) => {
+    const existingItem = cart.find(cartItem => cartItem.id === item.id);
+    if (existingItem) {
+      setCart(cart.map(cartItem => 
+        cartItem.id === item.id 
+          ? {...cartItem, orderQuantity: Math.min(cartItem.orderQuantity + quantity, item.available_quantity)}
+          : cartItem
+      ));
+    } else {
+      setCart([...cart, {...item, orderQuantity: quantity}]);
+    }
+  };
+
+  const updateCartQuantity = (itemId, quantity) => {
+    if (quantity === 0) {
+      setCart(cart.filter(item => item.id !== itemId));
+    } else {
+      setCart(cart.map(item => 
+        item.id === itemId ? {...item, orderQuantity: Math.min(quantity, item.available_quantity)} : item
+      ));
+    }
+  };
+
+  const placeOrder = async () => {
+    if (cart.length === 0 || !deliveryAddress) {
+      alert('Please add items to cart and provide delivery address');
+      return;
+    }
+
+    try {
+      const orderItems = cart.map(item => ({
+        production_item_id: item.id,
+        production_item_name: item.name,
+        quantity: item.orderQuantity,
+        unit_of_measure: item.unit_of_measure,
+        unit_price: item.unit_price
+      }));
+
+      const orderData = {
+        venue_name: user.name,
+        venue_id: user.id,
+        delivery_address: deliveryAddress,
+        items: orderItems
+      };
+
+      if (deliveryDate) {
+        orderData.delivery_date = deliveryDate;
+      }
+
+      await axios.post(`${API}/orders`, orderData);
+
+      setCart([]);
+      setDeliveryDate('');
+      fetchOrders();
+      fetchOrderableItems(); // Refresh to update available quantities
+      alert('Order placed successfully!');
+    } catch (error) {
+      console.error('Error placing order:', error);
+      alert('Error placing order');
+    }
+  };
+
+  const containerStyle = {
+    backgroundColor: appSettings?.secondary_color || '#f9fafb',
+    fontFamily: appSettings?.font_family || 'Inter'
+  };
+
+  const primaryButtonStyle = {
+    backgroundColor: appSettings?.primary_color || '#3b82f6'
+  };
+
+  return (
+    <div className="min-h-screen" style={containerStyle}>
+      <nav className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex justify-between items-center py-4">
+            <h1 className="text-xl font-semibold text-gray-800" style={{ fontFamily: appSettings?.font_family }}>
+              {appSettings?.app_name || 'Production Kitchen'} - Order Items
+            </h1>
+            <div className="flex items-center space-x-4">
+              <span className="text-gray-600">Welcome, {user.name}</span>
+              {cart.length > 0 && (
+                <div className="relative">
+                  <button 
+                    onClick={() => setActiveTab('cart')}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md flex items-center space-x-2"
+                    style={primaryButtonStyle}
+                  >
+                    <span>Cart ({cart.length})</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex space-x-6 overflow-x-auto">
+            {['recently-ordered', 'most-ordered', ...categories, 'cart', 'orders'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => {
+                  if (categories.includes(tab)) {
+                    setActiveCategory(tab);
+                    setActiveTab('category');
+                  } else {
+                    setActiveTab(tab);
+                  }
+                }}
+                className={`py-2 px-4 border-b-2 whitespace-nowrap ${
+                  (activeTab === tab || (activeTab === 'category' && activeCategory === tab)) 
+                    ? 'border-blue-500 text-blue-600' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+                style={(activeTab === tab || (activeTab === 'category' && activeCategory === tab)) ? 
+                  { borderColor: appSettings?.primary_color, color: appSettings?.primary_color } : {}}
+              >
+                {tab.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} 
+                {tab === 'cart' && cart.length > 0 && ` (${cart.length})`}
+              </button>
+            ))}
+          </div>
+        </div>
+      </nav>
+
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {(activeTab === 'recently-ordered' || activeTab === 'most-ordered') && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">
+              {activeTab === 'recently-ordered' ? 'Recently Ordered Items' : 'Your Most Ordered Items'}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {(activeTab === 'recently-ordered' ? orderHistory.recently_ordered : orderHistory.most_ordered).map(historyItem => {
+                const currentItem = Object.values(orderableItems).flat().find(item => item.id === historyItem.item_id);
+                if (!currentItem) return null;
+                
+                return (
+                  <div key={historyItem.item_id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                    {currentItem.image && (
+                      <img src={currentItem.image} alt={currentItem.name} className="w-full h-48 object-cover" />
+                    )}
+                    <div className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-2">{currentItem.name}</h3>
+                      <p className="text-sm text-gray-600 mb-2">{currentItem.category}</p>
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="text-lg font-bold text-green-600">${currentItem.unit_price.toFixed(2)}</span>
+                        <span className="text-sm text-gray-500">
+                          {currentItem.available_quantity} {currentItem.unit_of_measure} available
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500 mb-3">
+                        <p>Previously ordered: {historyItem.total_ordered} {currentItem.unit_of_measure}</p>
+                        <p>Times ordered: {historyItem.times_ordered}</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="number"
+                          min="1"
+                          max={currentItem.available_quantity}
+                          defaultValue="1"
+                          className="w-16 p-1 border border-gray-300 rounded text-sm"
+                          id={`quantity-${historyItem.item_id}`}
+                        />
+                        <button
+                          onClick={() => {
+                            const quantity = parseInt(document.getElementById(`quantity-${historyItem.item_id}`).value);
+                            addToCart(currentItem, quantity);
+                          }}
+                          className="flex-1 text-white py-2 px-4 rounded-md hover:opacity-90 transition-colors text-sm"
+                          style={primaryButtonStyle}
+                          disabled={currentItem.available_quantity === 0}
+                        >
+                          {currentItem.available_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'category' && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">{activeCategory}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {(orderableItems[activeCategory] || []).map(item => (
+                <div key={item.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                  {item.image && (
+                    <img src={item.image} alt={item.name} className="w-full h-48 object-cover" />
+                  )}
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">{item.name}</h3>
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-lg font-bold text-green-600">${item.unit_price.toFixed(2)}</span>
+                      <span className="text-sm text-gray-500">
+                        {item.available_quantity} {item.unit_of_measure} available
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="number"
+                        min="1"
+                        max={item.available_quantity}
+                        defaultValue="1"
+                        className="w-16 p-1 border border-gray-300 rounded text-sm"
+                        id={`quantity-${item.id}`}
+                      />
+                      <button
+                        onClick={() => {
+                          const quantity = parseInt(document.getElementById(`quantity-${item.id}`).value);
+                          addToCart(item, quantity);
+                        }}
+                        className="flex-1 text-white py-2 px-4 rounded-md hover:opacity-90 transition-colors text-sm"
+                        style={primaryButtonStyle}
+                        disabled={item.available_quantity === 0}
+                      >
+                        {item.available_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'cart' && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Shopping Cart</h2>
+            {cart.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-600 mb-4">Your cart is empty</p>
+                <button
+                  onClick={() => setActiveTab('recently-ordered')}
+                  className="text-white py-2 px-4 rounded-md hover:opacity-90 transition-colors"
+                  style={primaryButtonStyle}
+                >
+                  Browse Items
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Delivery Address</label>
+                    <textarea
+                      value={deliveryAddress}
+                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                      placeholder="Enter delivery address"
+                      rows="3"
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Delivery Date (Optional)</label>
+                    <input
+                      type="date"
+                      value={deliveryDate}
+                      onChange={(e) => setDeliveryDate(e.target.value)}
+                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {cart.map(item => (
+                    <div key={item.id} className="flex items-center space-x-4 border-b pb-4">
+                      {item.image && (
+                        <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded" />
+                      )}
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-800">{item.name}</h4>
+                        <p className="text-gray-600 text-sm">{item.category}</p>
+                        <p className="text-green-600 font-semibold">${item.unit_price.toFixed(2)} per {item.unit_of_measure}</p>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <button
+                          onClick={() => updateCartQuantity(item.id, item.orderQuantity - 1)}
+                          className="bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300"
+                        >
+                          -
+                        </button>
+                        <span className="font-medium w-8 text-center">{item.orderQuantity}</span>
+                        <button
+                          onClick={() => updateCartQuantity(item.id, item.orderQuantity + 1)}
+                          className="bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300"
+                          disabled={item.orderQuantity >= item.available_quantity}
+                        >
+                          +
+                        </button>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">${(item.unit_price * item.orderQuantity).toFixed(2)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="border-t pt-4">
+                  <div className="text-right space-y-2">
+                    <p className="text-lg">
+                      Subtotal: ${cart.reduce((total, item) => total + (item.unit_price * item.orderQuantity), 0).toFixed(2)}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Tax (8%): ${(cart.reduce((total, item) => total + (item.unit_price * item.orderQuantity), 0) * 0.08).toFixed(2)}
+                    </p>
+                    <p className="text-xl font-bold">
+                      Total: ${(cart.reduce((total, item) => total + (item.unit_price * item.orderQuantity), 0) * 1.08).toFixed(2)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={placeOrder}
+                    disabled={!deliveryAddress}
+                    className="w-full mt-4 text-white py-3 px-4 rounded-md hover:opacity-90 disabled:bg-gray-400 transition-colors text-lg font-semibold"
+                    style={primaryButtonStyle}
+                  >
+                    Place Order
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'orders' && (
+          <div className="bg-white rounded-lg shadow">
+            <h2 className="text-2xl font-bold text-gray-800 p-6 border-b">My Orders</h2>
+            <div className="space-y-4 p-6">
+              {orders.map(order => (
+                <div key={order.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <p className="text-sm text-gray-600">Order #{order.po_number}</p>
+                      <p className="text-sm text-gray-600">Order Date: {new Date(order.order_date).toLocaleDateString()}</p>
+                      <p className="text-sm text-gray-600">Delivery Address: {order.delivery_address}</p>
+                      {order.delivery_date && (
+                        <p className="text-sm text-gray-600">Delivery Date: {new Date(order.delivery_date).toLocaleDateString()}</p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-semibold text-gray-800">${order.total_amount?.toFixed(2) || '0.00'}</p>
+                      <p className="text-sm text-gray-600">Total (incl. tax)</p>
+                    </div>
+                  </div>
+                  <div className="mb-3">
+                    <h5 className="font-medium text-gray-700 mb-2">Items:</h5>
+                    {order.items.map((item, index) => (
+                      <div key={index} className="text-sm text-gray-600">
+                        {item.production_item_name} - Qty: {item.quantity} {item.unit_of_measure} @ ${item.unit_price?.toFixed(2)}
+                      </div>
+                    ))}
+                  </div>
+                  <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                    order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                    order.status === 'ready' ? 'bg-blue-100 text-blue-800' :
+                    order.status === 'preparing' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {order.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Venue Staff Dashboard (Original - keeping for reference)
+const VenueStaffDashboardOriginal = ({ user, appSettings }) => {
   const [completedItems, setCompletedItems] = useState([]);
   const [cart, setCart] = useState([]);
   const [orders, setOrders] = useState([]);
