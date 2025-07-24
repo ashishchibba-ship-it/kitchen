@@ -1291,6 +1291,15 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
     }
   };
 
+  const updateOrderStatus = async (orderId, status) => {
+    try {
+      await axios.put(`${API}/orders/${orderId}/status?status=${status}`);
+      fetchNewOrders(); // Refresh the orders list
+    } catch (error) {
+      console.error('Error updating order status:', error);
+    }
+  };
+
   const containerStyle = {
     backgroundColor: appSettings?.secondary_color || '#f9fafb',
     fontFamily: appSettings?.font_family || 'Inter'
