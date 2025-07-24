@@ -536,7 +536,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
             <div className="p-4 border-b bg-yellow-50">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center">
                 <span className="bg-red-500 text-white px-2 py-1 rounded-full text-sm mr-2">
-                  {stats.orders.recent_orders.length}
+                  {stats?.orders?.recent_orders?.length}
                 </span>
                 New Orders - Action Required
               </h3>
