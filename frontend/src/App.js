@@ -657,6 +657,15 @@ const ManagerDashboard = ({ user, appSettings }) => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(item.created_at).toLocaleDateString()}
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={() => handleDeleteProductionItem(item.id)}
+                            className="text-red-600 hover:text-red-900 transition-colors"
+                            title="Delete production item"
+                          >
+                            Delete
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
