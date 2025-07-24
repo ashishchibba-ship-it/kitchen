@@ -384,6 +384,17 @@ const ManagerDashboard = ({ user, appSettings }) => {
     }
   };
 
+  const handleEditProductionItem = async (itemId, updatedData) => {
+    try {
+      await axios.put(`${API}/production-items/${itemId}`, updatedData);
+      fetchProductionItems();
+      setEditingItem(null);
+    } catch (error) {
+      console.error('Error updating production item:', error);
+      alert('Error updating production item.');
+    }
+  };
+
   const exportInvoicePDF = async (invoiceId, invoiceNumber) => {
     try {
       const response = await axios.get(`${API}/invoices/${invoiceId}/pdf`, {
