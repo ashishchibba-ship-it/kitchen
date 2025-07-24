@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """
-Updated Backend API Testing for Production Kitchen Management System
-Tests the new changes: categories, unit_of_measure, removed cost, venue addresses, delivery dates
+Backend API Testing for Production Kitchen Management System
+Focus: Testing simplified production item creation and category management
+Key Changes:
+1. Simplified Production Item Creation - no target_time and production_date required
+2. Auto-generated defaults - production_date (today) and target_time (12:00)
+3. Category Management - CRUD operations
+4. Production Items Display - verify items show up correctly
 """
 
 import requests
