@@ -1044,6 +1044,479 @@ class KitchenAPITester:
         except Exception as e:
             self.log_result("Complete Visual Ordering Workflow", False, f"Exception: {str(e)}")
 
+    def test_order_notification_system(self):
+        """Test order notification system for kitchen and managers"""
+        print("\n=== Testing Order Notification System ===")
+        
+        try:
+            # Step 1: Test GET /api/dashboard/stats includes recent_orders data
+            response = self.session.get(f"{BASE_URL}/dashboard/stats")
+            if response.status_code == 200:
+                stats = response.json()
+                self.log_result("GET /api/dashboard/stats", True, "Dashboard stats retrieved successfully")
+                
+                # Verify structure includes orders section with recent_orders
+                if "orders" in stats and "recent_orders" in stats["orders"]:
+                    recent_orders = stats["orders"]["recent_orders"]
+                    self.log_result("Dashboard stats includes recent_orders", True, 
+                                  f"Found {len(recent_orders)} recent orders")
+                    
+                    # Verify recent_orders structure
+                    if recent_orders:
+                        first_order = recent_orders[0]
+                        required_fields = ["id", "venue_name", "order_date", "total_amount", "status", "items_count"]
+                        missing_fields = [field for field in required_fields if field not in first_order]
+                        
+                        if not missing_fields:
+                            self.log_result("Recent orders structure", True, "All required fields present")
+                        else:
+                            self.log_result("Recent orders structure", False, f"Missing fields: {missing_fields}")
+                else:
+                    self.log_result("Dashboard stats includes recent_orders", False, 
+                                  "recent_orders not found in orders section")
+            else:
+                self.log_result("GET /api/dashboard/stats", False, f"Status: {response.status_code}")
+            
+            # Step 2: Create a test order to verify it appears in notifications
+            # Get venue info first
+            response = self.session.get(f"{BASE_URL}/users")
+            if response.status_code == 200:
+                users = response.json()
+                venue_user = next((user for user in users if user.get("role") == "venue_staff"), None)
+                
+                if venue_user:
+                    # Get orderable items
+                    response = self.session.get(f"{BASE_URL}/orderable-items")
+                    if response.status_code == 200:
+                        orderable_items = response.json()
+                        if orderable_items:
+                            # Create a test order
+                            order_items = [
+                                {
+                                    "production_item_id": orderable_items[0]["id"],
+                                    "production_item_name": orderable_items[0]["name"],
+                                    "quantity": 2,
+                                    "unit_of_measure": orderable_items[0]["unit_of_measure"],
+                                    "unit_price": orderable_items[0]["unit_price"]
+                                }
+                            ]
+                            
+                            order_data = {
+                                "venue_name": venue_user["name"],
+                                "venue_id": venue_user["id"],
+                                "delivery_address": venue_user.get("address") or "123 Test Street",
+                                "items": order_items
+                            }
+                            
+                            response = self.session.post(f"{BASE_URL}/orders", json=order_data)
+                            if response.status_code == 200:
+                                new_order = response.json()
+                                self.log_result("Create test order for notifications", True, 
+                                              f"Order ID: {new_order['id']}")
+                                
+                                # Verify order appears in dashboard stats recent_orders
+                                response = self.session.get(f"{BASE_URL}/dashboard/stats")
+                                if response.status_code == 200:
+                                    updated_stats = response.json()
+                                    recent_orders = updated_stats["orders"]["recent_orders"]
+                                    
+                                    order_found = any(order["id"] == new_order["id"] for order in recent_orders)
+                                    if order_found:
+                                        self.log_result("New order appears in recent_orders", True, 
+                                                      "Order found in dashboard notifications")
+                                    else:
+                                        self.log_result("New order appears in recent_orders", False, 
+                                                      "Order not found in recent_orders")
+                                else:
+                                    self.log_result("Verify order in dashboard stats", False, 
+                                                  f"Status: {response.status_code}")
+                                
+                                return new_order
+                            else:
+                                self.log_result("Create test order for notifications", False, 
+                                              f"Status: {response.status_code}")
+                        else:
+                            self.log_result("Get orderable items for test order", False, "No orderable items available")
+                    else:
+                        self.log_result("Get orderable items for test order", False, f"Status: {response.status_code}")
+                else:
+                    self.log_result("Get venue user for test order", False, "No venue user found")
+            else:
+                self.log_result("Get users for test order", False, f"Status: {response.status_code}")
+            
+            return None
+            
+        except Exception as e:
+            self.log_result("Order Notification System", False, f"Exception: {str(e)}")
+            return None
+
+    def test_kitchen_order_management(self, test_order=None):
+        """Test kitchen staff order management functionality"""
+        print("\n=== Testing Kitchen Order Management ===")
+        
+        try:
+            # Step 1: Test GET /api/orders?status=pending for kitchen staff
+            response = self.session.get(f"{BASE_URL}/orders?status=pending")
+            if response.status_code == 200:
+                pending_orders = response.json()
+                self.log_result("GET /api/orders?status=pending", True, 
+                              f"Retrieved {len(pending_orders)} pending orders")
+                
+                # Verify all returned orders have pending status
+                if pending_orders:
+                    all_pending = all(order.get("status") == "pending" for order in pending_orders)
+                    if all_pending:
+                        self.log_result("Pending orders filter accuracy", True, 
+                                      "All returned orders have pending status")
+                    else:
+                        self.log_result("Pending orders filter accuracy", False, 
+                                      "Some orders don't have pending status")
+                    
+                    # If we have a test order, verify it appears in pending orders
+                    if test_order:
+                        test_order_found = any(order["id"] == test_order["id"] for order in pending_orders)
+                        if test_order_found:
+                            self.log_result("Test order in pending orders", True, 
+                                          "Test order found in pending orders list")
+                        else:
+                            self.log_result("Test order in pending orders", False, 
+                                          "Test order not found in pending orders")
+                else:
+                    self.log_result("Pending orders available", False, "No pending orders found")
+            else:
+                self.log_result("GET /api/orders?status=pending", False, f"Status: {response.status_code}")
+            
+            # Step 2: Test PUT /api/orders/{id}/status for updating to 'preparing'
+            if test_order:
+                order_id = test_order["id"]
+                
+                # Update order status to 'preparing'
+                response = self.session.put(f"{BASE_URL}/orders/{order_id}/status?status=preparing")
+                if response.status_code == 200:
+                    self.log_result("Update order status to preparing", True, 
+                                  f"Order {order_id} status updated to preparing")
+                    
+                    # Verify the status was actually updated
+                    response = self.session.get(f"{BASE_URL}/orders")
+                    if response.status_code == 200:
+                        all_orders = response.json()
+                        updated_order = next((order for order in all_orders if order["id"] == order_id), None)
+                        
+                        if updated_order and updated_order.get("status") == "preparing":
+                            self.log_result("Verify order status update", True, 
+                                          "Order status successfully updated to preparing")
+                        else:
+                            self.log_result("Verify order status update", False, 
+                                          f"Expected 'preparing', got '{updated_order.get('status') if updated_order else 'order not found'}'")
+                    else:
+                        self.log_result("Verify order status update", False, f"Status: {response.status_code}")
+                else:
+                    self.log_result("Update order status to preparing", False, 
+                                  f"Status: {response.status_code}, Response: {response.text}")
+            else:
+                self.log_result("Test order status update", False, "No test order available")
+                
+        except Exception as e:
+            self.log_result("Kitchen Order Management", False, f"Exception: {str(e)}")
+
+    def test_pdf_export_functionality(self):
+        """Test PDF export functionality for Xero integration"""
+        print("\n=== Testing PDF Export Functionality ===")
+        
+        try:
+            # Step 1: Get available invoices
+            response = self.session.get(f"{BASE_URL}/invoices")
+            if response.status_code == 200:
+                invoices = response.json()
+                self.log_result("GET /api/invoices", True, f"Retrieved {len(invoices)} invoices")
+                
+                if invoices:
+                    test_invoice = invoices[0]
+                    invoice_id = test_invoice["id"]
+                    
+                    # Step 2: Test GET /api/invoices/{id}/pdf endpoint
+                    response = self.session.get(f"{BASE_URL}/invoices/{invoice_id}/pdf")
+                    if response.status_code == 200:
+                        self.log_result("GET /api/invoices/{id}/pdf", True, 
+                                      f"PDF generated successfully for invoice {invoice_id}")
+                        
+                        # Verify response is PDF content
+                        content_type = response.headers.get('content-type', '')
+                        if 'application/pdf' in content_type:
+                            self.log_result("PDF content type", True, "Correct PDF content type")
+                        else:
+                            self.log_result("PDF content type", False, f"Expected PDF, got {content_type}")
+                        
+                        # Verify Content-Disposition header for download
+                        content_disposition = response.headers.get('content-disposition', '')
+                        if 'attachment' in content_disposition and 'filename=' in content_disposition:
+                            self.log_result("PDF download headers", True, f"Proper download headers: {content_disposition}")
+                            
+                            # Verify filename format includes invoice number
+                            invoice_number = test_invoice.get("invoice_number", "unknown")
+                            if invoice_number in content_disposition:
+                                self.log_result("PDF filename format", True, 
+                                              f"Filename includes invoice number: {invoice_number}")
+                            else:
+                                self.log_result("PDF filename format", False, 
+                                              f"Filename doesn't include invoice number {invoice_number}")
+                        else:
+                            self.log_result("PDF download headers", False, 
+                                          f"Missing proper download headers: {content_disposition}")
+                        
+                        # Verify PDF content size (should be substantial)
+                        pdf_size = len(response.content)
+                        if pdf_size > 1000:  # At least 1KB
+                            self.log_result("PDF content size", True, f"PDF size: {pdf_size} bytes")
+                        else:
+                            self.log_result("PDF content size", False, f"PDF too small: {pdf_size} bytes")
+                        
+                        # Step 3: Verify invoice contains Xero-compatible fields
+                        required_xero_fields = ["invoice_number", "issue_date", "venue_name", "delivery_address", 
+                                              "items", "subtotal", "tax_amount", "total_amount"]
+                        missing_fields = [field for field in required_xero_fields if field not in test_invoice]
+                        
+                        if not missing_fields:
+                            self.log_result("Xero-compatible invoice fields", True, 
+                                          "All required Xero fields present in invoice")
+                        else:
+                            self.log_result("Xero-compatible invoice fields", False, 
+                                          f"Missing Xero fields: {missing_fields}")
+                        
+                        # Verify invoice items structure
+                        if "items" in test_invoice and test_invoice["items"]:
+                            first_item = test_invoice["items"][0]
+                            required_item_fields = ["production_item_name", "quantity", "unit_of_measure", "unit_price"]
+                            missing_item_fields = [field for field in required_item_fields if field not in first_item]
+                            
+                            if not missing_item_fields:
+                                self.log_result("Invoice items structure", True, 
+                                              "Invoice items have all required fields")
+                            else:
+                                self.log_result("Invoice items structure", False, 
+                                              f"Missing item fields: {missing_item_fields}")
+                        else:
+                            self.log_result("Invoice items structure", False, "No items found in invoice")
+                        
+                    else:
+                        self.log_result("GET /api/invoices/{id}/pdf", False, 
+                                      f"Status: {response.status_code}, Response: {response.text}")
+                    
+                    # Step 4: Test PDF export with non-existent invoice ID
+                    fake_invoice_id = "non-existent-invoice-id"
+                    response = self.session.get(f"{BASE_URL}/invoices/{fake_invoice_id}/pdf")
+                    if response.status_code == 404:
+                        self.log_result("PDF export error handling", True, 
+                                      "Correctly returns 404 for non-existent invoice")
+                    else:
+                        self.log_result("PDF export error handling", False, 
+                                      f"Expected 404, got {response.status_code}")
+                        
+                else:
+                    self.log_result("Test PDF export", False, "No invoices available for testing")
+            else:
+                self.log_result("GET /api/invoices", False, f"Status: {response.status_code}")
+                
+        except Exception as e:
+            self.log_result("PDF Export Functionality", False, f"Exception: {str(e)}")
+
+    def test_complete_notification_workflow(self):
+        """Test complete notification workflow as specified in review request"""
+        print("\n=== Testing Complete Notification Workflow ===")
+        
+        try:
+            # Step 1: Place a test order from venue
+            print("\n--- Step 1: Place test order from venue ---")
+            
+            # Get venue and orderable items
+            response = self.session.get(f"{BASE_URL}/users")
+            if response.status_code != 200:
+                self.log_result("Complete Notification Workflow", False, "Cannot retrieve users")
+                return
+            
+            users = response.json()
+            venue_user = next((user for user in users if user.get("role") == "venue_staff"), None)
+            if not venue_user:
+                self.log_result("Complete Notification Workflow", False, "No venue user found")
+                return
+            
+            response = self.session.get(f"{BASE_URL}/orderable-items")
+            if response.status_code != 200:
+                self.log_result("Complete Notification Workflow", False, "Cannot retrieve orderable items")
+                return
+            
+            orderable_items = response.json()
+            if not orderable_items:
+                self.log_result("Complete Notification Workflow", False, "No orderable items available")
+                return
+            
+            # Create workflow test order
+            order_items = [
+                {
+                    "production_item_id": orderable_items[0]["id"],
+                    "production_item_name": orderable_items[0]["name"],
+                    "quantity": 3,
+                    "unit_of_measure": orderable_items[0]["unit_of_measure"],
+                    "unit_price": orderable_items[0]["unit_price"]
+                }
+            ]
+            
+            order_data = {
+                "venue_name": venue_user["name"],
+                "venue_id": venue_user["id"],
+                "delivery_address": venue_user.get("address") or "123 Workflow Test Street",
+                "items": order_items
+            }
+            
+            response = self.session.post(f"{BASE_URL}/orders", json=order_data)
+            if response.status_code == 200:
+                workflow_order = response.json()
+                self.log_result("Step 1 - Place test order from venue", True, 
+                              f"Order ID: {workflow_order['id']}, Venue: {venue_user['name']}")
+            else:
+                self.log_result("Step 1 - Place test order from venue", False, 
+                              f"Status: {response.status_code}")
+                return
+            
+            # Step 2: Verify order appears in dashboard stats recent_orders
+            print("\n--- Step 2: Verify order in dashboard notifications ---")
+            
+            response = self.session.get(f"{BASE_URL}/dashboard/stats")
+            if response.status_code == 200:
+                stats = response.json()
+                recent_orders = stats.get("orders", {}).get("recent_orders", [])
+                
+                order_in_notifications = any(order["id"] == workflow_order["id"] for order in recent_orders)
+                if order_in_notifications:
+                    self.log_result("Step 2 - Order appears in dashboard recent_orders", True, 
+                                  "Order found in manager dashboard notifications")
+                else:
+                    self.log_result("Step 2 - Order appears in dashboard recent_orders", False, 
+                                  "Order not found in dashboard notifications")
+            else:
+                self.log_result("Step 2 - Check dashboard notifications", False, f"Status: {response.status_code}")
+            
+            # Step 3: Verify order shows as 'pending' status
+            print("\n--- Step 3: Verify order has pending status ---")
+            
+            if workflow_order.get("status") == "pending":
+                self.log_result("Step 3 - Order has pending status", True, 
+                              f"Order status: {workflow_order['status']}")
+            else:
+                self.log_result("Step 3 - Order has pending status", False, 
+                              f"Expected 'pending', got '{workflow_order.get('status')}'")
+            
+            # Step 4: Test kitchen can see pending order
+            print("\n--- Step 4: Test kitchen can see pending order ---")
+            
+            response = self.session.get(f"{BASE_URL}/orders?status=pending")
+            if response.status_code == 200:
+                pending_orders = response.json()
+                kitchen_can_see_order = any(order["id"] == workflow_order["id"] for order in pending_orders)
+                
+                if kitchen_can_see_order:
+                    self.log_result("Step 4 - Kitchen can see pending order", True, 
+                                  "Order visible to kitchen staff in pending orders")
+                else:
+                    self.log_result("Step 4 - Kitchen can see pending order", False, 
+                                  "Order not visible in kitchen pending orders")
+            else:
+                self.log_result("Step 4 - Kitchen pending orders check", False, f"Status: {response.status_code}")
+            
+            # Step 5: Test kitchen can update order to 'preparing' status
+            print("\n--- Step 5: Test kitchen updates order to preparing ---")
+            
+            response = self.session.put(f"{BASE_URL}/orders/{workflow_order['id']}/status?status=preparing")
+            if response.status_code == 200:
+                self.log_result("Step 5 - Kitchen updates order to preparing", True, 
+                              "Order status successfully updated by kitchen")
+                
+                # Verify status was actually updated
+                response = self.session.get(f"{BASE_URL}/orders")
+                if response.status_code == 200:
+                    all_orders = response.json()
+                    updated_order = next((order for order in all_orders if order["id"] == workflow_order["id"]), None)
+                    
+                    if updated_order and updated_order.get("status") == "preparing":
+                        self.log_result("Step 5 - Verify status update", True, 
+                                      "Order status confirmed as 'preparing'")
+                    else:
+                        self.log_result("Step 5 - Verify status update", False, 
+                                      f"Status not updated correctly: {updated_order.get('status') if updated_order else 'order not found'}")
+                else:
+                    self.log_result("Step 5 - Verify status update", False, f"Status: {response.status_code}")
+            else:
+                self.log_result("Step 5 - Kitchen updates order to preparing", False, 
+                              f"Status: {response.status_code}")
+            
+            # Step 6: Verify manager dashboard shows updated order notifications
+            print("\n--- Step 6: Verify manager dashboard shows updated notifications ---")
+            
+            response = self.session.get(f"{BASE_URL}/dashboard/stats")
+            if response.status_code == 200:
+                updated_stats = response.json()
+                recent_orders = updated_stats.get("orders", {}).get("recent_orders", [])
+                
+                # Find our order in recent orders
+                our_order = next((order for order in recent_orders if order["id"] == workflow_order["id"]), None)
+                if our_order:
+                    if our_order.get("status") == "preparing":
+                        self.log_result("Step 6 - Manager sees updated order status", True, 
+                                      "Manager dashboard shows order as 'preparing'")
+                    else:
+                        self.log_result("Step 6 - Manager sees updated order status", False, 
+                                      f"Dashboard shows status as '{our_order.get('status')}' instead of 'preparing'")
+                else:
+                    self.log_result("Step 6 - Manager sees order in dashboard", False, 
+                                  "Order not found in manager dashboard recent_orders")
+            else:
+                self.log_result("Step 6 - Check manager dashboard", False, f"Status: {response.status_code}")
+            
+            print("\n--- Workflow Summary ---")
+            self.log_result("Complete Notification Workflow", True, 
+                          "Full workflow tested: venue order → dashboard notification → kitchen visibility → status update → manager notification")
+            
+        except Exception as e:
+            self.log_result("Complete Notification Workflow", False, f"Exception: {str(e)}")
+
+    def run_notification_and_pdf_tests(self):
+        """Run comprehensive tests for notification system and PDF export"""
+        print("🧪 Starting Notification System and PDF Export Testing")
+        print(f"🔗 Testing against: {BASE_URL}")
+        print("Focus: Order notification system and PDF export functionality for Xero integration")
+        print("=" * 80)
+        
+        # Test 1: Order Notification System
+        test_order = self.test_order_notification_system()
+        
+        # Test 2: Kitchen Order Management
+        self.test_kitchen_order_management(test_order)
+        
+        # Test 3: PDF Export Functionality
+        self.test_pdf_export_functionality()
+        
+        # Test 4: Complete Notification Workflow
+        self.test_complete_notification_workflow()
+        
+        # Print summary
+        print("\n" + "=" * 80)
+        print("🏁 NOTIFICATION SYSTEM AND PDF EXPORT TEST SUMMARY")
+        print("=" * 80)
+        print(f"✅ Passed: {self.test_results['passed']}")
+        print(f"❌ Failed: {self.test_results['failed']}")
+        
+        if self.test_results['errors']:
+            print("\n🚨 FAILED TESTS:")
+            for error in self.test_results['errors']:
+                print(f"   • {error}")
+        
+        if self.test_results['passed'] + self.test_results['failed'] > 0:
+            success_rate = (self.test_results['passed'] / 
+                           (self.test_results['passed'] + self.test_results['failed']) * 100)
+            print(f"\n📊 Success Rate: {success_rate:.1f}%")
+        
+        return self.test_results['failed'] == 0
+
     def run_visual_ordering_system_tests(self):
         """Run comprehensive tests for the visual ordering system"""
         print("🧪 Starting Visual Ordering System Backend API Testing")
