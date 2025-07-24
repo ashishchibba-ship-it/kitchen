@@ -153,8 +153,6 @@ const ManagerDashboard = ({ user, appSettings }) => {
     category: '',
     quantity: '',
     unit_of_measure: '',
-    target_time: '',
-    production_date: new Date().toISOString().split('T')[0],
     image: null
   });
 
