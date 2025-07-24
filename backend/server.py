@@ -99,9 +99,9 @@ class AppSettingsUpdate(BaseModel):
 class ProductionItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
-    category: str
+    category: Optional[str] = "Main Course"  # Make optional with default for backward compatibility
     quantity: int
-    unit_of_measure: str
+    unit_of_measure: Optional[str] = "units"  # Make optional with default for backward compatibility
     target_time: str  # Format: "HH:MM"
     production_date: date
     status: ProductionStatus = ProductionStatus.PENDING
