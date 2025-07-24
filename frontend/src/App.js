@@ -1331,44 +1331,52 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {newOrders.length > 0 && (
+        {/* New Orders Section */}
+        {pendingOrders.length > 0 && (
           <div className="bg-white rounded-lg shadow mb-6">
             <div className="p-4 border-b bg-red-50">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center">
                 <span className="bg-red-500 text-white px-2 py-1 rounded-full text-sm mr-2">
-                  {newOrders.length}
+                  {pendingOrders.length}
                 </span>
-                🔔 New Orders - Start Production!
+                🔔 New Orders - Start Preparation
               </h3>
             </div>
             <div className="p-4">
-              <div className="space-y-3">
-                {newOrders.map(order => (
-                  <div key={order.id} className="p-3 bg-red-50 rounded-lg border-l-4 border-red-500">
+              <div className="space-y-4">
+                {pendingOrders.map(order => (
+                  <div key={order.id} className="p-4 bg-red-50 rounded-lg border-l-4 border-red-500">
                     <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-medium text-gray-800">Order from: {order.venue_name}</div>
-                        <div className="text-sm text-gray-600 mb-2">
-                          Order Date: {new Date(order.order_date).toLocaleString()}
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="font-medium text-gray-800">Order #{order.invoice_number}</div>
+                          <div className="text-sm text-gray-600">
+                            {new Date(order.order_date).toLocaleString()}
+                          </div>
                         </div>
-                        <div className="text-sm">
-                          <strong>Items to produce:</strong>
-                          <ul className="list-disc ml-5 mt-1">
+                        <div className="font-medium text-blue-600 mb-2">From: {order.venue_name}</div>
+                        <div className="text-sm mb-3">
+                          <strong>Items to prepare:</strong>
+                          <div className="bg-white p-3 rounded mt-2">
                             {order.items.map((item, index) => (
-                              <li key={index}>
-                                {item.quantity} {item.unit_of_measure} of {item.production_item_name}
-                              </li>
+                              <div key={index} className="flex justify-between items-center py-1 border-b last:border-b-0">
+                                <span>{item.production_item_name}</span>
+                                <span className="font-medium">{item.quantity} {item.unit_of_measure}</span>
+                              </div>
                             ))}
-                          </ul>
+                          </div>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          <strong>Delivery Address:</strong> {order.delivery_address}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-lg font-semibold text-green-600">
+                      <div className="text-right ml-4">
+                        <div className="text-lg font-semibold text-green-600 mb-2">
                           ${order.total_amount.toFixed(2)}
                         </div>
                         <button
                           onClick={() => updateOrderStatus(order.id, 'preparing')}
-                          className="mt-2 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
                         >
                           Start Preparing
                         </button>
@@ -1381,6 +1389,148 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
           </div>
         )}
 
+        {/* Currently Preparing Section */}
+        {preparingOrders.length > 0 && (
+          <div className="bg-white rounded-lg shadow mb-6">
+            <div className="p-4 border-b bg-yellow-50">
+              <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                <span className="bg-yellow-500 text-white px-2 py-1 rounded-full text-sm mr-2">
+                  {preparingOrders.length}
+                </span>
+                👨‍🍳 Currently Preparing
+              </h3>
+            </div>
+            <div className="p-4">
+              <div className="space-y-4">
+                {preparingOrders.map(order => (
+                  <div key={order.id} className="p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="font-medium text-gray-800">Order #{order.invoice_number}</div>
+                          <div className="text-sm text-gray-600">
+                            Started: {new Date(order.order_date).toLocaleString()}
+                          </div>
+                        </div>
+                        <div className="font-medium text-blue-600 mb-2">For: {order.venue_name}</div>
+                        <div className="text-sm mb-3">
+                          <div className="bg-white p-3 rounded">
+                            {order.items.map((item, index) => (
+                              <div key={index} className="flex justify-between items-center py-1">
+                                <span>{item.production_item_name}</span>
+                                <span className="font-medium">{item.quantity} {item.unit_of_measure}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right ml-4">
+                        <button
+                          onClick={() => updateOrderStatus(order.id, 'ready')}
+                          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
+                        >
+                          Mark Ready
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Ready for Delivery Section */}
+        {readyOrders.length > 0 && (
+          <div className="bg-white rounded-lg shadow mb-6">
+            <div className="p-4 border-b bg-green-50">
+              <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                <span className="bg-green-500 text-white px-2 py-1 rounded-full text-sm mr-2">
+                  {readyOrders.length}
+                </span>
+                ✅ Ready for Pickup/Delivery
+              </h3>
+            </div>
+            <div className="p-4">
+              <div className="space-y-4">
+                {readyOrders.map(order => (
+                  <div key={order.id} className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="font-medium text-gray-800">Order #{order.invoice_number}</div>
+                          <div className="text-sm text-gray-600">
+                            Ready since: {new Date().toLocaleString()}
+                          </div>
+                        </div>
+                        <div className="font-medium text-blue-600 mb-2">For: {order.venue_name}</div>
+                        <div className="text-sm text-gray-600 mb-2">
+                          <strong>Delivery Address:</strong> {order.delivery_address}
+                        </div>
+                        <div className="text-sm">
+                          <div className="bg-white p-2 rounded">
+                            {order.items.map((item, index) => (
+                              <span key={index} className="inline-block mr-3 mb-1">
+                                {item.quantity} {item.unit_of_measure} {item.production_item_name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right ml-4">
+                        <div className="text-lg font-semibold text-green-600 mb-2">
+                          ${order.total_amount.toFixed(2)}
+                        </div>
+                        <button
+                          onClick={() => updateOrderStatus(order.id, 'delivered')}
+                          className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors"
+                        >
+                          Mark Delivered
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Completed Orders Section */}
+        {deliveredOrders.length > 0 && (
+          <div className="bg-white rounded-lg shadow mb-6">
+            <div className="p-4 border-b bg-gray-50">
+              <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                <span className="bg-gray-500 text-white px-2 py-1 rounded-full text-sm mr-2">
+                  {deliveredOrders.length}
+                </span>
+                🚚 Completed Orders (Today)
+              </h3>
+            </div>
+            <div className="p-4">
+              <div className="space-y-3">
+                {deliveredOrders.slice(0, 10).map(order => (
+                  <div key={order.id} className="p-3 bg-gray-50 rounded-lg border-l-4 border-gray-400">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-medium text-gray-800">Order #{order.invoice_number} - {order.venue_name}</div>
+                        <div className="text-sm text-gray-600">
+                          Delivered: {order.delivered_at ? new Date(order.delivered_at).toLocaleString() : 'Recently'}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-medium text-green-600">${order.total_amount.toFixed(2)}</div>
+                        <span className="text-xs text-gray-500">{order.items.length} items</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Today's Production Items */}
         <div className="bg-white rounded-lg shadow">
           <h3 className="text-lg font-semibold text-gray-800 p-4 border-b">Today's Production Items</h3>
           <div className="space-y-4 p-4">
