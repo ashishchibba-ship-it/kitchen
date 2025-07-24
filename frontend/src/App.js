@@ -279,6 +279,51 @@ const ManagerDashboard = ({ user, appSettings }) => {
     }
   };
 
+  const handleCreateCategory = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API}/categories`, newCategory);
+      setNewCategory({
+        name: '',
+        description: ''
+      });
+      fetchCategories();
+      fetchDetailedCategories();
+    } catch (error) {
+      console.error('Error creating category:', error);
+      alert('Error creating category. Category name might already exist.');
+    }
+  };
+
+  const handleUpdateCategory = async (categoryId, categoryData) => {
+    try {
+      await axios.put(`${API}/categories/${categoryId}`, categoryData);
+      setEditingCategory(null);
+      fetchCategories();
+      fetchDetailedCategories();
+    } catch (error) {
+      console.error('Error updating category:', error);
+      alert('Error updating category.');
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId) => {
+    if (window.confirm('Are you sure you want to delete this category?')) {
+      try {
+        await axios.delete(`${API}/categories/${categoryId}`);
+        fetchCategories();
+        fetchDetailedCategories();
+      } catch (error) {
+        console.error('Error deleting category:', error);
+        if (error.response?.status === 400) {
+          alert('Cannot delete category that is being used by production items.');
+        } else {
+          alert('Error deleting category.');
+        }
+      }
+    }
+  };
+
   const handleCreateUser = async (e) => {
     e.preventDefault();
     try {
