@@ -406,28 +406,470 @@ class KitchenAPITester:
         except Exception as e:
             self.log_result("Categories System Integration", False, f"Exception: {str(e)}")
     
-    def run_focused_tests(self):
-        """Run focused tests for the updated production kitchen management backend"""
-        print("🧪 Starting Focused Backend API Testing")
+    def test_enhanced_production_items_with_ordering_fields(self):
+        """Test enhanced production items with ordering fields"""
+        print("\n=== Testing Enhanced Production Items with Ordering Fields ===")
+        
+        try:
+            # Create production items with enhanced ordering fields
+            enhanced_items = [
+                {
+                    "name": "Premium Grilled Salmon",
+                    "category": "Main Course",
+                    "quantity": 20,
+                    "unit_of_measure": "portions",
+                    "assigned_staff": "chef_alice",
+                    "image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                },
+                {
+                    "name": "Artisan Chocolate Cake",
+                    "category": "Dessert",
+                    "quantity": 15,
+                    "unit_of_measure": "slices",
+                    "assigned_staff": "chef_bob"
+                },
+                {
+                    "name": "Fresh Caesar Salad",
+                    "category": "Salad",
+                    "quantity": 25,
+                    "unit_of_measure": "bowls"
+                }
+            ]
+            
+            created_items = []
+            
+            for item_data in enhanced_items:
+                response = self.session.post(
+                    f"{BASE_URL}/production-items?created_by=manager",
+                    json=item_data
+                )
+                
+                if response.status_code == 200:
+                    item = response.json()
+                    created_items.append(item)
+                    
+                    # Verify enhanced ordering fields exist with defaults
+                    ordering_fields = {
+                        "available_for_order": 0,
+                        "unit_price": 15.0,
+                        "availability_status": "available"
+                    }
+                    
+                    for field, expected_default in ordering_fields.items():
+                        if field in item:
+                            self.log_result(f"Enhanced field {field} for {item_data['name']}", True,
+                                          f"{field}: {item[field]}")
+                        else:
+                            self.log_result(f"Enhanced field {field} for {item_data['name']}", False,
+                                          f"Field {field} missing")
+                    
+                    self.log_result(f"Create enhanced production item: {item_data['name']}", True,
+                                  f"ID: {item['id']}")
+                else:
+                    self.log_result(f"Create enhanced production item: {item_data['name']}", False,
+                                  f"Status: {response.status_code}, Response: {response.text}")
+            
+            return created_items
+            
+        except Exception as e:
+            self.log_result("Enhanced Production Items with Ordering Fields", False, f"Exception: {str(e)}")
+            return []
+
+    def test_manager_item_availability_control(self, created_items):
+        """Test manager's ability to control item availability for ordering"""
+        print("\n=== Testing Manager Item Availability Control ===")
+        
+        try:
+            if not created_items:
+                self.log_result("Manager Item Availability Control", False, "No items to test with")
+                return []
+            
+            updated_items = []
+            
+            for i, item in enumerate(created_items):
+                item_id = item["id"]
+                item_name = item["name"]
+                
+                # Set different availability scenarios
+                availability_updates = [
+                    {
+                        "available_for_order": 10,
+                        "unit_price": 25.50,
+                        "availability_status": "available"
+                    },
+                    {
+                        "available_for_order": 3,
+                        "unit_price": 18.75,
+                        "availability_status": "limited"
+                    },
+                    {
+                        "available_for_order": 0,
+                        "unit_price": 22.00,
+                        "availability_status": "out_of_stock"
+                    }
+                ]
+                
+                update_data = availability_updates[i % len(availability_updates)]
+                
+                # Test PUT /api/production-items/{id}/availability
+                response = self.session.put(
+                    f"{BASE_URL}/production-items/{item_id}/availability",
+                    json=update_data
+                )
+                
+                if response.status_code == 200:
+                    self.log_result(f"Update availability for {item_name}", True,
+                                  f"Available: {update_data['available_for_order']}, Price: ${update_data['unit_price']}")
+                    
+                    # Verify the update by fetching the item
+                    response = self.session.get(f"{BASE_URL}/production-items")
+                    if response.status_code == 200:
+                        all_items = response.json()
+                        updated_item = next((item for item in all_items if item["id"] == item_id), None)
+                        
+                        if updated_item:
+                            # Verify all fields were updated correctly
+                            for field, expected_value in update_data.items():
+                                actual_value = updated_item.get(field)
+                                if actual_value == expected_value:
+                                    self.log_result(f"Verify {field} update for {item_name}", True,
+                                                  f"{field}: {actual_value}")
+                                else:
+                                    self.log_result(f"Verify {field} update for {item_name}", False,
+                                                  f"Expected {expected_value}, got {actual_value}")
+                            
+                            updated_items.append(updated_item)
+                        else:
+                            self.log_result(f"Fetch updated item {item_name}", False, "Item not found after update")
+                    else:
+                        self.log_result(f"Fetch updated item {item_name}", False, f"Status: {response.status_code}")
+                else:
+                    self.log_result(f"Update availability for {item_name}", False,
+                                  f"Status: {response.status_code}, Response: {response.text}")
+            
+            return updated_items
+            
+        except Exception as e:
+            self.log_result("Manager Item Availability Control", False, f"Exception: {str(e)}")
+            return []
+
+    def test_visual_ordering_apis(self, updated_items):
+        """Test visual ordering APIs for the ordering interface"""
+        print("\n=== Testing Visual Ordering APIs ===")
+        
+        try:
+            # First, mark some items as completed so they appear in orderable items
+            completed_items = []
+            for item in updated_items[:2]:  # Mark first 2 items as completed
+                item_id = item["id"]
+                response = self.session.put(
+                    f"{BASE_URL}/production-items/{item_id}/status?status=completed"
+                )
+                if response.status_code == 200:
+                    self.log_result(f"Mark {item['name']} as completed", True, "Status updated to completed")
+                    completed_items.append(item)
+                else:
+                    self.log_result(f"Mark {item['name']} as completed", False, f"Status: {response.status_code}")
+            
+            # Test GET /api/orderable-items
+            response = self.session.get(f"{BASE_URL}/orderable-items")
+            if response.status_code == 200:
+                orderable_items = response.json()
+                self.log_result("GET /api/orderable-items", True, f"Retrieved {len(orderable_items)} orderable items")
+                
+                # Verify only completed items with available_for_order > 0 appear
+                expected_orderable = [item for item in completed_items if item.get("available_for_order", 0) > 0]
+                found_orderable = [item for item in orderable_items if any(comp["id"] == item["id"] for comp in expected_orderable)]
+                
+                if len(found_orderable) >= len(expected_orderable):
+                    self.log_result("Orderable items filtering", True, 
+                                  f"Found {len(found_orderable)} items (expected at least {len(expected_orderable)})")
+                else:
+                    self.log_result("Orderable items filtering", False,
+                                  f"Expected at least {len(expected_orderable)}, found {len(found_orderable)}")
+                
+                # Verify orderable item structure
+                if orderable_items:
+                    first_item = orderable_items[0]
+                    required_fields = ["id", "name", "category", "available_quantity", "unit_of_measure", 
+                                     "unit_price", "availability_status"]
+                    missing_fields = [field for field in required_fields if field not in first_item]
+                    
+                    if not missing_fields:
+                        self.log_result("Orderable item structure", True, "All required fields present")
+                    else:
+                        self.log_result("Orderable item structure", False, f"Missing fields: {missing_fields}")
+                
+            else:
+                self.log_result("GET /api/orderable-items", False, f"Status: {response.status_code}")
+            
+            # Test GET /api/orderable-items/by-category
+            response = self.session.get(f"{BASE_URL}/orderable-items/by-category")
+            if response.status_code == 200:
+                items_by_category = response.json()
+                self.log_result("GET /api/orderable-items/by-category", True, 
+                              f"Retrieved items organized by {len(items_by_category)} categories")
+                
+                # Verify structure is a dictionary with categories as keys
+                if isinstance(items_by_category, dict):
+                    total_items = sum(len(items) for items in items_by_category.values())
+                    self.log_result("Category organization structure", True, 
+                                  f"Categories: {list(items_by_category.keys())}, Total items: {total_items}")
+                    
+                    # Verify each category contains proper item structure
+                    for category, items in items_by_category.items():
+                        if items and isinstance(items, list):
+                            first_item = items[0]
+                            if "id" in first_item and "name" in first_item and "category" in first_item:
+                                self.log_result(f"Category {category} item structure", True, 
+                                              f"{len(items)} items with proper structure")
+                            else:
+                                self.log_result(f"Category {category} item structure", False, 
+                                              "Items missing required fields")
+                else:
+                    self.log_result("Category organization structure", False, "Response is not a dictionary")
+            else:
+                self.log_result("GET /api/orderable-items/by-category", False, f"Status: {response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Visual Ordering APIs", False, f"Exception: {str(e)}")
+
+    def test_enhanced_order_management_with_venue_id(self, orderable_items_for_order=None):
+        """Test enhanced order management with venue_id and automatic quantity reduction"""
+        print("\n=== Testing Enhanced Order Management with Venue ID ===")
+        
+        try:
+            # Get venue information first
+            response = self.session.get(f"{BASE_URL}/users")
+            if response.status_code != 200:
+                self.log_result("Enhanced Order Management", False, "Cannot retrieve users")
+                return []
+            
+            users = response.json()
+            venue_users = [user for user in users if user.get("role") == "venue_staff"]
+            
+            if not venue_users:
+                self.log_result("Enhanced Order Management", False, "No venue users found")
+                return []
+            
+            venue_user = venue_users[0]  # Use first venue user
+            venue_id = venue_user["id"]
+            venue_name = venue_user["name"]
+            venue_address = venue_user.get("address", "123 Test Street, Test City")
+            
+            # Get orderable items for the order
+            response = self.session.get(f"{BASE_URL}/orderable-items")
+            if response.status_code != 200:
+                self.log_result("Enhanced Order Management", False, "Cannot retrieve orderable items")
+                return []
+            
+            orderable_items = response.json()
+            if not orderable_items:
+                self.log_result("Enhanced Order Management", False, "No orderable items available")
+                return []
+            
+            # Create test orders with venue_id
+            test_orders = []
+            
+            # Order 1: Small order
+            order_items_1 = [
+                {
+                    "production_item_id": orderable_items[0]["id"],
+                    "production_item_name": orderable_items[0]["name"],
+                    "quantity": 2,
+                    "unit_of_measure": orderable_items[0]["unit_of_measure"],
+                    "unit_price": orderable_items[0]["unit_price"]
+                }
+            ]
+            
+            order_data_1 = {
+                "venue_name": venue_name,
+                "venue_id": venue_id,
+                "delivery_address": venue_address,
+                "items": order_items_1,
+                "delivery_date": "2024-12-20"
+            }
+            
+            # Store original available quantity for verification
+            original_quantity = orderable_items[0]["available_quantity"]
+            
+            response = self.session.post(f"{BASE_URL}/orders", json=order_data_1)
+            if response.status_code == 200:
+                order_1 = response.json()
+                test_orders.append(order_1)
+                
+                # Verify order structure includes venue_id
+                if order_1.get("venue_id") == venue_id:
+                    self.log_result("Order with venue_id creation", True, f"Order ID: {order_1['id']}")
+                else:
+                    self.log_result("Order with venue_id creation", False, 
+                                  f"Expected venue_id {venue_id}, got {order_1.get('venue_id')}")
+                
+                # Verify automatic quantity reduction
+                response = self.session.get(f"{BASE_URL}/orderable-items")
+                if response.status_code == 200:
+                    updated_orderable_items = response.json()
+                    updated_item = next((item for item in updated_orderable_items 
+                                       if item["id"] == orderable_items[0]["id"]), None)
+                    
+                    if updated_item:
+                        expected_quantity = original_quantity - order_items_1[0]["quantity"]
+                        actual_quantity = updated_item["available_quantity"]
+                        
+                        if actual_quantity == expected_quantity:
+                            self.log_result("Automatic quantity reduction", True,
+                                          f"Quantity reduced from {original_quantity} to {actual_quantity}")
+                        else:
+                            self.log_result("Automatic quantity reduction", False,
+                                          f"Expected {expected_quantity}, got {actual_quantity}")
+                    else:
+                        self.log_result("Automatic quantity reduction", False, "Item not found after order")
+                else:
+                    self.log_result("Automatic quantity reduction", False, "Cannot verify quantity reduction")
+                
+            else:
+                self.log_result("Order with venue_id creation", False,
+                              f"Status: {response.status_code}, Response: {response.text}")
+            
+            # Test GET /api/orders with venue_id filtering
+            response = self.session.get(f"{BASE_URL}/orders?venue_id={venue_id}")
+            if response.status_code == 200:
+                venue_orders = response.json()
+                self.log_result("GET /api/orders with venue_id filter", True,
+                              f"Retrieved {len(venue_orders)} orders for venue {venue_name}")
+                
+                # Verify all returned orders belong to the specified venue
+                venue_specific = all(order.get("venue_id") == venue_id for order in venue_orders)
+                if venue_specific:
+                    self.log_result("Venue-specific order filtering", True, "All orders belong to specified venue")
+                else:
+                    self.log_result("Venue-specific order filtering", False, "Some orders don't belong to specified venue")
+            else:
+                self.log_result("GET /api/orders with venue_id filter", False, f"Status: {response.status_code}")
+            
+            return test_orders
+            
+        except Exception as e:
+            self.log_result("Enhanced Order Management with Venue ID", False, f"Exception: {str(e)}")
+            return []
+
+    def test_order_history_for_personalized_experience(self, test_orders):
+        """Test order history for personalized venue experience"""
+        print("\n=== Testing Order History for Personalized Experience ===")
+        
+        try:
+            if not test_orders:
+                self.log_result("Order History for Personalized Experience", False, "No test orders available")
+                return
+            
+            # Get venue_id from the first test order
+            venue_id = test_orders[0].get("venue_id")
+            if not venue_id:
+                self.log_result("Order History for Personalized Experience", False, "No venue_id in test orders")
+                return
+            
+            # Create additional orders to build history
+            response = self.session.get(f"{BASE_URL}/orderable-items")
+            if response.status_code == 200:
+                orderable_items = response.json()
+                if len(orderable_items) >= 2:
+                    # Create a second order with different items
+                    order_items_2 = [
+                        {
+                            "production_item_id": orderable_items[1]["id"],
+                            "production_item_name": orderable_items[1]["name"],
+                            "quantity": 3,
+                            "unit_of_measure": orderable_items[1]["unit_of_measure"],
+                            "unit_price": orderable_items[1]["unit_price"]
+                        }
+                    ]
+                    
+                    order_data_2 = {
+                        "venue_name": test_orders[0]["venue_name"],
+                        "venue_id": venue_id,
+                        "delivery_address": test_orders[0]["delivery_address"],
+                        "items": order_items_2
+                    }
+                    
+                    response = self.session.post(f"{BASE_URL}/orders", json=order_data_2)
+                    if response.status_code == 200:
+                        self.log_result("Create additional order for history", True, "Second order created")
+                    else:
+                        self.log_result("Create additional order for history", False, f"Status: {response.status_code}")
+            
+            # Test GET /api/order-history/{venue_id}
+            response = self.session.get(f"{BASE_URL}/order-history/{venue_id}")
+            if response.status_code == 200:
+                order_history = response.json()
+                self.log_result("GET /api/order-history/{venue_id}", True, "Order history retrieved successfully")
+                
+                # Verify structure contains most_ordered and recently_ordered
+                required_keys = ["most_ordered", "recently_ordered"]
+                missing_keys = [key for key in required_keys if key not in order_history]
+                
+                if not missing_keys:
+                    self.log_result("Order history structure", True, "Contains most_ordered and recently_ordered")
+                    
+                    # Verify most_ordered items
+                    most_ordered = order_history["most_ordered"]
+                    if isinstance(most_ordered, list):
+                        self.log_result("Most ordered items", True, f"Found {len(most_ordered)} most ordered items")
+                        
+                        # Verify item structure
+                        if most_ordered:
+                            first_item = most_ordered[0]
+                            required_fields = ["item_id", "item_name", "total_ordered", "times_ordered", 
+                                             "last_ordered", "average_quantity"]
+                            missing_fields = [field for field in required_fields if field not in first_item]
+                            
+                            if not missing_fields:
+                                self.log_result("Most ordered item structure", True, "All required fields present")
+                            else:
+                                self.log_result("Most ordered item structure", False, f"Missing fields: {missing_fields}")
+                    else:
+                        self.log_result("Most ordered items", False, "most_ordered is not a list")
+                    
+                    # Verify recently_ordered items
+                    recently_ordered = order_history["recently_ordered"]
+                    if isinstance(recently_ordered, list):
+                        self.log_result("Recently ordered items", True, f"Found {len(recently_ordered)} recently ordered items")
+                    else:
+                        self.log_result("Recently ordered items", False, "recently_ordered is not a list")
+                        
+                else:
+                    self.log_result("Order history structure", False, f"Missing keys: {missing_keys}")
+                    
+            else:
+                self.log_result("GET /api/order-history/{venue_id}", False, f"Status: {response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Order History for Personalized Experience", False, f"Exception: {str(e)}")
+
+    def run_visual_ordering_system_tests(self):
+        """Run comprehensive tests for the visual ordering system"""
+        print("🧪 Starting Visual Ordering System Backend API Testing")
         print(f"🔗 Testing against: {BASE_URL}")
-        print("Focus: Simplified production item creation and category management")
+        print("Focus: Enhanced visual ordering system with manager controls and personalized experience")
         print("=" * 80)
         
-        # Test 1: Simplified Production Item Creation
-        created_items = self.test_simplified_production_item_creation()
+        # Test 1: Enhanced Production Items with Ordering Fields
+        created_items = self.test_enhanced_production_items_with_ordering_fields()
         
-        # Test 2: Category Management CRUD Operations
-        self.test_category_management_crud()
+        # Test 2: Manager Item Availability Control
+        updated_items = self.test_manager_item_availability_control(created_items)
         
-        # Test 3: Production Items Display
-        self.test_production_items_display(created_items)
+        # Test 3: Visual Ordering APIs
+        self.test_visual_ordering_apis(updated_items)
         
-        # Test 4: Categories System Integration
-        self.test_categories_system_integration()
+        # Test 4: Enhanced Order Management with Venue ID
+        test_orders = self.test_enhanced_order_management_with_venue_id()
+        
+        # Test 5: Order History for Personalized Experience
+        self.test_order_history_for_personalized_experience(test_orders)
         
         # Print summary
         print("\n" + "=" * 80)
-        print("🏁 FOCUSED TEST SUMMARY")
+        print("🏁 VISUAL ORDERING SYSTEM TEST SUMMARY")
         print("=" * 80)
         print(f"✅ Passed: {self.test_results['passed']}")
         print(f"❌ Failed: {self.test_results['failed']}")
