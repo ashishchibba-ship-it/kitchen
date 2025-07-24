@@ -440,6 +440,118 @@ async def delete_category(category_id: str):
         raise HTTPException(status_code=404, detail="Category not found")
     return {"message": "Category deleted successfully"}
 
+@api_router.put("/production-items/{item_id}/availability")
+async def update_item_availability(item_id: str, update: ProductionItemUpdate):
+    update_data = {k: v for k, v in update.dict().items() if v is not None}
+    
+    if update_data:
+        result = await db.production_items.update_one(
+            {"id": item_id},
+            {"$set": update_data}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Production item not found")
+    
+    return {"message": "Item availability updated successfully"}
+
+@api_router.get("/orderable-items", response_model=List[OrderableItem])
+async def get_orderable_items():
+    """Get items available for ordering"""
+    items = await db.production_items.find({
+        "status": "completed",
+        "available_for_order": {"$gt": 0}
+    }).sort("name", 1).to_list(1000)
+    
+    orderable_items = []
+    for item in items:
+        orderable_item = OrderableItem(
+            id=item["id"],
+            name=item["name"],
+            category=item.get("category", "Main Course"),
+            available_quantity=item.get("available_for_order", 0),
+            unit_of_measure=item.get("unit_of_measure", "units"),
+            unit_price=item.get("unit_price", 15.0),
+            image=item.get("image"),
+            availability_status=item.get("availability_status", "available")
+        )
+        orderable_items.append(orderable_item)
+    
+    return orderable_items
+
+@api_router.get("/orderable-items/by-category")
+async def get_orderable_items_by_category():
+    """Get orderable items organized by category"""
+    items = await db.production_items.find({
+        "status": "completed",
+        "available_for_order": {"$gt": 0}
+    }).sort("name", 1).to_list(1000)
+    
+    categories = defaultdict(list)
+    
+    for item in items:
+        category = item.get("category", "Main Course")
+        orderable_item = OrderableItem(
+            id=item["id"],
+            name=item["name"],
+            category=category,
+            available_quantity=item.get("available_for_order", 0),
+            unit_of_measure=item.get("unit_of_measure", "units"),
+            unit_price=item.get("unit_price", 15.0),
+            image=item.get("image"),
+            availability_status=item.get("availability_status", "available")
+        )
+        categories[category].append(orderable_item)
+    
+    return dict(categories)
+
+@api_router.get("/order-history/{venue_id}")
+async def get_venue_order_history(venue_id: str):
+    """Get order history for a venue"""
+    orders = await db.orders.find({"venue_id": venue_id}).to_list(1000)
+    
+    # Aggregate order history
+    item_history = defaultdict(lambda: {
+        'total_ordered': 0,
+        'times_ordered': 0,
+        'last_ordered': None,
+        'item_name': '',
+        'category': ''
+    })
+    
+    for order in orders:
+        order_date = order['order_date']
+        for item in order['items']:
+            item_id = item['production_item_id']
+            item_history[item_id]['total_ordered'] += item['quantity']
+            item_history[item_id]['times_ordered'] += 1
+            item_history[item_id]['item_name'] = item['production_item_name']
+            
+            if item_history[item_id]['last_ordered'] is None or order_date > item_history[item_id]['last_ordered']:
+                item_history[item_id]['last_ordered'] = order_date
+    
+    # Create OrderHistory objects
+    history_list = []
+    for item_id, data in item_history.items():
+        history_item = OrderHistory(
+            item_id=item_id,
+            item_name=data['item_name'],
+            category=data.get('category', 'Unknown'),
+            total_ordered=data['total_ordered'],
+            last_ordered=data['last_ordered'],
+            times_ordered=data['times_ordered'],
+            average_quantity=data['total_ordered'] / data['times_ordered']
+        )
+        history_list.append(history_item)
+    
+    # Sort by most frequently ordered
+    history_list.sort(key=lambda x: x.times_ordered, reverse=True)
+    
+    return {
+        "most_ordered": history_list[:10],  # Top 10 most ordered
+        "recently_ordered": sorted(history_list, key=lambda x: x.last_ordered, reverse=True)[:10]  # Top 10 recently ordered
+    }
+
 # Order management endpoints
 @api_router.post("/orders", response_model=Order)
 async def create_order(order: OrderCreate):
