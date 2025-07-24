@@ -528,7 +528,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
             </div>
 
             <div className="bg-white rounded-lg shadow overflow-hidden">
-              <h3 className="text-lg font-semibold text-gray-800 p-4 border-b">Production Items</h3>
+              <h3 className="text-lg font-semibold text-gray-800 p-4 border-b">Production Items & Order Management</h3>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -536,9 +536,11 @@ const ManagerDashboard = ({ user, appSettings }) => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produced</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Available for Order</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -556,7 +558,33 @@ const ManagerDashboard = ({ user, appSettings }) => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.category}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.quantity} {item.unit_of_measure}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(item.created_at).toLocaleDateString()}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <input
+                            type="number"
+                            defaultValue={item.available_for_order || 0}
+                            max={item.quantity}
+                            min={0}
+                            className="w-20 p-1 border border-gray-300 rounded text-sm"
+                            onBlur={(e) => {
+                              if (e.target.value !== (item.available_for_order || 0).toString()) {
+                                updateItemAvailability(item.id, e.target.value, item.unit_price || 15.0);
+                              }
+                            }}
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <input
+                            type="number"
+                            step="0.01"
+                            defaultValue={item.unit_price || 15.0}
+                            className="w-20 p-1 border border-gray-300 rounded text-sm"
+                            onBlur={(e) => {
+                              if (e.target.value !== (item.unit_price || 15.0).toString()) {
+                                updateItemAvailability(item.id, item.available_for_order || 0, e.target.value);
+                              }
+                            }}
+                          />
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             item.status === 'completed' ? 'bg-green-100 text-green-800' :
@@ -565,6 +593,9 @@ const ManagerDashboard = ({ user, appSettings }) => {
                           }`}>
                             {item.status.replace('_', ' ')}
                           </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(item.created_at).toLocaleDateString()}
                         </td>
                       </tr>
                     ))}
