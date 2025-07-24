@@ -446,6 +446,10 @@ async def delete_category(category_id: str):
 async def update_item_availability(item_id: str, update: ProductionItemUpdate):
     update_data = {k: v for k, v in update.dict().items() if v is not None}
     
+    # If base_cost is being updated, automatically calculate unit_price with 15% markup
+    if 'base_cost' in update_data:
+        update_data['unit_price'] = update_data['base_cost'] * 1.15
+    
     if update_data:
         result = await db.production_items.update_one(
             {"id": item_id},
