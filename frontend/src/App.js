@@ -628,19 +628,6 @@ const ManagerDashboard = ({ user, appSettings }) => {
                           <span className="text-xs text-gray-400">(+15%)</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <input
-                            type="number"
-                            step="0.01"
-                            defaultValue={item.unit_price || 15.0}
-                            className="w-20 p-1 border border-gray-300 rounded text-sm"
-                            onBlur={(e) => {
-                              if (e.target.value !== (item.unit_price || 15.0).toString()) {
-                                updateItemAvailability(item.id, item.available_for_order || 0, e.target.value);
-                              }
-                            }}
-                          />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             item.status === 'completed' ? 'bg-green-100 text-green-800' :
                             item.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
