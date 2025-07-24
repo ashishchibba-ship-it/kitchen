@@ -448,7 +448,6 @@ backend:
 
 test_plan:
   current_focus:
-    - "Production item edit functionality for managers"
     - "Organized kitchen dashboard workflow"
     - "Order notification system for kitchen and managers"
     - "Invoice PDF export for Xero integration"
