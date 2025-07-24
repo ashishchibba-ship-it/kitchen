@@ -845,6 +845,205 @@ class KitchenAPITester:
         except Exception as e:
             self.log_result("Order History for Personalized Experience", False, f"Exception: {str(e)}")
 
+    def test_complete_visual_ordering_workflow(self):
+        """Test the complete workflow as described in the review request"""
+        print("\n=== Testing Complete Visual Ordering Workflow ===")
+        
+        try:
+            # Step 1: Create production items with images and categories
+            workflow_items = [
+                {
+                    "name": "Workflow Test Burger",
+                    "category": "Main Course",
+                    "quantity": 20,
+                    "unit_of_measure": "burgers",
+                    "assigned_staff": "chef_alice",
+                    "image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                },
+                {
+                    "name": "Workflow Test Fries",
+                    "category": "Side Dish",
+                    "quantity": 30,
+                    "unit_of_measure": "portions",
+                    "image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                }
+            ]
+            
+            created_workflow_items = []
+            for item_data in workflow_items:
+                response = self.session.post(
+                    f"{BASE_URL}/production-items?created_by=manager",
+                    json=item_data
+                )
+                if response.status_code == 200:
+                    created_workflow_items.append(response.json())
+                    self.log_result(f"Step 1 - Create {item_data['name']} with image and category", True, 
+                                  f"Category: {item_data['category']}")
+                else:
+                    self.log_result(f"Step 1 - Create {item_data['name']}", False, f"Status: {response.status_code}")
+            
+            # Step 2: Manager sets items available for ordering with specific quantities and prices
+            for i, item in enumerate(created_workflow_items):
+                availability_data = {
+                    "available_for_order": 15 - (i * 5),  # 15, 10
+                    "unit_price": 20.0 + (i * 5),  # 20.0, 25.0
+                    "availability_status": "available"
+                }
+                
+                response = self.session.put(
+                    f"{BASE_URL}/production-items/{item['id']}/availability",
+                    json=availability_data
+                )
+                if response.status_code == 200:
+                    self.log_result(f"Step 2 - Set availability for {item['name']}", True,
+                                  f"Quantity: {availability_data['available_for_order']}, Price: ${availability_data['unit_price']}")
+                else:
+                    self.log_result(f"Step 2 - Set availability for {item['name']}", False, f"Status: {response.status_code}")
+            
+            # Step 3: Mark items as completed so they appear in orderable items
+            for item in created_workflow_items:
+                response = self.session.put(
+                    f"{BASE_URL}/production-items/{item['id']}/status?status=completed"
+                )
+                if response.status_code == 200:
+                    self.log_result(f"Step 3 - Mark {item['name']} as completed", True, "Ready for ordering")
+                else:
+                    self.log_result(f"Step 3 - Mark {item['name']} as completed", False, f"Status: {response.status_code}")
+            
+            # Step 4: Test orderable items APIs return proper data with images and categories
+            response = self.session.get(f"{BASE_URL}/orderable-items")
+            if response.status_code == 200:
+                orderable_items = response.json()
+                workflow_orderable = [item for item in orderable_items 
+                                    if any(wf_item['id'] == item['id'] for wf_item in created_workflow_items)]
+                
+                if len(workflow_orderable) == len(created_workflow_items):
+                    self.log_result("Step 4 - Orderable items API with images and categories", True,
+                                  f"Found {len(workflow_orderable)} items with proper data")
+                    
+                    # Verify images and categories are present
+                    for item in workflow_orderable:
+                        if item.get('image') and item.get('category'):
+                            self.log_result(f"Step 4 - {item['name']} has image and category", True,
+                                          f"Category: {item['category']}")
+                        else:
+                            self.log_result(f"Step 4 - {item['name']} missing image or category", False,
+                                          f"Image: {bool(item.get('image'))}, Category: {item.get('category')}")
+                else:
+                    self.log_result("Step 4 - Orderable items API", False,
+                                  f"Expected {len(created_workflow_items)}, found {len(workflow_orderable)}")
+            else:
+                self.log_result("Step 4 - Orderable items API", False, f"Status: {response.status_code}")
+            
+            # Test by-category API
+            response = self.session.get(f"{BASE_URL}/orderable-items/by-category")
+            if response.status_code == 200:
+                items_by_category = response.json()
+                categories_found = list(items_by_category.keys())
+                expected_categories = ["Main Course", "Side Dish"]
+                
+                if all(cat in categories_found for cat in expected_categories):
+                    self.log_result("Step 4 - Orderable items by category API", True,
+                                  f"Categories organized: {categories_found}")
+                else:
+                    self.log_result("Step 4 - Orderable items by category API", False,
+                                  f"Expected {expected_categories}, found {categories_found}")
+            else:
+                self.log_result("Step 4 - Orderable items by category API", False, f"Status: {response.status_code}")
+            
+            # Step 5: Place orders and verify quantities automatically reduce
+            if workflow_orderable:
+                # Get venue info
+                response = self.session.get(f"{BASE_URL}/users")
+                users = response.json()
+                venue_user = next((user for user in users if user.get("role") == "venue_staff"), None)
+                
+                if venue_user:
+                    # Record original quantities
+                    original_quantities = {item['id']: item['available_quantity'] for item in workflow_orderable}
+                    
+                    # Place an order
+                    order_items = [
+                        {
+                            "production_item_id": workflow_orderable[0]["id"],
+                            "production_item_name": workflow_orderable[0]["name"],
+                            "quantity": 3,
+                            "unit_of_measure": workflow_orderable[0]["unit_of_measure"],
+                            "unit_price": workflow_orderable[0]["unit_price"]
+                        }
+                    ]
+                    
+                    order_data = {
+                        "venue_name": venue_user["name"],
+                        "venue_id": venue_user["id"],
+                        "delivery_address": venue_user.get("address") or "123 Test Street",
+                        "items": order_items
+                    }
+                    
+                    response = self.session.post(f"{BASE_URL}/orders", json=order_data)
+                    if response.status_code == 200:
+                        order = response.json()
+                        self.log_result("Step 5 - Place order", True, f"Order ID: {order['id']}")
+                        
+                        # Verify quantity reduction
+                        response = self.session.get(f"{BASE_URL}/orderable-items")
+                        if response.status_code == 200:
+                            updated_orderable = response.json()
+                            updated_item = next((item for item in updated_orderable 
+                                               if item['id'] == workflow_orderable[0]['id']), None)
+                            
+                            if updated_item:
+                                original_qty = original_quantities[updated_item['id']]
+                                expected_qty = original_qty - 3
+                                actual_qty = updated_item['available_quantity']
+                                
+                                if actual_qty == expected_qty:
+                                    self.log_result("Step 5 - Automatic quantity reduction", True,
+                                                  f"Reduced from {original_qty} to {actual_qty}")
+                                else:
+                                    self.log_result("Step 5 - Automatic quantity reduction", False,
+                                                  f"Expected {expected_qty}, got {actual_qty}")
+                            else:
+                                self.log_result("Step 5 - Verify quantity reduction", False, "Item not found")
+                        else:
+                            self.log_result("Step 5 - Verify quantity reduction", False, "Cannot fetch updated items")
+                        
+                        # Step 6: Test order history tracking
+                        response = self.session.get(f"{BASE_URL}/order-history/{venue_user['id']}")
+                        if response.status_code == 200:
+                            order_history = response.json()
+                            if order_history.get('most_ordered') and order_history.get('recently_ordered'):
+                                self.log_result("Step 6 - Order history tracking", True,
+                                              f"Most ordered: {len(order_history['most_ordered'])}, Recently ordered: {len(order_history['recently_ordered'])}")
+                            else:
+                                self.log_result("Step 6 - Order history tracking", False, "Missing history data")
+                        else:
+                            self.log_result("Step 6 - Order history tracking", False, f"Status: {response.status_code}")
+                        
+                        # Step 7: Verify venue-specific order filtering
+                        response = self.session.get(f"{BASE_URL}/orders?venue_id={venue_user['id']}")
+                        if response.status_code == 200:
+                            venue_orders = response.json()
+                            venue_order_found = any(o['id'] == order['id'] for o in venue_orders)
+                            
+                            if venue_order_found:
+                                self.log_result("Step 7 - Venue-specific order filtering", True,
+                                              f"Order found in venue's order list")
+                            else:
+                                self.log_result("Step 7 - Venue-specific order filtering", False,
+                                              "Order not found in venue filter")
+                        else:
+                            self.log_result("Step 7 - Venue-specific order filtering", False, f"Status: {response.status_code}")
+                    else:
+                        self.log_result("Step 5 - Place order", False, f"Status: {response.status_code}")
+                else:
+                    self.log_result("Step 5 - Get venue user", False, "No venue user found")
+            else:
+                self.log_result("Step 5 - Place order", False, "No orderable items available")
+                
+        except Exception as e:
+            self.log_result("Complete Visual Ordering Workflow", False, f"Exception: {str(e)}")
+
     def run_visual_ordering_system_tests(self):
         """Run comprehensive tests for the visual ordering system"""
         print("🧪 Starting Visual Ordering System Backend API Testing")
@@ -866,6 +1065,9 @@ class KitchenAPITester:
         
         # Test 5: Order History for Personalized Experience
         self.test_order_history_for_personalized_experience(test_orders)
+        
+        # Test 6: Complete Workflow Test
+        self.test_complete_visual_ordering_workflow()
         
         # Print summary
         print("\n" + "=" * 80)
