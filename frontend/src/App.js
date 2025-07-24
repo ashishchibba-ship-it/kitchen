@@ -564,7 +564,20 @@ const ManagerDashboard = ({ user, appSettings }) => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.category}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.quantity} {item.unit_of_measure}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.quantity}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <input
+                            type="text"
+                            defaultValue={item.unit_of_measure || 'units'}
+                            className="w-20 p-1 border border-gray-300 rounded text-sm"
+                            onBlur={(e) => {
+                              if (e.target.value !== (item.unit_of_measure || 'units')) {
+                                updateItemAvailability(item.id, item.available_for_order || 0, item.unit_price || 15.0, e.target.value);
+                              }
+                            }}
+                            placeholder="units"
+                          />
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <input
                             type="number"
