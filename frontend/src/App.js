@@ -508,24 +508,24 @@ const ManagerDashboard = ({ user, appSettings }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Today's Production</h3>
-              <div className="text-3xl font-bold text-blue-600">{stats.production?.total_items_today || 0}</div>
+              <div className="text-3xl font-bold text-blue-600">{stats?.production?.total_items_today || 0}</div>
               <p className="text-sm text-gray-600">
-                {stats.production?.completed_items_today || 0} completed ({(stats.production?.completion_rate || 0).toFixed(1)}%)
+                {stats?.production?.completed_items_today || 0} completed ({(stats?.production?.completion_rate || 0).toFixed(1)}%)
               </p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Orders Today</h3>
-              <div className="text-3xl font-bold text-green-600">{stats.orders?.total_orders_today || 0}</div>
-              <p className="text-sm text-gray-600">{stats.orders?.pending_orders || 0} pending</p>
+              <div className="text-3xl font-bold text-green-600">{stats?.orders?.total_orders_today || 0}</div>
+              <p className="text-sm text-gray-600">{stats?.orders?.pending_orders || 0} pending</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Daily Revenue</h3>
-              <div className="text-3xl font-bold text-purple-600">${(stats.orders?.daily_revenue || 0).toFixed(2)}</div>
+              <div className="text-3xl font-bold text-purple-600">${(stats?.orders?.daily_revenue || 0).toFixed(2)}</div>
               <p className="text-sm text-gray-600">Including tax</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Pending Invoices</h3>
-              <div className="text-3xl font-bold text-orange-600">{stats.financial?.pending_invoices || 0}</div>
+              <div className="text-3xl font-bold text-orange-600">{stats?.financial?.pending_invoices || 0}</div>
               <p className="text-sm text-gray-600">Awaiting payment</p>
             </div>
           </div>
