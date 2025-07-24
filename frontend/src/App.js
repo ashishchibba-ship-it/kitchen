@@ -520,6 +520,19 @@ const ManagerDashboard = ({ user, appSettings }) => {
                     required
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Base Cost per Unit</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="10.00"
+                    value={newItem.base_cost}
+                    onChange={(e) => setNewItem({...newItem, base_cost: e.target.value})}
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Selling price: ${(parseFloat(newItem.base_cost || 0) * 1.15).toFixed(2)} (15% markup)</p>
+                </div>
                 <div className="md:col-span-2">
                   <ImageUpload 
                     onImageSelect={(image) => setNewItem({...newItem, image})}
