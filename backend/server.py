@@ -201,6 +201,20 @@ async def init_predefined_data():
     if existing_settings == 0:
         default_settings = AppSettings()
         await db.app_settings.insert_one(default_settings.dict())
+    
+    # Initialize default categories
+    existing_categories = await db.categories.count_documents({})
+    if existing_categories == 0:
+        default_categories = [
+            Category(name="Main Course", description="Primary dishes and entrees"),
+            Category(name="Appetizer", description="Starters and small plates"),
+            Category(name="Dessert", description="Sweet treats and desserts"),
+            Category(name="Beverage", description="Drinks and beverages"),
+            Category(name="Side Dish", description="Accompaniments and sides"),
+            Category(name="Salad", description="Fresh salads and greens"),
+        ]
+        for category in default_categories:
+            await db.categories.insert_one(category.dict())
 
 # Authentication endpoints
 @api_router.get("/users", response_model=List[User])
