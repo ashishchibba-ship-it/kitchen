@@ -162,6 +162,7 @@ class OrderItem(BaseModel):
 class Order(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     venue_name: str
+    venue_id: str
     delivery_address: str
     items: List[OrderItem]
     status: OrderStatus = OrderStatus.PENDING
@@ -177,6 +178,7 @@ class Order(BaseModel):
 
 class OrderCreate(BaseModel):
     venue_name: str
+    venue_id: str
     delivery_address: str
     items: List[OrderItem]
     delivery_date: Optional[date] = None
