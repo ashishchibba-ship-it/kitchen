@@ -165,7 +165,13 @@ const ManagerDashboard = ({ user, appSettings }) => {
     address: ''
   });
 
+  const [newCategory, setNewCategory] = useState({
+    name: '',
+    description: ''
+  });
+
   const [editingUser, setEditingUser] = useState(null);
+  const [editingCategory, setEditingCategory] = useState(null);
 
   useEffect(() => {
     fetchStats();
