@@ -353,6 +353,50 @@ async def create_production_item(item: ProductionItemCreate, created_by: str):
     await db.production_items.insert_one(item_data)
     return production_item
 
+@api_router.put("/production-items/{item_id}", response_model=ProductionItem)
+async def update_production_item(item_id: str, item_update: ProductionItemCreate):
+    """Update a complete production item"""
+    update_data = item_update.dict()
+    
+    # Auto-calculate unit_price with 15% markup
+    update_data["unit_price"] = update_data["base_cost"] * 1.15
+    
+    # Convert date objects to strings for MongoDB storage
+    if isinstance(update_data.get("production_date"), date):
+        update_data["production_date"] = update_data["production_date"].isoformat()
+    
+    result = await db.production_items.update_one(
+        {"id": item_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Production item not found")
+    
+    updated_item = await db.production_items.find_one({"id": item_id})
+    return ProductionItem(**updated_item)
+
+@api_router.delete("/production-items/{item_id}")
+async def delete_production_item(item_id: str):
+    """Delete a production item"""
+    # Check if item is referenced in any orders
+    orders_with_item = await db.orders.count_documents({
+        "items.production_item_id": item_id
+    })
+    
+    if orders_with_item > 0:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot delete item. It is referenced in {orders_with_item} order(s). Consider updating it instead."
+        )
+    
+    result = await db.production_items.delete_one({"id": item_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Production item not found")
+    
+    return {"message": "Production item deleted successfully"}
+
 @api_router.get("/production-items", response_model=List[ProductionItem])
 async def get_production_items(production_date: Optional[str] = None, status: Optional[str] = None, category: Optional[str] = None):
     filter_dict = {}
