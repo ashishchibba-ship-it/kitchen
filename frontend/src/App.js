@@ -153,6 +153,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
     category: '',
     quantity: '',
     unit_of_measure: '',
+    base_cost: '10.00',
     image: null
   });
 
