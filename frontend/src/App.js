@@ -143,6 +143,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [detailedCategories, setDetailedCategories] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [settings, setSettings] = useState(appSettings || {});
