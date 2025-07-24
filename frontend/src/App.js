@@ -156,6 +156,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
     base_cost: '10.00',
     image: null
   });
+  const [editingItem, setEditingItem] = useState(null);
 
   const [newUser, setNewUser] = useState({
     name: '',
