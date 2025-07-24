@@ -655,7 +655,7 @@ class KitchenAPITester:
             venue_user = venue_users[0]  # Use first venue user
             venue_id = venue_user["id"]
             venue_name = venue_user["name"]
-            venue_address = venue_user.get("address", "123 Test Street, Test City")
+            venue_address = venue_user.get("address") or "123 Test Street, Test City"
             
             # Get orderable items for the order
             response = self.session.get(f"{BASE_URL}/orderable-items")
