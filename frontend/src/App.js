@@ -313,7 +313,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
 
   const updateDeliveryDate = async (orderId, deliveryDate) => {
     try {
-      await axios.put(`${API}/orders/${orderId}/delivery-date`, deploymentDate, {
+      await axios.put(`${API}/orders/${orderId}/delivery-date`, deliveryDate, {
         headers: { 'Content-Type': 'application/json' }
       });
       fetchOrders();
