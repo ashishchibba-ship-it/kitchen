@@ -888,5 +888,5 @@ class KitchenAPITester:
 
 if __name__ == "__main__":
     tester = KitchenAPITester()
-    success = tester.run_focused_tests()
+    success = tester.run_visual_ordering_system_tests()
     sys.exit(0 if success else 1)
