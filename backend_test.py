@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
 Backend API Testing for Production Kitchen Management System
-Focus: Testing simplified production item creation and category management
-Key Changes:
-1. Simplified Production Item Creation - no target_time and production_date required
-2. Auto-generated defaults - production_date (today) and target_time (12:00)
-3. Category Management - CRUD operations
-4. Production Items Display - verify items show up correctly
+Focus: Testing enhanced visual ordering system features
+Key Features to Test:
+1. Enhanced Production Items with Ordering Fields (available_for_order, unit_price, availability_status)
+2. Manager Item Availability Control (PUT /api/production-items/{id}/availability)
+3. Visual Ordering APIs (GET /api/orderable-items, GET /api/orderable-items/by-category)
+4. Order History for Personalized Experience (GET /api/order-history/{venue_id})
+5. Enhanced Order Management with venue_id and automatic quantity reduction
 """
 
 import requests
