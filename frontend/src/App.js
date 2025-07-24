@@ -181,6 +181,10 @@ const ManagerDashboard = ({ user, appSettings }) => {
     fetchDetailedCategories();
     fetchInvoices();
     fetchPurchaseOrders();
+    
+    // Poll for dashboard stats every 30 seconds for real-time notifications
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchStats = async () => {
