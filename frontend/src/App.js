@@ -1310,6 +1310,56 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
+        {newOrders.length > 0 && (
+          <div className="bg-white rounded-lg shadow mb-6">
+            <div className="p-4 border-b bg-red-50">
+              <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                <span className="bg-red-500 text-white px-2 py-1 rounded-full text-sm mr-2">
+                  {newOrders.length}
+                </span>
+                🔔 New Orders - Start Production!
+              </h3>
+            </div>
+            <div className="p-4">
+              <div className="space-y-3">
+                {newOrders.map(order => (
+                  <div key={order.id} className="p-3 bg-red-50 rounded-lg border-l-4 border-red-500">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-medium text-gray-800">Order from: {order.venue_name}</div>
+                        <div className="text-sm text-gray-600 mb-2">
+                          Order Date: {new Date(order.order_date).toLocaleString()}
+                        </div>
+                        <div className="text-sm">
+                          <strong>Items to produce:</strong>
+                          <ul className="list-disc ml-5 mt-1">
+                            {order.items.map((item, index) => (
+                              <li key={index}>
+                                {item.quantity} {item.unit_of_measure} of {item.production_item_name}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-semibold text-green-600">
+                          ${order.total_amount.toFixed(2)}
+                        </div>
+                        <button
+                          onClick={() => updateOrderStatus(order.id, 'preparing')}
+                          className="mt-2 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                        >
+                          Start Preparing
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-lg shadow">
           <h3 className="text-lg font-semibold text-gray-800 p-4 border-b">Today's Production Items</h3>
           <div className="space-y-4 p-4">
