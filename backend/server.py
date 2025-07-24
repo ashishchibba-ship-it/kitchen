@@ -924,6 +924,9 @@ async def export_invoice_pdf(invoice_id: str):
             }
         )
         
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 404) as-is
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating PDF: {str(e)}")
 
