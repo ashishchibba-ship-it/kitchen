@@ -585,6 +585,13 @@ async def create_order(order: OrderCreate):
     
     await db.orders.insert_one(order_data)
     
+    # Update available quantities
+    for item in order.items:
+        await db.production_items.update_one(
+            {"id": item.production_item_id},
+            {"$inc": {"available_for_order": -item.quantity}}
+        )
+    
     # Auto-generate invoice and purchase order
     await create_invoice_for_order(new_order)
     await create_purchase_order_for_order(new_order)
