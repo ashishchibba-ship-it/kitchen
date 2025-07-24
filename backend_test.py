@@ -2042,13 +2042,13 @@ class KitchenAPITester:
 if __name__ == "__main__":
     tester = KitchenAPITester()
     
-    # Run notification system and PDF export tests as requested
-    print("🎯 RUNNING NOTIFICATION SYSTEM AND PDF EXPORT TESTS")
+    # Run production item edit functionality tests as requested
+    print("🎯 RUNNING PRODUCTION ITEM EDIT FUNCTIONALITY TESTS")
     print("=" * 80)
-    success = tester.run_notification_and_pdf_tests()
+    success = tester.run_production_item_edit_tests()
     
     if success:
-        print("\n🎉 All notification and PDF export tests passed!")
+        print("\n🎉 All production item edit tests passed!")
         sys.exit(0)
     else:
         print("\n💥 Some tests failed. Check the output above for details.")
