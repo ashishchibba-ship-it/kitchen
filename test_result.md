@@ -361,27 +361,33 @@ metadata:
 backend:
   - task: "Production item delete functionality for managers"
     implemented: true
-    working: false
+    working: true
     file: "server.py, App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Added DELETE endpoint in backend and delete button with confirmation dialog in manager dashboard. Updated orderable-items workflow to remove 'completed' status requirement - items are now orderable as soon as available_for_order > 0."
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED - DELETE /api/production-items/{id} endpoint working perfectly with proper protection: 1) Successfully deletes items not referenced in orders 2) Returns 400 error with descriptive message for items referenced in orders ('Cannot delete item. It is referenced in X order(s). Consider updating it instead.') 3) Returns 404 for non-existent items 4) Properly verifies item deletion and protection. All delete functionality tests passed (9/9)."
 
   - task: "Changed orderable items workflow"
     implemented: true
-    working: false
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Updated GET /api/orderable-items and /api/orderable-items/by-category endpoints to remove 'status=completed' filter. Items are now orderable as soon as manager sets available_for_order > 0, regardless of production completion status. Kitchen will produce items after orders are received."
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED - Updated orderable items workflow working perfectly (25/25 tests passed): 1) GET /api/orderable-items now returns items based ONLY on available_for_order > 0 (no more 'completed' status requirement) 2) GET /api/orderable-items/by-category works identically 3) Items with status='pending' but available_for_order > 0 correctly appear in orderable items 4) Complete workflow verified: Manager creates item → sets availability → item immediately appears in orderable-items (regardless of completion status) → venue places order → kitchen sees items to produce → kitchen marks complete when done 5) Venue users can see items immediately when managers set availability 6) All endpoints work correctly with new workflow including automatic quantity reduction and proper pricing with 15% markup."
 
 test_plan:
   current_focus:
