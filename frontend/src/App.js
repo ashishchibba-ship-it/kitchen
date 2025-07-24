@@ -580,7 +580,6 @@ const ManagerDashboard = ({ user, appSettings }) => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.category}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.quantity}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <input
                             type="text"
@@ -588,7 +587,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                             className="w-20 p-1 border border-gray-300 rounded text-sm"
                             onBlur={(e) => {
                               if (e.target.value !== (item.unit_of_measure || 'units')) {
-                                updateItemAvailability(item.id, item.available_for_order || 0, item.unit_price || 15.0, e.target.value);
+                                updateItemAvailability(item.id, item.available_for_order || 0, item.base_cost || 10.0, e.target.value);
                               }
                             }}
                             placeholder="units"
@@ -603,10 +602,30 @@ const ManagerDashboard = ({ user, appSettings }) => {
                             className="w-20 p-1 border border-gray-300 rounded text-sm"
                             onBlur={(e) => {
                               if (e.target.value !== (item.available_for_order || 0).toString()) {
-                                updateItemAvailability(item.id, e.target.value, item.unit_price || 15.0);
+                                updateItemAvailability(item.id, e.target.value, item.base_cost || 10.0);
                               }
                             }}
                           />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <input
+                            type="number"
+                            step="0.01"
+                            defaultValue={item.base_cost || 10.0}
+                            className="w-20 p-1 border border-gray-300 rounded text-sm"
+                            onBlur={(e) => {
+                              if (e.target.value !== (item.base_cost || 10.0).toString()) {
+                                updateItemAvailability(item.id, item.available_for_order || 0, e.target.value);
+                              }
+                            }}
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <span className="font-medium text-green-600">
+                            ${((item.base_cost || 10.0) * 1.15).toFixed(2)}
+                          </span>
+                          <br />
+                          <span className="text-xs text-gray-400">(+15%)</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <input
