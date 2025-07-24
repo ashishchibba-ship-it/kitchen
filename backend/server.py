@@ -106,13 +106,16 @@ class ProductionItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     category: Optional[str] = "Main Course"  # Make optional with default for backward compatibility
-    quantity: int
+    quantity: int  # Total produced
+    available_for_order: int = 0  # Available for ordering (set by manager)
     unit_of_measure: Optional[str] = "units"  # Make optional with default for backward compatibility
     target_time: str  # Format: "HH:MM"
     production_date: date
     status: ProductionStatus = ProductionStatus.PENDING
     assigned_staff: Optional[str] = None
     image: Optional[str] = None  # Base64 encoded image
+    unit_price: float = 15.0  # Price per unit for ordering
+    availability_status: ItemAvailability = ItemAvailability.AVAILABLE
     created_by: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
     completed_at: Optional[datetime] = None
