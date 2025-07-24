@@ -244,6 +244,8 @@ class KitchenAPITester:
         print("\n=== Testing Production Items Display ===")
         
         try:
+            created_item_ids = [item["id"] for item in created_items] if created_items else []
+            
             # Test GET /api/production-items (should return all items)
             response = self.session.get(f"{BASE_URL}/production-items")
             if response.status_code == 200:
@@ -251,7 +253,6 @@ class KitchenAPITester:
                 self.log_result("GET /api/production-items", True, f"Retrieved {len(all_items)} total items")
                 
                 # Verify our created items appear in the list
-                created_item_ids = [item["id"] for item in created_items] if created_items else []
                 found_items = [item for item in all_items if item["id"] in created_item_ids]
                 
                 if len(found_items) == len(created_items):
