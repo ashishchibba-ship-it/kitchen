@@ -114,7 +114,8 @@ class ProductionItem(BaseModel):
     status: ProductionStatus = ProductionStatus.PENDING
     assigned_staff: Optional[str] = None
     image: Optional[str] = None  # Base64 encoded image
-    unit_price: float = 15.0  # Price per unit for ordering
+    base_cost: float = 10.0  # Base cost per unit (manager sets this)
+    unit_price: float = 11.5  # Selling price with 15% markup (auto-calculated)
     availability_status: ItemAvailability = ItemAvailability.AVAILABLE
     created_by: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
