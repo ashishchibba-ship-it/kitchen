@@ -358,6 +358,23 @@ const ManagerDashboard = ({ user, appSettings }) => {
         fetchUsers();
       } catch (error) {
         console.error('Error deleting user:', error);
+        alert('Error deleting user.');
+      }
+    }
+  };
+
+  const handleDeleteProductionItem = async (itemId) => {
+    if (window.confirm('Are you sure you want to delete this production item?')) {
+      try {
+        await axios.delete(`${API}/production-items/${itemId}`);
+        fetchProductionItems();
+      } catch (error) {
+        console.error('Error deleting production item:', error);
+        if (error.response?.status === 400) {
+          alert('Cannot delete item. It is referenced in existing orders. Consider updating it instead.');
+        } else {
+          alert('Error deleting production item.');
+        }
       }
     }
   };
