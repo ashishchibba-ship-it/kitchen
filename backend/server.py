@@ -752,6 +752,121 @@ async def get_invoice(invoice_id: str):
         raise HTTPException(status_code=404, detail="Invoice not found")
     return Invoice(**invoice)
 
+@api_router.get("/invoices/{invoice_id}/pdf")
+async def export_invoice_pdf(invoice_id: str):
+    """Export invoice as PDF for Xero compatibility"""
+    try:
+        # Get invoice data
+        invoice = await db.invoices.find_one({"id": invoice_id})
+        if not invoice:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+        
+        # Create PDF in memory
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=1*inch)
+        
+        # Get styles
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            alignment=TA_CENTER,
+            spaceAfter=30
+        )
+        
+        # Build PDF content
+        story = []
+        
+        # Title
+        story.append(Paragraph("INVOICE", title_style))
+        story.append(Spacer(1, 20))
+        
+        # Invoice details table
+        invoice_data = [
+            ["Invoice Number:", invoice.get("invoice_number", "N/A")],
+            ["Date:", datetime.fromisoformat(invoice.get("issue_date", datetime.now().isoformat())).strftime("%Y-%m-%d")],
+            ["Due Date:", datetime.fromisoformat(invoice.get("due_date", datetime.now().isoformat())).strftime("%Y-%m-%d") if invoice.get("due_date") else "N/A"],
+            ["Customer:", invoice.get("venue_name", "N/A")],
+            ["Delivery Address:", invoice.get("delivery_address", "N/A")],
+        ]
+        
+        invoice_table = Table(invoice_data, colWidths=[2*inch, 4*inch])
+        invoice_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+        ]))
+        
+        story.append(invoice_table)
+        story.append(Spacer(1, 30))
+        
+        # Items table
+        items_data = [["Item", "Quantity", "Unit", "Unit Price", "Total"]]
+        
+        for item in invoice.get("items", []):
+            item_total = item.get("quantity", 0) * item.get("unit_price", 0)
+            items_data.append([
+                item.get("production_item_name", "N/A"),
+                str(item.get("quantity", 0)),
+                item.get("unit_of_measure", "units"),
+                f"${item.get('unit_price', 0):.2f}",
+                f"${item_total:.2f}"
+            ])
+        
+        items_table = Table(items_data, colWidths=[2.5*inch, 1*inch, 1*inch, 1*inch, 1*inch])
+        items_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        story.append(items_table)
+        story.append(Spacer(1, 20))
+        
+        # Totals
+        subtotal = invoice.get("subtotal", 0)
+        tax_amount = invoice.get("tax_amount", 0)
+        total_amount = invoice.get("total_amount", 0)
+        
+        totals_data = [
+            ["Subtotal:", f"${subtotal:.2f}"],
+            ["Tax (8%):", f"${tax_amount:.2f}"],
+            ["Total:", f"${total_amount:.2f}"]
+        ]
+        
+        totals_table = Table(totals_data, colWidths=[4*inch, 1.5*inch])
+        totals_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+            ('LINEBELOW', (0, -1), (-1, -1), 2, colors.black),
+        ]))
+        
+        story.append(totals_table)
+        
+        # Build PDF
+        doc.build(story)
+        buffer.seek(0)
+        
+        return Response(
+            content=buffer.getvalue(),
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename=invoice_{invoice.get('invoice_number', 'unknown')}.pdf"
+            }
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating PDF: {str(e)}")
+
 @api_router.put("/invoices/{invoice_id}/status")
 async def update_invoice_status(invoice_id: str, status: str):
     result = await db.invoices.update_one(
