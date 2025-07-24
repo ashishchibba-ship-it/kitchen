@@ -405,28 +405,6 @@ const ManagerDashboard = ({ user, appSettings }) => {
     }
   };
 
-  const exportInvoicePDF = async (invoiceId, invoiceNumber) => {
-    try {
-      const response = await axios.get(`${API}/invoices/${invoiceId}/pdf`, {
-        responseType: 'blob'
-      });
-      
-      // Create download link
-      const blob = new Blob([response.data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `invoice_${invoiceNumber}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error exporting PDF:', error);
-      alert('Error exporting PDF. Please try again.');
-    }
-  };
-
   const updateOrderStatus = async (orderId, status) => {
     try {
       await axios.put(`${API}/orders/${orderId}/status?status=${status}`);
