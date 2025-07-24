@@ -461,7 +461,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Add Production Item</h3>
-              <form onSubmit={handleCreateItem} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <form onSubmit={handleCreateItem} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
                   type="text"
                   placeholder="Item Name"
@@ -499,21 +499,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                     required
                   />
                 </div>
-                <input
-                  type="time"
-                  value={newItem.target_time}
-                  onChange={(e) => setNewItem({...newItem, target_time: e.target.value})}
-                  className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                <input
-                  type="date"
-                  value={newItem.production_date}
-                  onChange={(e) => setNewItem({...newItem, production_date: e.target.value})}
-                  className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                <div className="md:col-span-2 lg:col-span-3">
+                <div className="md:col-span-2">
                   <ImageUpload 
                     onImageSelect={(image) => setNewItem({...newItem, image})}
                     currentImage={newItem.image}
@@ -521,7 +507,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                 </div>
                 <button
                   type="submit"
-                  className="text-white py-3 px-4 rounded-md hover:opacity-90 transition-colors"
+                  className="md:col-span-2 text-white py-3 px-4 rounded-md hover:opacity-90 transition-colors"
                   style={primaryButtonStyle}
                 >
                   Add Item
