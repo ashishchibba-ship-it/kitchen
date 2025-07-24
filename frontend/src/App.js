@@ -367,19 +367,25 @@ const ManagerDashboard = ({ user, appSettings }) => {
     }
   };
 
-  const handleDeleteProductionItem = async (itemId) => {
-    if (window.confirm('Are you sure you want to delete this production item?')) {
-      try {
-        await axios.delete(`${API}/production-items/${itemId}`);
-        fetchProductionItems();
-      } catch (error) {
-        console.error('Error deleting production item:', error);
-        if (error.response?.status === 400) {
-          alert('Cannot delete item. It is referenced in existing orders. Consider updating it instead.');
-        } else {
-          alert('Error deleting production item.');
-        }
-      }
+  const exportInvoicePDF = async (invoiceId, invoiceNumber) => {
+    try {
+      const response = await axios.get(`${API}/invoices/${invoiceId}/pdf`, {
+        responseType: 'blob'
+      });
+      
+      // Create download link
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `invoice_${invoiceNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      alert('Error exporting PDF. Please try again.');
     }
   };
 
