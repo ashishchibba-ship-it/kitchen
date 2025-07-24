@@ -358,13 +358,42 @@ metadata:
   test_sequence: 4
   run_ui: true
 
+backend:
+  - task: "Production item delete functionality for managers"
+    implemented: true
+    working: false
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added DELETE endpoint in backend and delete button with confirmation dialog in manager dashboard. Updated orderable-items workflow to remove 'completed' status requirement - items are now orderable as soon as available_for_order > 0."
+
+  - task: "Changed orderable items workflow"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Updated GET /api/orderable-items and /api/orderable-items/by-category endpoints to remove 'status=completed' filter. Items are now orderable as soon as manager sets available_for_order > 0, regardless of production completion status. Kitchen will produce items after orders are received."
+
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Production item delete functionality for managers"
+    - "Changed orderable items workflow"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
+    - agent: "main"
+      message: "Updated production item workflow and added delete functionality. CHANGES: 1) Removed 'completed' status requirement from orderable-items endpoints - items are now orderable as soon as available_for_order > 0 2) Added DELETE endpoint protection (prevents deletion if item referenced in orders) 3) Added handleDeleteProductionItem function to frontend with confirmation dialog 4) Added 'Actions' column and delete buttons to production items table in manager dashboard. Ready for backend testing of new workflow and delete functionality."
     - agent: "main"
       message: "Initial implementation complete. Full production kitchen management system with multi-role authentication, production scheduling, status tracking, inter-venue ordering with 15% markup, and comprehensive dashboard. Ready for backend API testing to verify all endpoints work correctly."
     - agent: "main"
