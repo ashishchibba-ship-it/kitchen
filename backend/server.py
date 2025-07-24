@@ -792,6 +792,26 @@ async def get_invoice(invoice_id: str):
         raise HTTPException(status_code=404, detail="Invoice not found")
     return Invoice(**invoice)
 
+# Helper function for date formatting in PDF
+def format_date_for_pdf(date_value):
+    """Format date value for PDF display"""
+    if not date_value:
+        return "N/A"
+    
+    if isinstance(date_value, str):
+        try:
+            # Try to parse ISO format string
+            parsed_date = datetime.fromisoformat(date_value.replace('Z', '+00:00'))
+            return parsed_date.strftime("%Y-%m-%d")
+        except:
+            return date_value  # Return as-is if parsing fails
+    elif isinstance(date_value, datetime):
+        return date_value.strftime("%Y-%m-%d")
+    elif isinstance(date_value, date):
+        return date_value.strftime("%Y-%m-%d")
+    else:
+        return str(date_value)
+
 @api_router.get("/invoices/{invoice_id}/pdf")
 async def export_invoice_pdf(invoice_id: str):
     """Export invoice as PDF for Xero compatibility"""
@@ -825,8 +845,8 @@ async def export_invoice_pdf(invoice_id: str):
         # Invoice details table
         invoice_data = [
             ["Invoice Number:", invoice.get("invoice_number", "N/A")],
-            ["Date:", datetime.fromisoformat(invoice.get("issue_date", datetime.now().isoformat())).strftime("%Y-%m-%d")],
-            ["Due Date:", datetime.fromisoformat(invoice.get("due_date", datetime.now().isoformat())).strftime("%Y-%m-%d") if invoice.get("due_date") else "N/A"],
+            ["Date:", format_date_for_pdf(invoice.get("issue_date"))],
+            ["Due Date:", format_date_for_pdf(invoice.get("due_date")) if invoice.get("due_date") else "N/A"],
             ["Customer:", invoice.get("venue_name", "N/A")],
             ["Delivery Address:", invoice.get("delivery_address", "N/A")],
         ]
