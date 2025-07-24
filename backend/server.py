@@ -797,11 +797,17 @@ async def get_dashboard_stats():
         "status": "pending"
     })
     
-    # Order stats
+    # Order stats with new order notifications
     total_orders_today = await db.orders.count_documents({
         "order_date": {"$gte": datetime.combine(date.today(), datetime.min.time())}
     })
     pending_orders = await db.orders.count_documents({"status": "pending"})
+    
+    # Get recent orders (last 24 hours) for notifications
+    recent_orders = await db.orders.find({
+        "order_date": {"$gte": datetime.combine(date.today(), datetime.min.time())},
+        "status": {"$in": ["pending", "preparing"]}
+    }).sort("order_date", -1).limit(10).to_list(10)
     
     # Financial stats
     today_orders = await db.orders.find({
@@ -829,7 +835,18 @@ async def get_dashboard_stats():
         "orders": {
             "total_orders_today": total_orders_today,
             "pending_orders": pending_orders,
-            "daily_revenue": daily_revenue
+            "daily_revenue": daily_revenue,
+            "recent_orders": [
+                {
+                    "id": order["id"],
+                    "venue_name": order["venue_name"],
+                    "order_date": order["order_date"],
+                    "total_amount": order.get("total_amount", 0),
+                    "status": order["status"],
+                    "items_count": len(order.get("items", []))
+                }
+                for order in recent_orders
+            ]
         },
         "financial": {
             "pending_invoices": pending_invoices,
