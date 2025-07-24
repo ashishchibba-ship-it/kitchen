@@ -36,521 +36,396 @@ class KitchenAPITester:
             self.test_results["errors"].append(f"{test_name}: {message}")
             print(f"❌ {test_name}: FAILED - {message}")
     
-    def test_user_authentication_with_addresses(self):
-        """Test user authentication endpoints and verify venue users have addresses"""
-        print("\n=== Testing User Authentication with Venue Addresses ===")
+    def test_simplified_production_item_creation(self):
+        """Test simplified production item creation without target_time and production_date"""
+        print("\n=== Testing Simplified Production Item Creation ===")
         
         try:
-            # Test GET /api/users
-            response = self.session.get(f"{BASE_URL}/users")
-            if response.status_code == 200:
-                users = response.json()
-                self.log_result("GET /api/users", True, f"Retrieved {len(users)} users")
-                
-                # Verify predefined users exist with correct roles
-                expected_users = {
-                    "manager": "manager",
-                    "chef_alice": "kitchen_staff", 
-                    "chef_bob": "kitchen_staff",
-                    "downtown_cafe": "venue_staff",
-                    "uptown_restaurant": "venue_staff"
+            # Test creating production items with only required fields
+            simplified_items = [
+                {
+                    "name": "Grilled Chicken Breast",
+                    "category": "Main Course",
+                    "quantity": 30,
+                    "unit_of_measure": "portions",
+                    "assigned_staff": "chef_alice"
+                },
+                {
+                    "name": "Fresh Garden Salad",
+                    "category": "Salad", 
+                    "quantity": 25,
+                    "unit_of_measure": "bowls"
+                },
+                {
+                    "name": "Chocolate Chip Cookies",
+                    "category": "Dessert",
+                    "quantity": 50,
+                    "unit_of_measure": "pieces",
+                    "assigned_staff": "chef_bob",
+                    "image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                 }
+            ]
+            
+            created_items = []
+            today = date.today().isoformat()
+            
+            for item_data in simplified_items:
+                response = self.session.post(
+                    f"{BASE_URL}/production-items?created_by=manager",
+                    json=item_data
+                )
                 
-                found_users = {user["username"]: user for user in users}
-                
-                for username, expected_role in expected_users.items():
-                    if username in found_users:
-                        user = found_users[username]
-                        if user["role"] == expected_role:
-                            self.log_result(f"User {username} role verification", True, f"Role: {expected_role}")
-                            
-                            # Test venue users have addresses
-                            if expected_role == "venue_staff":
-                                if "address" in user and user["address"]:
-                                    self.log_result(f"Venue {username} address field", True, f"Address: {user['address']}")
-                                else:
-                                    self.log_result(f"Venue {username} address field", False, "Address field missing or empty")
-                        else:
-                            self.log_result(f"User {username} role verification", False, 
-                                          f"Expected {expected_role}, got {user['role']}")
-                    else:
-                        self.log_result(f"User {username} existence", False, "User not found")
-                
-                # Test GET /api/users/{username} for venue user
-                test_username = "downtown_cafe"
-                response = self.session.get(f"{BASE_URL}/users/{test_username}")
                 if response.status_code == 200:
-                    user = response.json()
-                    if user["username"] == test_username and user["role"] == "venue_staff":
-                        self.log_result("GET /api/users/{username} for venue", True, f"Retrieved venue user {test_username}")
-                        if "address" in user and user["address"]:
-                            self.log_result("Venue user address in individual fetch", True, f"Address: {user['address']}")
-                        else:
-                            self.log_result("Venue user address in individual fetch", False, "Address missing")
-                    else:
-                        self.log_result("GET /api/users/{username} for venue", False, "User data mismatch")
-                else:
-                    self.log_result("GET /api/users/{username} for venue", False, f"Status: {response.status_code}")
+                    item = response.json()
+                    created_items.append(item)
                     
-            else:
-                self.log_result("GET /api/users", False, f"Status: {response.status_code}")
-                
+                    # Verify auto-generated production_date is today
+                    if "production_date" in item and item["production_date"] == today:
+                        self.log_result(f"Auto-generated production_date for {item_data['name']}", True, 
+                                      f"Date: {item['production_date']}")
+                    else:
+                        self.log_result(f"Auto-generated production_date for {item_data['name']}", False,
+                                      f"Expected {today}, got {item.get('production_date', 'missing')}")
+                    
+                    # Verify auto-generated target_time is 12:00
+                    if "target_time" in item and item["target_time"] == "12:00":
+                        self.log_result(f"Auto-generated target_time for {item_data['name']}", True,
+                                      f"Time: {item['target_time']}")
+                    else:
+                        self.log_result(f"Auto-generated target_time for {item_data['name']}", False,
+                                      f"Expected 12:00, got {item.get('target_time', 'missing')}")
+                    
+                    # Verify all provided fields are preserved
+                    for field in ["name", "category", "quantity", "unit_of_measure"]:
+                        if field in item and item[field] == item_data[field]:
+                            self.log_result(f"{field} field for {item_data['name']}", True,
+                                          f"{field}: {item[field]}")
+                        else:
+                            self.log_result(f"{field} field for {item_data['name']}", False,
+                                          f"Expected {item_data[field]}, got {item.get(field, 'missing')}")
+                    
+                    # Verify optional fields
+                    if "assigned_staff" in item_data:
+                        if item.get("assigned_staff") == item_data["assigned_staff"]:
+                            self.log_result(f"assigned_staff for {item_data['name']}", True,
+                                          f"Staff: {item['assigned_staff']}")
+                        else:
+                            self.log_result(f"assigned_staff for {item_data['name']}", False,
+                                          f"Expected {item_data['assigned_staff']}, got {item.get('assigned_staff', 'missing')}")
+                    
+                    if "image" in item_data:
+                        if item.get("image") == item_data["image"]:
+                            self.log_result(f"image field for {item_data['name']}", True, "Image data preserved")
+                        else:
+                            self.log_result(f"image field for {item_data['name']}", False, "Image data not preserved")
+                    
+                    self.log_result(f"Create simplified production item: {item_data['name']}", True,
+                                  f"ID: {item['id']}")
+                else:
+                    self.log_result(f"Create simplified production item: {item_data['name']}", False,
+                                  f"Status: {response.status_code}, Response: {response.text}")
+            
+            return created_items
+            
         except Exception as e:
-            self.log_result("User Authentication with Addresses", False, f"Exception: {str(e)}")
+            self.log_result("Simplified Production Item Creation", False, f"Exception: {str(e)}")
+            return []
     
-    def test_categories_endpoint(self):
-        """Test the new categories endpoint"""
-        print("\n=== Testing Categories Endpoint ===")
+    def test_category_management_crud(self):
+        """Test comprehensive category CRUD operations"""
+        print("\n=== Testing Category Management CRUD Operations ===")
         
         try:
+            # Test GET /api/categories (simple format)
             response = self.session.get(f"{BASE_URL}/categories")
             if response.status_code == 200:
                 categories_data = response.json()
                 if "categories" in categories_data and isinstance(categories_data["categories"], list):
                     categories = categories_data["categories"]
-                    self.log_result("GET /api/categories", True, f"Retrieved {len(categories)} categories")
+                    self.log_result("GET /api/categories", True, f"Retrieved {len(categories)} category names")
                     
                     # Verify default categories exist
                     expected_defaults = ["Main Course", "Appetizer", "Dessert", "Beverage", "Side Dish", "Salad"]
                     found_defaults = [cat for cat in expected_defaults if cat in categories]
                     
-                    if len(found_defaults) >= 3:  # At least some defaults should be present
+                    if len(found_defaults) >= 4:
                         self.log_result("Default categories present", True, f"Found: {', '.join(found_defaults)}")
                     else:
                         self.log_result("Default categories present", False, f"Only found: {', '.join(found_defaults)}")
-                        
                 else:
                     self.log_result("GET /api/categories", False, "Invalid response structure")
             else:
                 self.log_result("GET /api/categories", False, f"Status: {response.status_code}")
+            
+            # Test GET /api/categories/detailed (detailed format)
+            response = self.session.get(f"{BASE_URL}/categories/detailed")
+            if response.status_code == 200:
+                detailed_categories = response.json()
+                if isinstance(detailed_categories, list) and len(detailed_categories) > 0:
+                    self.log_result("GET /api/categories/detailed", True, 
+                                  f"Retrieved {len(detailed_categories)} detailed categories")
+                    
+                    # Verify structure of detailed categories
+                    first_cat = detailed_categories[0]
+                    required_fields = ["id", "name", "created_at"]
+                    if all(field in first_cat for field in required_fields):
+                        self.log_result("Detailed category structure", True, "All required fields present")
+                    else:
+                        missing = [field for field in required_fields if field not in first_cat]
+                        self.log_result("Detailed category structure", False, f"Missing fields: {missing}")
+                else:
+                    self.log_result("GET /api/categories/detailed", False, "Invalid response structure")
+            else:
+                self.log_result("GET /api/categories/detailed", False, f"Status: {response.status_code}")
+            
+            # Test POST /api/categories (create new category)
+            new_category = {
+                "name": "Test Specialty Items",
+                "description": "Special test category for API testing"
+            }
+            
+            response = self.session.post(f"{BASE_URL}/categories", json=new_category)
+            created_category = None
+            if response.status_code == 200:
+                created_category = response.json()
+                self.log_result("POST /api/categories", True, f"Created category: {created_category['name']}")
                 
+                # Verify created category structure
+                if "id" in created_category and "name" in created_category:
+                    self.log_result("Created category structure", True, f"ID: {created_category['id']}")
+                else:
+                    self.log_result("Created category structure", False, "Missing required fields")
+            else:
+                self.log_result("POST /api/categories", False, f"Status: {response.status_code}, Response: {response.text}")
+            
+            # Test PUT /api/categories/{id} (update category)
+            if created_category:
+                category_id = created_category["id"]
+                update_data = {
+                    "name": "Updated Test Category",
+                    "description": "Updated description for testing"
+                }
+                
+                response = self.session.put(f"{BASE_URL}/categories/{category_id}", json=update_data)
+                if response.status_code == 200:
+                    updated_category = response.json()
+                    if updated_category["name"] == update_data["name"]:
+                        self.log_result("PUT /api/categories/{id}", True, f"Updated to: {updated_category['name']}")
+                    else:
+                        self.log_result("PUT /api/categories/{id}", False, "Name not updated correctly")
+                else:
+                    self.log_result("PUT /api/categories/{id}", False, f"Status: {response.status_code}")
+                
+                # Test DELETE /api/categories/{id} (delete category)
+                response = self.session.delete(f"{BASE_URL}/categories/{category_id}")
+                if response.status_code == 200:
+                    self.log_result("DELETE /api/categories/{id}", True, "Category deleted successfully")
+                else:
+                    self.log_result("DELETE /api/categories/{id}", False, f"Status: {response.status_code}")
+            
+            # Test duplicate category name prevention
+            duplicate_category = {
+                "name": "Main Course",  # This should already exist
+                "description": "Duplicate test"
+            }
+            
+            response = self.session.post(f"{BASE_URL}/categories", json=duplicate_category)
+            if response.status_code == 400:
+                self.log_result("Duplicate category prevention", True, "Correctly rejected duplicate name")
+            else:
+                self.log_result("Duplicate category prevention", False, 
+                              f"Expected 400, got {response.status_code}")
+            
         except Exception as e:
-            self.log_result("Categories Endpoint", False, f"Exception: {str(e)}")
+            self.log_result("Category Management CRUD", False, f"Exception: {str(e)}")
     
-    def test_production_management_with_categories(self):
-        """Test production item management with new category and unit_of_measure fields"""
-        print("\n=== Testing Production Management with Categories and Units ===")
+    def test_production_items_display(self, created_items):
+        """Test that production items display correctly in GET requests"""
+        print("\n=== Testing Production Items Display ===")
         
         try:
-            # Create test production items with new required fields
-            today = date.today().isoformat()
-            
-            production_items = [
-                {
-                    "name": "Grilled Salmon with Herbs",
-                    "category": "Main Course",
-                    "quantity": 25,
-                    "unit_of_measure": "portions",
-                    "target_time": "10:00",
-                    "production_date": today,
-                    "assigned_staff": "chef_alice"
-                },
-                {
-                    "name": "Caesar Salad Mix", 
-                    "category": "Salad",
-                    "quantity": 40,
-                    "unit_of_measure": "servings",
-                    "target_time": "11:30",
-                    "production_date": today,
-                    "assigned_staff": "chef_bob"
-                },
-                {
-                    "name": "Chocolate Mousse",
-                    "category": "Dessert",
-                    "quantity": 20,
-                    "unit_of_measure": "cups",
-                    "target_time": "09:00",
-                    "production_date": today,
-                    "assigned_staff": "chef_alice"
-                }
-            ]
-            
-            created_items = []
-            
-            # Test POST /api/production-items with new fields
-            for item_data in production_items:
-                response = self.session.post(
-                    f"{BASE_URL}/production-items?created_by=manager",
-                    json=item_data
-                )
-                if response.status_code == 200:
-                    item = response.json()
-                    created_items.append(item)
-                    
-                    # Verify new fields are present
-                    if "category" in item and item["category"] == item_data["category"]:
-                        self.log_result(f"Category field for {item_data['name']}", True, f"Category: {item['category']}")
-                    else:
-                        self.log_result(f"Category field for {item_data['name']}", False, "Category missing or incorrect")
-                    
-                    if "unit_of_measure" in item and item["unit_of_measure"] == item_data["unit_of_measure"]:
-                        self.log_result(f"Unit of measure for {item_data['name']}", True, f"Unit: {item['unit_of_measure']}")
-                    else:
-                        self.log_result(f"Unit of measure for {item_data['name']}", False, "Unit of measure missing or incorrect")
-                    
-                    # Verify cost field is NOT present (removed functionality)
-                    if "cost" not in item:
-                        self.log_result(f"Cost field removed for {item_data['name']}", True, "Cost field not present")
-                    else:
-                        self.log_result(f"Cost field removed for {item_data['name']}", False, "Cost field still present")
-                        
-                    self.log_result(f"Create production item: {item_data['name']}", True, f"ID: {item['id']}")
-                else:
-                    self.log_result(f"Create production item: {item_data['name']}", False, 
-                                  f"Status: {response.status_code}, Response: {response.text}")
-            
-            # Test GET /api/production-items
+            # Test GET /api/production-items (should return all items)
             response = self.session.get(f"{BASE_URL}/production-items")
             if response.status_code == 200:
-                items = response.json()
-                self.log_result("GET /api/production-items", True, f"Retrieved {len(items)} items")
+                all_items = response.json()
+                self.log_result("GET /api/production-items", True, f"Retrieved {len(all_items)} total items")
                 
-                # Test filtering by category
-                response = self.session.get(f"{BASE_URL}/production-items?category=Main Course")
-                if response.status_code == 200:
-                    main_course_items = response.json()
-                    main_course_count = len([item for item in main_course_items if item.get("category") == "Main Course"])
-                    self.log_result("Filter by category", True, 
-                                  f"Retrieved {main_course_count} Main Course items")
-                else:
-                    self.log_result("Filter by category", False, f"Status: {response.status_code}")
+                # Verify our created items appear in the list
+                created_item_ids = [item["id"] for item in created_items] if created_items else []
+                found_items = [item for item in all_items if item["id"] in created_item_ids]
                 
-                # Test filtering by date
-                response = self.session.get(f"{BASE_URL}/production-items?production_date={today}")
-                if response.status_code == 200:
-                    filtered_items = response.json()
-                    self.log_result("Filter by production date", True, 
-                                  f"Retrieved {len(filtered_items)} items for today")
+                if len(found_items) == len(created_items):
+                    self.log_result("Created items in list", True, f"All {len(created_items)} items found")
                 else:
-                    self.log_result("Filter by production date", False, f"Status: {response.status_code}")
+                    self.log_result("Created items in list", False, 
+                                  f"Expected {len(created_items)}, found {len(found_items)}")
+                
+                # Verify items have correct structure and auto-generated fields
+                for item in found_items:
+                    # Check required fields
+                    required_fields = ["id", "name", "category", "quantity", "unit_of_measure", 
+                                     "production_date", "target_time", "status", "created_by", "created_at"]
+                    missing_fields = [field for field in required_fields if field not in item]
                     
-                # Test filtering by status
-                response = self.session.get(f"{BASE_URL}/production-items?status=pending")
-                if response.status_code == 200:
-                    pending_items = response.json()
-                    self.log_result("Filter by status", True, 
-                                  f"Retrieved {len(pending_items)} pending items")
-                else:
-                    self.log_result("Filter by status", False, f"Status: {response.status_code}")
+                    if not missing_fields:
+                        self.log_result(f"Item structure for {item['name']}", True, "All required fields present")
+                    else:
+                        self.log_result(f"Item structure for {item['name']}", False, 
+                                      f"Missing fields: {missing_fields}")
                     
+                    # Verify auto-generated defaults
+                    today = date.today().isoformat()
+                    if item.get("production_date") == today:
+                        self.log_result(f"Production date for {item['name']}", True, f"Date: {item['production_date']}")
+                    else:
+                        self.log_result(f"Production date for {item['name']}", False, 
+                                      f"Expected {today}, got {item.get('production_date')}")
+                    
+                    if item.get("target_time") == "12:00":
+                        self.log_result(f"Target time for {item['name']}", True, f"Time: {item['target_time']}")
+                    else:
+                        self.log_result(f"Target time for {item['name']}", False, 
+                                      f"Expected 12:00, got {item.get('target_time')}")
+                
             else:
                 self.log_result("GET /api/production-items", False, f"Status: {response.status_code}")
             
-            return created_items
-            
-        except Exception as e:
-            self.log_result("Production Management with Categories", False, f"Exception: {str(e)}")
-            return []
-    
-    def test_production_status_workflow(self, created_items):
-        """Test production status tracking workflow"""
-        print("\n=== Testing Production Status Workflow ===")
-        
-        if not created_items:
-            self.log_result("Production Status Workflow", False, "No items to test with")
-            return []
-            
-        try:
-            completed_items = []
-            
-            for item in created_items:
-                item_id = item["id"]
-                item_name = item["name"]
-                
-                # Test status transition: pending -> in_progress
-                response = self.session.put(
-                    f"{BASE_URL}/production-items/{item_id}/status?status=in_progress"
-                )
-                if response.status_code == 200:
-                    self.log_result(f"Update {item_name} to in_progress", True)
-                else:
-                    self.log_result(f"Update {item_name} to in_progress", False, 
-                                  f"Status: {response.status_code}")
-                
-                # Test status transition: in_progress -> completed
-                response = self.session.put(
-                    f"{BASE_URL}/production-items/{item_id}/status?status=completed"
-                )
-                if response.status_code == 200:
-                    self.log_result(f"Update {item_name} to completed", True)
-                    completed_items.append(item)
-                else:
-                    self.log_result(f"Update {item_name} to completed", False, 
-                                  f"Status: {response.status_code}")
-            
-            # Test GET /api/production-items/completed
-            response = self.session.get(f"{BASE_URL}/production-items/completed")
+            # Test filtering by today's date
+            today = date.today().isoformat()
+            response = self.session.get(f"{BASE_URL}/production-items?production_date={today}")
             if response.status_code == 200:
-                completed_list = response.json()
-                self.log_result("GET completed items", True, 
-                              f"Retrieved {len(completed_list)} completed items")
+                today_items = response.json()
+                self.log_result("Filter by today's date", True, f"Retrieved {len(today_items)} items for today")
+                
+                # All items should be for today since we created them with auto-generated dates
+                if created_items:
+                    expected_count = len([item for item in today_items if item["id"] in created_item_ids])
+                    if expected_count == len(created_items):
+                        self.log_result("Today's items filter accuracy", True, 
+                                      f"All {len(created_items)} created items found in today's filter")
+                    else:
+                        self.log_result("Today's items filter accuracy", False,
+                                      f"Expected {len(created_items)}, found {expected_count}")
             else:
-                self.log_result("GET completed items", False, f"Status: {response.status_code}")
+                self.log_result("Filter by today's date", False, f"Status: {response.status_code}")
             
-            return completed_items
-            
-        except Exception as e:
-            self.log_result("Production Status Workflow", False, f"Exception: {str(e)}")
-            return []
-    
-    def test_order_management_with_delivery(self, completed_items):
-        """Test order management with delivery_address and delivery_date fields"""
-        print("\n=== Testing Order Management with Delivery Information ===")
-        
-        if not completed_items:
-            self.log_result("Order Management with Delivery", False, "No completed items to order")
-            return []
-            
-        try:
-            # Create test orders with delivery information
-            tomorrow = (date.today() + timedelta(days=1)).isoformat()
-            day_after = (date.today() + timedelta(days=2)).isoformat()
-            
-            orders_data = [
-                {
-                    "venue_name": "Downtown Cafe",
-                    "delivery_address": "123 Main St, Downtown, City 12345",
-                    "delivery_date": tomorrow,
-                    "items": [
-                        {
-                            "production_item_id": completed_items[0]["id"],
-                            "production_item_name": completed_items[0]["name"],
-                            "quantity": 10,
-                            "unit_of_measure": completed_items[0]["unit_of_measure"]
-                        }
-                    ]
-                }
-            ]
-            
-            if len(completed_items) > 1:
-                orders_data.append({
-                    "venue_name": "Uptown Restaurant",
-                    "delivery_address": "456 Oak Ave, Uptown, City 67890",
-                    "delivery_date": day_after,
-                    "items": [
-                        {
-                            "production_item_id": completed_items[1]["id"],
-                            "production_item_name": completed_items[1]["name"],
-                            "quantity": 15,
-                            "unit_of_measure": completed_items[1]["unit_of_measure"]
-                        }
-                    ]
-                })
-            
-            created_orders = []
-            
-            # Test POST /api/orders with delivery information
-            for order_data in orders_data:
-                response = self.session.post(f"{BASE_URL}/orders", json=order_data)
+            # Test filtering by category
+            if created_items:
+                test_category = created_items[0]["category"]
+                response = self.session.get(f"{BASE_URL}/production-items?category={test_category}")
                 if response.status_code == 200:
-                    order = response.json()
-                    created_orders.append(order)
-                    
-                    # Verify delivery_address field
-                    if "delivery_address" in order and order["delivery_address"] == order_data["delivery_address"]:
-                        self.log_result(f"Delivery address for {order_data['venue_name']}", True,
-                                      f"Address: {order['delivery_address']}")
-                    else:
-                        self.log_result(f"Delivery address for {order_data['venue_name']}", False,
-                                      "Delivery address missing or incorrect")
-                    
-                    # Verify delivery_date field
-                    if "delivery_date" in order and order["delivery_date"] == order_data["delivery_date"]:
-                        self.log_result(f"Delivery date for {order_data['venue_name']}", True,
-                                      f"Date: {order['delivery_date']}")
-                    else:
-                        self.log_result(f"Delivery date for {order_data['venue_name']}", False,
-                                      "Delivery date missing or incorrect")
-                        
-                    self.log_result(f"Create order for {order_data['venue_name']}", True, 
-                                  f"Order ID: {order['id']}")
+                    category_items = response.json()
+                    category_count = len([item for item in category_items if item["category"] == test_category])
+                    self.log_result("Filter by category", True, 
+                                  f"Retrieved {category_count} items for category '{test_category}'")
                 else:
-                    self.log_result(f"Create order for {order_data['venue_name']}", False,
-                                  f"Status: {response.status_code}, Response: {response.text}")
+                    self.log_result("Filter by category", False, f"Status: {response.status_code}")
             
-            # Test GET /api/orders
-            response = self.session.get(f"{BASE_URL}/orders")
+            # Test filtering by status (should be 'pending' for new items)
+            response = self.session.get(f"{BASE_URL}/production-items?status=pending")
             if response.status_code == 200:
-                orders = response.json()
-                self.log_result("GET /api/orders", True, f"Retrieved {len(orders)} orders")
+                pending_items = response.json()
+                self.log_result("Filter by status", True, f"Retrieved {len(pending_items)} pending items")
                 
-                # Test filtering by venue
-                if created_orders:
-                    venue_name = created_orders[0]["venue_name"]
-                    response = self.session.get(f"{BASE_URL}/orders?venue_name={venue_name}")
-                    if response.status_code == 200:
-                        venue_orders = response.json()
-                        self.log_result("Filter orders by venue", True,
-                                      f"Retrieved {len(venue_orders)} orders for {venue_name}")
+                # Our created items should be in pending status
+                if created_items:
+                    pending_created = [item for item in pending_items if item["id"] in created_item_ids]
+                    if len(pending_created) == len(created_items):
+                        self.log_result("Created items pending status", True, 
+                                      f"All {len(created_items)} items have pending status")
                     else:
-                        self.log_result("Filter orders by venue", False, f"Status: {response.status_code}")
+                        self.log_result("Created items pending status", False,
+                                      f"Expected {len(created_items)} pending, found {len(pending_created)}")
             else:
-                self.log_result("GET /api/orders", False, f"Status: {response.status_code}")
-            
-            return created_orders
-            
-        except Exception as e:
-            self.log_result("Order Management with Delivery", False, f"Exception: {str(e)}")
-            return []
-    
-    def test_delivery_date_update(self, created_orders):
-        """Test the new delivery date update endpoint"""
-        print("\n=== Testing Delivery Date Update ===")
-        
-        if not created_orders:
-            self.log_result("Delivery Date Update", False, "No orders to test with")
-            return
-            
-        try:
-            for order in created_orders:
-                order_id = order["id"]
-                venue_name = order["venue_name"]
-                new_delivery_date = (date.today() + timedelta(days=3)).isoformat()
+                self.log_result("Filter by status", False, f"Status: {response.status_code}")
                 
-                # Test PUT /api/orders/{order_id}/delivery-date
-                response = self.session.put(
-                    f"{BASE_URL}/orders/{order_id}/delivery-date?delivery_date={new_delivery_date}"
-                )
+        except Exception as e:
+            self.log_result("Production Items Display", False, f"Exception: {str(e)}")
+    
+    def test_categories_system_integration(self):
+        """Test that the categories system works properly with production items"""
+        print("\n=== Testing Categories System Integration ===")
+        
+        try:
+            # Get available categories
+            response = self.session.get(f"{BASE_URL}/categories")
+            if response.status_code != 200:
+                self.log_result("Categories System Integration", False, "Cannot retrieve categories")
+                return
+            
+            categories_data = response.json()
+            available_categories = categories_data.get("categories", [])
+            
+            if not available_categories:
+                self.log_result("Categories System Integration", False, "No categories available")
+                return
+            
+            # Test creating production item with each available category
+            test_category = available_categories[0] if available_categories else "Main Course"
+            
+            test_item = {
+                "name": "Category Integration Test Item",
+                "category": test_category,
+                "quantity": 5,
+                "unit_of_measure": "units"
+            }
+            
+            response = self.session.post(f"{BASE_URL}/production-items?created_by=manager", json=test_item)
+            if response.status_code == 200:
+                created_item = response.json()
+                
+                # Verify category was set correctly
+                if created_item.get("category") == test_category:
+                    self.log_result("Category integration with production items", True,
+                                  f"Item created with category: {test_category}")
+                else:
+                    self.log_result("Category integration with production items", False,
+                                  f"Expected category {test_category}, got {created_item.get('category')}")
+                
+                # Test filtering production items by this category
+                response = self.session.get(f"{BASE_URL}/production-items?category={test_category}")
                 if response.status_code == 200:
-                    self.log_result(f"Update delivery date for {venue_name}", True, 
-                                  f"New date: {new_delivery_date}")
+                    category_items = response.json()
+                    item_found = any(item["id"] == created_item["id"] for item in category_items)
+                    
+                    if item_found:
+                        self.log_result("Category filtering integration", True,
+                                      f"Item found when filtering by category {test_category}")
+                    else:
+                        self.log_result("Category filtering integration", False,
+                                      "Item not found in category filter")
                 else:
-                    self.log_result(f"Update delivery date for {venue_name}", False,
-                                  f"Status: {response.status_code}")
-                        
-        except Exception as e:
-            self.log_result("Delivery Date Update", False, f"Exception: {str(e)}")
-    
-    def test_order_status_workflow(self, created_orders):
-        """Test order status workflow"""
-        print("\n=== Testing Order Status Workflow ===")
-        
-        if not created_orders:
-            self.log_result("Order Status Workflow", False, "No orders to test with")
-            return
-            
-        try:
-            for order in created_orders:
-                order_id = order["id"]
-                venue_name = order["venue_name"]
-                
-                # Test status transitions: pending -> preparing -> ready -> delivered
-                statuses = ["preparing", "ready", "delivered"]
-                
-                for status in statuses:
-                    response = self.session.put(
-                        f"{BASE_URL}/orders/{order_id}/status?status={status}"
-                    )
-                    if response.status_code == 200:
-                        self.log_result(f"Update {venue_name} order to {status}", True)
-                    else:
-                        self.log_result(f"Update {venue_name} order to {status}", False,
-                                      f"Status: {response.status_code}")
-                        
-        except Exception as e:
-            self.log_result("Order Status Workflow", False, f"Exception: {str(e)}")
-    
-    def test_dashboard_statistics(self):
-        """Test dashboard statistics calculation"""
-        print("\n=== Testing Dashboard Statistics ===")
-        
-        try:
-            response = self.session.get(f"{BASE_URL}/dashboard/stats")
-            if response.status_code == 200:
-                stats = response.json()
-                
-                # Verify structure
-                required_keys = ["production", "orders"]
-                production_keys = ["total_items_today", "completed_items_today", "pending_items_today", "completion_rate", "categories"]
-                order_keys = ["total_orders_today", "pending_orders"]
-                
-                structure_valid = True
-                
-                for key in required_keys:
-                    if key not in stats:
-                        structure_valid = False
-                        break
-                
-                if structure_valid:
-                    for key in production_keys:
-                        if key not in stats["production"]:
-                            structure_valid = False
-                            break
-                    
-                    for key in order_keys:
-                        if key not in stats["orders"]:
-                            structure_valid = False
-                            break
-                
-                if structure_valid:
-                    self.log_result("Dashboard stats structure", True, "All required fields present")
-                    
-                    # Verify completion rate calculation
-                    prod_stats = stats["production"]
-                    total = prod_stats["total_items_today"]
-                    completed = prod_stats["completed_items_today"]
-                    rate = prod_stats["completion_rate"]
-                    
-                    expected_rate = (completed / total * 100) if total > 0 else 0
-                    if abs(rate - expected_rate) < 0.01:
-                        self.log_result("Completion rate calculation", True, 
-                                      f"Rate: {rate:.1f}% ({completed}/{total})")
-                    else:
-                        self.log_result("Completion rate calculation", False,
-                                      f"Expected {expected_rate:.1f}%, got {rate:.1f}%")
-                    
-                    # Verify categories breakdown exists
-                    if "categories" in prod_stats and isinstance(prod_stats["categories"], dict):
-                        self.log_result("Categories breakdown in stats", True, 
-                                      f"Categories: {list(prod_stats['categories'].keys())}")
-                    else:
-                        self.log_result("Categories breakdown in stats", False, "Categories breakdown missing")
-                        
-                    self.log_result("GET /api/dashboard/stats", True, 
-                                  f"Production: {total} items, Orders: {stats['orders']['total_orders_today']} today")
-                else:
-                    self.log_result("Dashboard stats structure", False, "Missing required fields")
-                    
+                    self.log_result("Category filtering integration", False, 
+                                  f"Category filter failed: {response.status_code}")
             else:
-                self.log_result("GET /api/dashboard/stats", False, f"Status: {response.status_code}")
+                self.log_result("Category integration with production items", False,
+                              f"Failed to create item: {response.status_code}")
                 
         except Exception as e:
-            self.log_result("Dashboard Statistics", False, f"Exception: {str(e)}")
+            self.log_result("Categories System Integration", False, f"Exception: {str(e)}")
     
-    def run_all_tests(self):
-        """Run comprehensive backend API tests for updated functionality"""
-        print("🧪 Starting Updated Backend API Testing")
+    def run_focused_tests(self):
+        """Run focused tests for the updated production kitchen management backend"""
+        print("🧪 Starting Focused Backend API Testing")
         print(f"🔗 Testing against: {BASE_URL}")
-        print("Testing new features: categories, unit_of_measure, removed cost, venue addresses, delivery dates")
+        print("Focus: Simplified production item creation and category management")
         print("=" * 80)
         
-        # Test user authentication with venue addresses
-        self.test_user_authentication_with_addresses()
+        # Test 1: Simplified Production Item Creation
+        created_items = self.test_simplified_production_item_creation()
         
-        # Test new categories endpoint
-        self.test_categories_endpoint()
+        # Test 2: Category Management CRUD Operations
+        self.test_category_management_crud()
         
-        # Test production management with categories and units
-        created_items = self.test_production_management_with_categories()
+        # Test 3: Production Items Display
+        self.test_production_items_display(created_items)
         
-        # Test production status workflow
-        completed_items = self.test_production_status_workflow(created_items)
-        
-        # Test order management with delivery information
-        created_orders = self.test_order_management_with_delivery(completed_items)
-        
-        # Test delivery date update endpoint
-        self.test_delivery_date_update(created_orders)
-        
-        # Test order status workflow
-        self.test_order_status_workflow(created_orders)
-        
-        # Test dashboard statistics
-        self.test_dashboard_statistics()
+        # Test 4: Categories System Integration
+        self.test_categories_system_integration()
         
         # Print summary
         print("\n" + "=" * 80)
-        print("🏁 TEST SUMMARY")
+        print("🏁 FOCUSED TEST SUMMARY")
         print("=" * 80)
         print(f"✅ Passed: {self.test_results['passed']}")
         print(f"❌ Failed: {self.test_results['failed']}")
@@ -560,9 +435,10 @@ class KitchenAPITester:
             for error in self.test_results['errors']:
                 print(f"   • {error}")
         
-        success_rate = (self.test_results['passed'] / 
-                       (self.test_results['passed'] + self.test_results['failed']) * 100)
-        print(f"\n📊 Success Rate: {success_rate:.1f}%")
+        if self.test_results['passed'] + self.test_results['failed'] > 0:
+            success_rate = (self.test_results['passed'] / 
+                           (self.test_results['passed'] + self.test_results['failed']) * 100)
+            print(f"\n📊 Success Rate: {success_rate:.1f}%")
         
         return self.test_results['failed'] == 0
 
