@@ -10,6 +10,12 @@ from typing import List, Optional
 import uuid
 from datetime import datetime, date
 from enum import Enum
+from collections import defaultdict, Counter
+
+class ItemAvailability(str, Enum):
+    AVAILABLE = "available"
+    LIMITED = "limited"
+    OUT_OF_STOCK = "out_of_stock"
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
