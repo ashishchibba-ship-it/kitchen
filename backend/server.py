@@ -298,6 +298,10 @@ async def update_app_settings(settings_update: AppSettingsUpdate):
 async def create_production_item(item: ProductionItemCreate, created_by: str):
     item_dict = item.dict()
     item_dict["created_by"] = created_by
+    # Set automatic defaults for production items
+    item_dict["production_date"] = date.today()
+    item_dict["target_time"] = "12:00"  # Default target time
+    
     production_item = ProductionItem(**item_dict)
     
     # Convert date objects to strings for MongoDB storage
