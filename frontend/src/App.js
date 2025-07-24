@@ -1249,26 +1249,38 @@ const ManagerDashboard = ({ user, appSettings }) => {
 // Kitchen Staff Dashboard
 const KitchenStaffDashboard = ({ user, appSettings }) => {
   const [productionItems, setProductionItems] = useState([]);
-  const [newOrders, setNewOrders] = useState([]);
+  const [pendingOrders, setPendingOrders] = useState([]);
+  const [preparingOrders, setPreparingOrders] = useState([]);
+  const [readyOrders, setReadyOrders] = useState([]);
+  const [deliveredOrders, setDeliveredOrders] = useState([]);
 
   useEffect(() => {
     fetchProductionItems();
-    fetchNewOrders();
+    fetchAllOrders();
     
-    // Poll for new orders every 30 seconds
+    // Poll for orders every 30 seconds
     const interval = setInterval(() => {
-      fetchNewOrders();
+      fetchAllOrders();
       fetchProductionItems();
     }, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  const fetchNewOrders = async () => {
+  const fetchAllOrders = async () => {
     try {
-      const response = await axios.get(`${API}/orders?status=pending`);
-      setNewOrders(response.data);
+      const [pendingRes, preparingRes, readyRes, deliveredRes] = await Promise.all([
+        axios.get(`${API}/orders?status=pending`),
+        axios.get(`${API}/orders?status=preparing`),
+        axios.get(`${API}/orders?status=ready`),
+        axios.get(`${API}/orders?status=delivered`)
+      ]);
+      
+      setPendingOrders(pendingRes.data);
+      setPreparingOrders(preparingRes.data);
+      setReadyOrders(readyRes.data);
+      setDeliveredOrders(deliveredRes.data);
     } catch (error) {
-      console.error('Error fetching new orders:', error);
+      console.error('Error fetching orders:', error);
     }
   };
 
