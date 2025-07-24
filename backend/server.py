@@ -536,7 +536,6 @@ async def get_orderable_items():
 async def get_orderable_items_by_category():
     """Get orderable items organized by category"""
     items = await db.production_items.find({
-        "status": "completed",
         "available_for_order": {"$gt": 0}
     }).sort("name", 1).to_list(1000)
     
