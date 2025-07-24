@@ -341,6 +341,9 @@ async def create_production_item(item: ProductionItemCreate, created_by: str):
     
     production_item = ProductionItem(**item_dict)
     
+    # Auto-calculate unit_price with 15% markup if base_cost is provided
+    production_item.unit_price = production_item.base_cost * 1.15
+    
     # Convert date objects to strings for MongoDB storage
     item_data = production_item.dict()
     if isinstance(item_data.get("production_date"), date):
