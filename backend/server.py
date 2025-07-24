@@ -641,10 +641,12 @@ async def create_purchase_order_for_order(order: Order):
     await db.purchase_orders.insert_one(po_data)
 
 @api_router.get("/orders", response_model=List[Order])
-async def get_orders(venue_name: Optional[str] = None):
+async def get_orders(venue_name: Optional[str] = None, venue_id: Optional[str] = None):
     filter_dict = {}
     if venue_name:
         filter_dict["venue_name"] = venue_name
+    if venue_id:
+        filter_dict["venue_id"] = venue_id
     
     orders = await db.orders.find(filter_dict).sort("order_date", -1).to_list(1000)
     return [Order(**order) for order in orders]
