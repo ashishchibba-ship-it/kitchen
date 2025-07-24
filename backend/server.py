@@ -346,12 +346,62 @@ async def get_completed_items():
 
 @api_router.get("/categories")
 async def get_categories():
-    """Get distinct categories from production items"""
-    categories = await db.production_items.distinct("category")
-    # Add some default categories if none exist
-    default_categories = ["Main Course", "Appetizer", "Dessert", "Beverage", "Side Dish", "Salad"]
-    all_categories = list(set(categories + default_categories))
-    return {"categories": sorted(all_categories)}
+    """Get all categories"""
+    categories = await db.categories.find().sort("name", 1).to_list(1000)
+    category_list = [Category(**cat) for cat in categories]
+    return {"categories": [cat.name for cat in category_list]}
+
+@api_router.get("/categories/detailed", response_model=List[Category])
+async def get_categories_detailed():
+    """Get detailed category information for management"""
+    categories = await db.categories.find().sort("name", 1).to_list(1000)
+    return [Category(**cat) for cat in categories]
+
+@api_router.post("/categories", response_model=Category)
+async def create_category(category: CategoryCreate):
+    # Check if category name already exists
+    existing_category = await db.categories.find_one({"name": category.name})
+    if existing_category:
+        raise HTTPException(status_code=400, detail="Category name already exists")
+    
+    new_category = Category(**category.dict())
+    await db.categories.insert_one(new_category.dict())
+    return new_category
+
+@api_router.put("/categories/{category_id}", response_model=Category)
+async def update_category(category_id: str, category_update: CategoryUpdate):
+    # Check if new name is taken (if name is being updated)
+    if category_update.name:
+        existing_category = await db.categories.find_one({
+            "name": category_update.name,
+            "id": {"$ne": category_id}
+        })
+        if existing_category:
+            raise HTTPException(status_code=400, detail="Category name already exists")
+    
+    update_data = {k: v for k, v in category_update.dict().items() if v is not None}
+    if update_data:
+        result = await db.categories.update_one(
+            {"id": category_id},
+            {"$set": update_data}
+        )
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Category not found")
+    
+    updated_category = await db.categories.find_one({"id": category_id})
+    return Category(**updated_category)
+
+@api_router.delete("/categories/{category_id}")
+async def delete_category(category_id: str):
+    # Check if category is being used by any production items
+    items_using_category = await db.production_items.count_documents({"category": category_id})
+    if items_using_category > 0:
+        raise HTTPException(status_code=400, detail="Cannot delete category that is being used by production items")
+    
+    result = await db.categories.delete_one({"id": category_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Category not found")
+    return {"message": "Category deleted successfully"}
 
 # Order management endpoints
 @api_router.post("/orders", response_model=Order)
