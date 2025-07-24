@@ -128,6 +128,7 @@ class ProductionItemCreate(BaseModel):
     unit_of_measure: str
     assigned_staff: Optional[str] = None
     image: Optional[str] = None
+    base_cost: float = 10.0  # Base cost per unit
 
 class ProductionItemUpdate(BaseModel):
     available_for_order: Optional[int] = None
