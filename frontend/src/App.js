@@ -1306,7 +1306,7 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
   const updateOrderStatus = async (orderId, status) => {
     try {
       await axios.put(`${API}/orders/${orderId}/status?status=${status}`);
-      fetchNewOrders(); // Refresh the orders list
+      fetchAllOrders(); // Refresh all orders
     } catch (error) {
       console.error('Error updating order status:', error);
     }
