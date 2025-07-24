@@ -513,7 +513,6 @@ async def update_item_availability(item_id: str, update: ProductionItemUpdate):
 async def get_orderable_items():
     """Get items available for ordering"""
     items = await db.production_items.find({
-        "status": "completed",
         "available_for_order": {"$gt": 0}
     }).sort("name", 1).to_list(1000)
     
