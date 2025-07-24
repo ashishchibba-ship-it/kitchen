@@ -1104,6 +1104,15 @@ const ManagerDashboard = ({ user, appSettings }) => {
                           {invoice.status}
                         </span>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() => exportInvoicePDF(invoice.id, invoice.invoice_number)}
+                          className="text-blue-600 hover:text-blue-900 mr-3"
+                          title="Export PDF for Xero"
+                        >
+                          Export PDF
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
