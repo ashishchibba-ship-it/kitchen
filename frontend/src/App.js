@@ -543,7 +543,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
             </div>
             <div className="p-4">
               <div className="space-y-3">
-                {stats.orders.recent_orders.map(order => (
+                {stats?.orders?.recent_orders?.map(order => (
                   <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div>
                       <div className="font-medium text-gray-800">{order.venue_name}</div>
