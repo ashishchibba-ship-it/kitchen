@@ -531,7 +531,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
           </div>
         )}
 
-        {activeTab === 'dashboard' && stats.orders?.recent_orders?.length > 0 && (
+        {activeTab === 'dashboard' && stats?.orders?.recent_orders?.length > 0 && (
           <div className="bg-white rounded-lg shadow mb-8">
             <div className="p-4 border-b bg-yellow-50">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center">
