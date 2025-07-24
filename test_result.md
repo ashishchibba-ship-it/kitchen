@@ -389,8 +389,34 @@ backend:
           agent: "testing"
           comment: "✅ PASSED - Updated orderable items workflow working perfectly (25/25 tests passed): 1) GET /api/orderable-items now returns items based ONLY on available_for_order > 0 (no more 'completed' status requirement) 2) GET /api/orderable-items/by-category works identically 3) Items with status='pending' but available_for_order > 0 correctly appear in orderable items 4) Complete workflow verified: Manager creates item → sets availability → item immediately appears in orderable-items (regardless of completion status) → venue places order → kitchen sees items to produce → kitchen marks complete when done 5) Venue users can see items immediately when managers set availability 6) All endpoints work correctly with new workflow including automatic quantity reduction and proper pricing with 15% markup."
 
+  - task: "Order notification system for kitchen and managers"
+    implemented: true
+    working: false
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added real-time polling (30s intervals) to both kitchen and manager dashboards to show new orders. Enhanced dashboard stats API to include recent_orders data for notifications."
+
+  - task: "Invoice PDF export for Xero integration"
+    implemented: true
+    working: false
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added GET /api/invoices/{id}/pdf endpoint using ReportLab for PDF generation. Added exportInvoicePDF function and Export PDF buttons in manager invoices table. PDF includes invoice number, date, items, venue details for Xero compatibility."
+
 test_plan:
   current_focus:
+    - "Order notification system for kitchen and managers"
+    - "Invoice PDF export for Xero integration"
     - "Production item delete functionality for managers"
     - "Changed orderable items workflow"
   stuck_tasks: []
@@ -399,7 +425,7 @@ test_plan:
 
 agent_communication:
     - agent: "main"
-      message: "Updated production item workflow and added delete functionality. CHANGES: 1) Removed 'completed' status requirement from orderable-items endpoints - items are now orderable as soon as available_for_order > 0 2) Added DELETE endpoint protection (prevents deletion if item referenced in orders) 3) Added handleDeleteProductionItem function to frontend with confirmation dialog 4) Added 'Actions' column and delete buttons to production items table in manager dashboard. Ready for backend testing of new workflow and delete functionality."
+      message: "Added notification system and PDF export functionality. FEATURES: 1) Real-time order notifications on kitchen dashboard with order details and 'Start Preparing' button 2) Manager dashboard shows new orders with action required alerts 3) Invoice PDF export with Xero-compatible format including invoice number, date, items, venue details 4) Auto-polling every 30 seconds for real-time updates 5) Kitchen can update order status to 'preparing' directly from notifications. Ready for testing notification system and PDF export functionality."
     - agent: "main"
       message: "Initial implementation complete. Full production kitchen management system with multi-role authentication, production scheduling, status tracking, inter-venue ordering with 15% markup, and comprehensive dashboard. Ready for backend API testing to verify all endpoints work correctly."
     - agent: "main"
