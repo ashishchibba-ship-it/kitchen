@@ -544,8 +544,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.category}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.quantity} {item.unit_of_measure}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.target_time}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.production_date}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(item.created_at).toLocaleDateString()}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             item.status === 'completed' ? 'bg-green-100 text-green-800' :
