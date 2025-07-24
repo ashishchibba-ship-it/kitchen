@@ -1088,7 +1088,257 @@ class KitchenAPITester:
         
         return self.test_results['failed'] == 0
 
+    def debug_venue_items_visibility_issue(self):
+        """Debug why venue users are only seeing limited items and categories"""
+        print("\n=== DEBUGGING VENUE ITEMS VISIBILITY ISSUE ===")
+        print("User reports: Can only see 'most ordered and skewers' items, not all food items and categories")
+        
+        try:
+            # 1. Check current database state
+            print("\n--- 1. CHECKING CURRENT DATABASE STATE ---")
+            
+            # Get all production items
+            response = self.session.get(f"{BASE_URL}/production-items")
+            if response.status_code == 200:
+                all_items = response.json()
+                total_items = len(all_items)
+                self.log_result("Total production items in database", True, f"{total_items} items")
+                
+                # Count items with available_for_order > 0
+                available_items = [item for item in all_items if item.get("available_for_order", 0) > 0]
+                available_count = len(available_items)
+                self.log_result("Items with available_for_order > 0", True, f"{available_count} items")
+                
+                # Show breakdown by category
+                category_breakdown = {}
+                available_category_breakdown = {}
+                
+                for item in all_items:
+                    category = item.get("category", "Unknown")
+                    category_breakdown[category] = category_breakdown.get(category, 0) + 1
+                    
+                    if item.get("available_for_order", 0) > 0:
+                        available_category_breakdown[category] = available_category_breakdown.get(category, 0) + 1
+                
+                print(f"\n📊 CATEGORY BREAKDOWN:")
+                print(f"Total items by category: {dict(category_breakdown)}")
+                print(f"Available items by category: {dict(available_category_breakdown)}")
+                
+                # Show status breakdown
+                status_breakdown = {}
+                for item in all_items:
+                    status = item.get("status", "Unknown")
+                    status_breakdown[status] = status_breakdown.get(status, 0) + 1
+                
+                print(f"Status breakdown: {dict(status_breakdown)}")
+                
+            else:
+                self.log_result("Get all production items", False, f"Status: {response.status_code}")
+                return
+            
+            # 2. Test orderable items endpoints
+            print("\n--- 2. TESTING ORDERABLE ITEMS ENDPOINTS ---")
+            
+            # Test GET /api/orderable-items
+            response = self.session.get(f"{BASE_URL}/orderable-items")
+            if response.status_code == 200:
+                orderable_items = response.json()
+                orderable_count = len(orderable_items)
+                self.log_result("GET /api/orderable-items", True, f"Returns {orderable_count} items")
+                
+                # Show what items are returned
+                if orderable_items:
+                    print(f"\n📋 ORDERABLE ITEMS RETURNED:")
+                    for item in orderable_items[:10]:  # Show first 10
+                        print(f"  • {item.get('name', 'Unknown')} (Category: {item.get('category', 'Unknown')}, Available: {item.get('available_quantity', 0)})")
+                    
+                    if len(orderable_items) > 10:
+                        print(f"  ... and {len(orderable_items) - 10} more items")
+                else:
+                    print("❌ NO ORDERABLE ITEMS RETURNED!")
+                
+                # Check categories in orderable items
+                orderable_categories = set(item.get('category', 'Unknown') for item in orderable_items)
+                print(f"\n🏷️ CATEGORIES IN ORDERABLE ITEMS: {list(orderable_categories)}")
+                
+            else:
+                self.log_result("GET /api/orderable-items", False, f"Status: {response.status_code}")
+            
+            # Test GET /api/orderable-items/by-category
+            response = self.session.get(f"{BASE_URL}/orderable-items/by-category")
+            if response.status_code == 200:
+                items_by_category = response.json()
+                categories_returned = list(items_by_category.keys())
+                total_items_by_category = sum(len(items) for items in items_by_category.values())
+                
+                self.log_result("GET /api/orderable-items/by-category", True, 
+                              f"Returns {len(categories_returned)} categories with {total_items_by_category} total items")
+                
+                print(f"\n📂 CATEGORIES WITH ITEM COUNTS:")
+                for category, items in items_by_category.items():
+                    print(f"  • {category}: {len(items)} items")
+                    # Show first few items in each category
+                    for item in items[:3]:
+                        print(f"    - {item.get('name', 'Unknown')} (Available: {item.get('available_quantity', 0)})")
+                    if len(items) > 3:
+                        print(f"    ... and {len(items) - 3} more items")
+                
+            else:
+                self.log_result("GET /api/orderable-items/by-category", False, f"Status: {response.status_code}")
+            
+            # 3. Check categories endpoint
+            print("\n--- 3. TESTING CATEGORIES ENDPOINT ---")
+            
+            response = self.session.get(f"{BASE_URL}/categories")
+            if response.status_code == 200:
+                categories_data = response.json()
+                if "categories" in categories_data:
+                    all_categories = categories_data["categories"]
+                    self.log_result("GET /api/categories", True, f"Returns {len(all_categories)} categories")
+                    print(f"📋 ALL CATEGORIES: {all_categories}")
+                else:
+                    self.log_result("GET /api/categories", False, "Invalid response structure")
+            else:
+                self.log_result("GET /api/categories", False, f"Status: {response.status_code}")
+            
+            # 4. Analyze the issue
+            print("\n--- 4. ISSUE ANALYSIS ---")
+            
+            # Check if the issue is with the orderable items workflow
+            print(f"\n🔍 ANALYSIS:")
+            print(f"• Total production items: {total_items}")
+            print(f"• Items with available_for_order > 0: {available_count}")
+            print(f"• Items returned by orderable-items API: {orderable_count}")
+            
+            if available_count > orderable_count:
+                print(f"⚠️  ISSUE IDENTIFIED: {available_count - orderable_count} items have available_for_order > 0 but are not appearing in orderable-items API")
+                
+                # Find the missing items
+                orderable_ids = set(item['id'] for item in orderable_items)
+                missing_items = [item for item in available_items if item['id'] not in orderable_ids]
+                
+                print(f"\n❌ MISSING ITEMS FROM ORDERABLE API:")
+                for item in missing_items[:10]:  # Show first 10 missing items
+                    print(f"  • {item.get('name', 'Unknown')} (Category: {item.get('category', 'Unknown')}, Status: {item.get('status', 'Unknown')}, Available: {item.get('available_for_order', 0)})")
+                
+                # Check if the issue is with status filtering
+                missing_statuses = set(item.get('status', 'Unknown') for item in missing_items)
+                print(f"\n📊 STATUS OF MISSING ITEMS: {list(missing_statuses)}")
+                
+                if 'pending' in missing_statuses or 'in_progress' in missing_statuses:
+                    print("💡 LIKELY CAUSE: Items need to be marked as 'completed' to appear in orderable-items")
+                    print("   The orderable-items endpoint may still be filtering by status='completed'")
+            
+            elif available_count == orderable_count:
+                print("✅ All items with available_for_order > 0 are appearing in orderable-items API")
+                if orderable_count == 0:
+                    print("❌ ROOT CAUSE: No items have available_for_order > 0 set by managers")
+                    print("   SOLUTION: Managers need to set available_for_order quantities > 0")
+            
+            # 5. Test the workflow by creating and setting up a test item
+            print("\n--- 5. TESTING WORKFLOW WITH NEW ITEM ---")
+            
+            test_item = {
+                "name": "Debug Test Item",
+                "category": "Main Course",
+                "quantity": 10,
+                "unit_of_measure": "portions"
+            }
+            
+            # Create item
+            response = self.session.post(f"{BASE_URL}/production-items?created_by=manager", json=test_item)
+            if response.status_code == 200:
+                created_item = response.json()
+                item_id = created_item["id"]
+                self.log_result("Create test item", True, f"ID: {item_id}")
+                
+                # Set availability
+                availability_data = {
+                    "available_for_order": 5,
+                    "unit_price": 20.0,
+                    "availability_status": "available"
+                }
+                
+                response = self.session.put(f"{BASE_URL}/production-items/{item_id}/availability", json=availability_data)
+                if response.status_code == 200:
+                    self.log_result("Set item availability", True, "Available for order: 5")
+                    
+                    # Check if it appears in orderable-items (should appear immediately with new workflow)
+                    response = self.session.get(f"{BASE_URL}/orderable-items")
+                    if response.status_code == 200:
+                        orderable_items_after = response.json()
+                        test_item_found = any(item['id'] == item_id for item in orderable_items_after)
+                        
+                        if test_item_found:
+                            self.log_result("Test item appears in orderable-items (new workflow)", True, 
+                                          "Item appears immediately after setting availability")
+                        else:
+                            self.log_result("Test item missing from orderable-items", False, 
+                                          "Item should appear immediately with new workflow")
+                            
+                            # Check if we need to mark as completed (old workflow)
+                            response = self.session.put(f"{BASE_URL}/production-items/{item_id}/status?status=completed")
+                            if response.status_code == 200:
+                                self.log_result("Mark test item as completed", True, "Status updated")
+                                
+                                # Check again
+                                response = self.session.get(f"{BASE_URL}/orderable-items")
+                                if response.status_code == 200:
+                                    orderable_items_final = response.json()
+                                    test_item_found_final = any(item['id'] == item_id for item in orderable_items_final)
+                                    
+                                    if test_item_found_final:
+                                        self.log_result("Test item appears after completion", True, 
+                                                      "Item appears after marking as completed")
+                                        print("⚠️  WORKFLOW ISSUE: Items still need to be marked as 'completed' to appear")
+                                    else:
+                                        self.log_result("Test item still missing", False, 
+                                                      "Item missing even after completion")
+                                else:
+                                    self.log_result("Check orderable items after completion", False, f"Status: {response.status_code}")
+                            else:
+                                self.log_result("Mark test item as completed", False, f"Status: {response.status_code}")
+                    else:
+                        self.log_result("Check orderable items after availability", False, f"Status: {response.status_code}")
+                else:
+                    self.log_result("Set item availability", False, f"Status: {response.status_code}")
+            else:
+                self.log_result("Create test item", False, f"Status: {response.status_code}")
+            
+        except Exception as e:
+            self.log_result("Debug Venue Items Visibility Issue", False, f"Exception: {str(e)}")
+
+    def run_debug_tests(self):
+        """Run debug tests for venue items visibility issue"""
+        print("🔍 Starting Debug Tests for Venue Items Visibility Issue")
+        print(f"🔗 Testing against: {BASE_URL}")
+        print("Focus: Debugging why venue users only see limited items and categories")
+        print("=" * 80)
+        
+        # Debug the specific issue
+        self.debug_venue_items_visibility_issue()
+        
+        # Print summary
+        print("\n" + "=" * 80)
+        print("🏁 DEBUG TEST SUMMARY")
+        print("=" * 80)
+        print(f"✅ Passed: {self.test_results['passed']}")
+        print(f"❌ Failed: {self.test_results['failed']}")
+        
+        if self.test_results['errors']:
+            print("\n🚨 FAILED TESTS:")
+            for error in self.test_results['errors']:
+                print(f"   • {error}")
+        
+        if self.test_results['passed'] + self.test_results['failed'] > 0:
+            success_rate = (self.test_results['passed'] / 
+                           (self.test_results['passed'] + self.test_results['failed']) * 100)
+            print(f"\n📊 Success Rate: {success_rate:.1f}%")
+        
+        return self.test_results['failed'] == 0
+
 if __name__ == "__main__":
     tester = KitchenAPITester()
-    success = tester.run_visual_ordering_system_tests()
+    # Run the debug tests instead of the full visual ordering tests
+    success = tester.run_debug_tests()
     sys.exit(0 if success else 1)
