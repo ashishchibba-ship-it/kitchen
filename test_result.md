@@ -134,6 +134,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "✅ PASSED - Production item creation, retrieval, and filtering all working correctly. Fixed date serialization issue for MongoDB storage. POST /api/production-items creates items successfully, GET /api/production-items retrieves items with proper filtering by date and status."
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED - SIMPLIFIED PRODUCTION ITEM CREATION VERIFIED (51/51 tests passed): 1) Items can be created with only name, category, quantity, unit_of_measure, optional assigned_staff and image 2) Auto-generated defaults working: production_date=today, target_time=12:00 3) All created items display correctly in GET /api/production-items 4) Filtering by date, category, and status working perfectly 5) Fixed backward compatibility issue for existing items without new required fields"
 
   - task: "Production status tracking"
     implemented: true
