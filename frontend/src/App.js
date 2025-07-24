@@ -382,11 +382,11 @@ const ManagerDashboard = ({ user, appSettings }) => {
     }
   };
 
-  const updateItemAvailability = async (itemId, availableForOrder, unitPrice, unitOfMeasure = null) => {
+  const updateItemAvailability = async (itemId, availableForOrder, baseCost, unitOfMeasure = null) => {
     try {
       const updateData = {
         available_for_order: parseInt(availableForOrder),
-        unit_price: parseFloat(unitPrice)
+        base_cost: parseFloat(baseCost)
       };
       
       if (unitOfMeasure !== null) {
