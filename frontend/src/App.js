@@ -229,6 +229,15 @@ const ManagerDashboard = ({ user, appSettings }) => {
     }
   };
 
+  const fetchDetailedCategories = async () => {
+    try {
+      const response = await axios.get(`${API}/categories/detailed`);
+      setDetailedCategories(response.data);
+    } catch (error) {
+      console.error('Error fetching detailed categories:', error);
+    }
+  };
+
   const fetchInvoices = async () => {
     try {
       const response = await axios.get(`${API}/invoices`);
