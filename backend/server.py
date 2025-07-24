@@ -116,8 +116,6 @@ class ProductionItemCreate(BaseModel):
     category: str
     quantity: int
     unit_of_measure: str
-    target_time: str
-    production_date: date
     assigned_staff: Optional[str] = None
     image: Optional[str] = None
 
