@@ -1435,19 +1435,17 @@ const VenueStaffDashboard = ({ user, appSettings }) => {
         {activeTab === 'category' && (
           <div>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">{activeCategory}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-3 gap-4">
               {(orderableItems[activeCategory] || []).map(item => (
                 <div key={item.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                   {item.image && (
-                    <img src={item.image} alt={item.name} className="w-full h-48 object-cover" />
+                    <img src={item.image} alt={item.name} className="w-full h-32 object-cover" />
                   )}
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">{item.name}</h3>
+                  <div className="p-3">
+                    <h3 className="text-md font-semibold text-gray-800 mb-1">{item.name}</h3>
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-lg font-bold text-green-600">${item.unit_price.toFixed(2)}</span>
-                      <span className="text-sm text-gray-500">
-                        {item.available_quantity} {item.unit_of_measure} available
-                      </span>
+                      <span className="text-md font-bold text-green-600">${item.unit_price.toFixed(2)}</span>
+                      <span className="text-xs text-gray-500">per {item.unit_of_measure}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <input
@@ -1455,15 +1453,16 @@ const VenueStaffDashboard = ({ user, appSettings }) => {
                         min="1"
                         max={item.available_quantity}
                         defaultValue="1"
-                        className="w-16 p-1 border border-gray-300 rounded text-sm"
+                        className="w-12 p-1 border border-gray-300 rounded text-xs"
                         id={`quantity-${item.id}`}
                       />
+                      <span className="text-xs text-gray-600">{item.unit_of_measure}</span>
                       <button
                         onClick={() => {
                           const quantity = parseInt(document.getElementById(`quantity-${item.id}`).value);
                           addToCart(item, quantity);
                         }}
-                        className="flex-1 text-white py-2 px-4 rounded-md hover:opacity-90 transition-colors text-sm"
+                        className="flex-1 text-white py-1 px-2 rounded-md hover:opacity-90 transition-colors text-xs"
                         style={primaryButtonStyle}
                         disabled={item.available_quantity === 0}
                       >
