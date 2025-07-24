@@ -179,6 +179,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
     fetchOrders();
     fetchUsers();
     fetchCategories();
+    fetchDetailedCategories();
     fetchInvoices();
     fetchPurchaseOrders();
   }, []);
