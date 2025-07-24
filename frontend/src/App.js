@@ -757,6 +757,102 @@ const ManagerDashboard = ({ user, appSettings }) => {
                 </table>
               </div>
             </div>
+
+          {editingItem && (
+            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg shadow-lg max-w-2xl w-full m-4">
+                <h3 className="text-lg font-semibold mb-4">Edit Production Item</h3>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.target);
+                  const updatedData = {
+                    name: formData.get('name'),
+                    category: formData.get('category'),
+                    quantity: parseInt(formData.get('quantity')),
+                    unit_of_measure: formData.get('unit_of_measure'),
+                    assigned_staff: formData.get('assigned_staff'),
+                    base_cost: parseFloat(formData.get('base_cost')),
+                    image: editingItem.image // Keep existing image for now
+                  };
+                  handleEditProductionItem(editingItem.id, updatedData);
+                }} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      name="name"
+                      type="text"
+                      placeholder="Item Name"
+                      defaultValue={editingItem.name}
+                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                    <select
+                      name="category"
+                      defaultValue={editingItem.category}
+                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Select Category</option>
+                      {categories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                    <input
+                      name="quantity"
+                      type="number"
+                      placeholder="Quantity"
+                      defaultValue={editingItem.quantity}
+                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                    <input
+                      name="unit_of_measure"
+                      type="text"
+                      placeholder="Unit of Measure"
+                      defaultValue={editingItem.unit_of_measure}
+                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                    <input
+                      name="base_cost"
+                      type="number"
+                      step="0.01"
+                      placeholder="Base Cost"
+                      defaultValue={editingItem.base_cost}
+                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                    <select
+                      name="assigned_staff"
+                      defaultValue={editingItem.assigned_staff}
+                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Staff (Optional)</option>
+                      {users.filter(user => user.role === 'kitchen_staff').map(user => (
+                        <option key={user.id} value={user.username}>{user.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="flex space-x-3">
+                    <button
+                      type="submit"
+                      className="flex-1 text-white py-3 px-4 rounded-md hover:opacity-90 transition-colors"
+                      style={primaryButtonStyle}
+                    >
+                      Update Item
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingItem(null)}
+                      className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-md hover:bg-gray-400 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
           </div>
         )}
 
