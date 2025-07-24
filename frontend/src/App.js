@@ -1249,10 +1249,28 @@ const ManagerDashboard = ({ user, appSettings }) => {
 // Kitchen Staff Dashboard
 const KitchenStaffDashboard = ({ user, appSettings }) => {
   const [productionItems, setProductionItems] = useState([]);
+  const [newOrders, setNewOrders] = useState([]);
 
   useEffect(() => {
     fetchProductionItems();
+    fetchNewOrders();
+    
+    // Poll for new orders every 30 seconds
+    const interval = setInterval(() => {
+      fetchNewOrders();
+      fetchProductionItems();
+    }, 30000);
+    return () => clearInterval(interval);
   }, []);
+
+  const fetchNewOrders = async () => {
+    try {
+      const response = await axios.get(`${API}/orders?status=pending`);
+      setNewOrders(response.data);
+    } catch (error) {
+      console.error('Error fetching new orders:', error);
+    }
+  };
 
   const fetchProductionItems = async () => {
     try {
