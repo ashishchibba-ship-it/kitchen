@@ -131,7 +131,7 @@ class ProductionItemCreate(BaseModel):
 
 class ProductionItemUpdate(BaseModel):
     available_for_order: Optional[int] = None
-    unit_price: Optional[float] = None
+    base_cost: Optional[float] = None  # Base cost per unit
     availability_status: Optional[ItemAvailability] = None
     unit_of_measure: Optional[str] = None
 
