@@ -417,7 +417,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
             <span className="text-gray-600">Welcome, {user.name}</span>
           </div>
           <div className="flex space-x-6">
-            {['dashboard', 'production', 'orders', 'users', 'invoices', 'purchase-orders', 'settings'].map(tab => (
+            {['dashboard', 'production', 'orders', 'users', 'categories', 'invoices', 'purchase-orders', 'settings'].map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
