@@ -391,27 +391,33 @@ backend:
 
   - task: "Order notification system for kitchen and managers"
     implemented: true
-    working: false
+    working: true
     file: "server.py, App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Added real-time polling (30s intervals) to both kitchen and manager dashboards to show new orders. Enhanced dashboard stats API to include recent_orders data for notifications."
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED - Order notification system working perfectly (100% success rate - 27/27 tests passed). COMPREHENSIVE VERIFICATION: 1) DASHBOARD STATS WITH RECENT ORDERS: GET /api/dashboard/stats includes recent_orders data with all required fields (id, venue_name, order_date, total_amount, status, items_count) 2) KITCHEN ORDER VISIBILITY: GET /api/orders?status=pending correctly filters and returns pending orders for kitchen staff 3) ORDER STATUS UPDATES: PUT /api/orders/{id}/status successfully updates order status from 'pending' to 'preparing' 4) COMPLETE NOTIFICATION WORKFLOW: Venue places order → appears in dashboard notifications → kitchen sees pending order → kitchen updates to preparing → manager sees updated status. All notification features working correctly for real-time order management."
 
   - task: "Invoice PDF export for Xero integration"
     implemented: true
-    working: false
+    working: true
     file: "server.py, App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Added GET /api/invoices/{id}/pdf endpoint using ReportLab for PDF generation. Added exportInvoicePDF function and Export PDF buttons in manager invoices table. PDF includes invoice number, date, items, venue details for Xero compatibility."
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED - PDF export functionality working perfectly (100% success rate - 27/27 tests passed). COMPREHENSIVE VERIFICATION: 1) PDF GENERATION: GET /api/invoices/{id}/pdf successfully generates PDF files with proper content-type (application/pdf) 2) XERO-COMPATIBLE FIELDS: PDFs contain all required fields - invoice number, date, due date, customer name, delivery address, itemized list with quantities/prices, subtotal, tax, total 3) DOWNLOAD FUNCTIONALITY: Proper Content-Disposition headers with filename format 'invoice_{invoice_number}.pdf' 4) ERROR HANDLING: Returns 404 for non-existent invoices, handles date formatting correctly 5) PDF STRUCTURE: Professional invoice layout with tables, proper formatting, and all business details. Fixed date parsing issues and backward compatibility. PDF exports are fully Xero-ready."
 
 test_plan:
   current_focus:
