@@ -132,6 +132,7 @@ class ProductionItemUpdate(BaseModel):
     available_for_order: Optional[int] = None
     unit_price: Optional[float] = None
     availability_status: Optional[ItemAvailability] = None
+    unit_of_measure: Optional[str] = None
 
 class OrderableItem(BaseModel):
     id: str
