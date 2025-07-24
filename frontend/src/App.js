@@ -260,13 +260,15 @@ const ManagerDashboard = ({ user, appSettings }) => {
     try {
       await axios.post(`${API}/production-items?created_by=${user.username}`, {
         ...newItem,
-        quantity: parseInt(newItem.quantity)
+        quantity: parseInt(newItem.quantity),
+        base_cost: parseFloat(newItem.base_cost)
       });
       setNewItem({
         name: '',
         category: '',
         quantity: '',
         unit_of_measure: '',
+        base_cost: '10.00',
         image: null
       });
       fetchProductionItems();
