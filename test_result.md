@@ -433,15 +433,18 @@ backend:
 
   - task: "Production item edit functionality for managers"
     implemented: true
-    working: false
+    working: true
     file: "server.py, App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Added edit functionality for production items in manager dashboard. Added Edit button next to Delete button, created edit modal with form fields for all production item properties (name, category, quantity, unit_of_measure, base_cost, assigned_staff), and handleEditProductionItem function that uses PUT /api/production-items/{id} endpoint."
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED - Production item edit functionality working perfectly (100% success rate - 22/22 tests passed). COMPREHENSIVE VERIFICATION: 1) PUT /api/production-items/{id} endpoint works correctly for updating all fields (name, category, quantity, unit_of_measure, base_cost, assigned_staff) 2) Automatic unit_price calculation (base_cost * 1.15) works correctly after edit - verified 15% markup recalculation 3) All updated fields persist correctly and appear in production items list 4) Error handling works properly for invalid item IDs (404) and missing required fields (422) 5) Orderable items are updated correctly when item details change - name, category, and unit_of_measure changes reflected in orderable items API 6) Complete edit workflow verified: create item → edit all fields → verify changes in list → verify changes in orderable items. The edit functionality is production-ready and working flawlessly."
 
 test_plan:
   current_focus:
