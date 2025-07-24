@@ -379,6 +379,18 @@ const ManagerDashboard = ({ user, appSettings }) => {
     }
   };
 
+  const updateItemAvailability = async (itemId, availableForOrder, unitPrice) => {
+    try {
+      await axios.put(`${API}/production-items/${itemId}/availability`, {
+        available_for_order: parseInt(availableForOrder),
+        unit_price: parseFloat(unitPrice)
+      });
+      fetchProductionItems();
+    } catch (error) {
+      console.error('Error updating item availability:', error);
+    }
+  };
+
   const updateAppSettings = async (newSettings) => {
     try {
       const response = await axios.put(`${API}/settings`, newSettings);
