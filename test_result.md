@@ -419,19 +419,30 @@ backend:
           agent: "testing"
           comment: "✅ PASSED - PDF export functionality working perfectly (100% success rate - 27/27 tests passed). COMPREHENSIVE VERIFICATION: 1) PDF GENERATION: GET /api/invoices/{id}/pdf successfully generates PDF files with proper content-type (application/pdf) 2) XERO-COMPATIBLE FIELDS: PDFs contain all required fields - invoice number, date, due date, customer name, delivery address, itemized list with quantities/prices, subtotal, tax, total 3) DOWNLOAD FUNCTIONALITY: Proper Content-Disposition headers with filename format 'invoice_{invoice_number}.pdf' 4) ERROR HANDLING: Returns 404 for non-existent invoices, handles date formatting correctly 5) PDF STRUCTURE: Professional invoice layout with tables, proper formatting, and all business details. Fixed date parsing issues and backward compatibility. PDF exports are fully Xero-ready."
 
+  - task: "Organized kitchen dashboard workflow"
+    implemented: true
+    working: false
+    file: "App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Completely reorganized kitchen dashboard into workflow sections: 1) New Orders (pending) - each order separate with Start Preparing button 2) Currently Preparing - orders in progress with Mark Ready button 3) Ready for Pickup/Delivery - completed orders with Mark Delivered button 4) Completed Orders - delivered orders history. Each section shows order details, items, and venue information separately."
+
 test_plan:
   current_focus:
+    - "Organized kitchen dashboard workflow"
     - "Order notification system for kitchen and managers"
     - "Invoice PDF export for Xero integration"
-    - "Production item delete functionality for managers"
-    - "Changed orderable items workflow"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
     - agent: "main"
-      message: "Added notification system and PDF export functionality. FEATURES: 1) Real-time order notifications on kitchen dashboard with order details and 'Start Preparing' button 2) Manager dashboard shows new orders with action required alerts 3) Invoice PDF export with Xero-compatible format including invoice number, date, items, venue details 4) Auto-polling every 30 seconds for real-time updates 5) Kitchen can update order status to 'preparing' directly from notifications. Ready for testing notification system and PDF export functionality."
+      message: "Implemented organized kitchen dashboard workflow. WORKFLOW SECTIONS: 1) New Orders (red) - pending orders with order details, items list, and 'Start Preparing' button 2) Currently Preparing (yellow) - orders in progress with 'Mark Ready' button 3) Ready for Pickup/Delivery (green) - completed orders waiting for delivery with 'Mark Delivered' button 4) Completed Orders (gray) - delivered orders history with timestamps. Each order is displayed separately with complete details including order number, venue, items, delivery address, and total amount. Kitchen staff can move orders through the workflow stages with clear action buttons."
     - agent: "main"
       message: "Initial implementation complete. Full production kitchen management system with multi-role authentication, production scheduling, status tracking, inter-venue ordering with 15% markup, and comprehensive dashboard. Ready for backend API testing to verify all endpoints work correctly."
     - agent: "main"
