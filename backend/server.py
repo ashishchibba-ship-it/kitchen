@@ -701,15 +701,55 @@ async def create_purchase_order_for_order(order: Order):
     await db.purchase_orders.insert_one(po_data)
 
 @api_router.get("/orders", response_model=List[Order])
-async def get_orders(venue_name: Optional[str] = None, venue_id: Optional[str] = None):
+async def get_orders(venue_name: Optional[str] = None, venue_id: Optional[str] = None, status: Optional[str] = None):
     filter_dict = {}
     if venue_name:
         filter_dict["venue_name"] = venue_name
     if venue_id:
         filter_dict["venue_id"] = venue_id
+    if status:
+        filter_dict["status"] = status
     
     orders = await db.orders.find(filter_dict).sort("order_date", -1).to_list(1000)
-    return [Order(**order) for order in orders]
+    
+    # Handle backward compatibility for old orders
+    valid_orders = []
+    for order in orders:
+        try:
+            # Ensure required fields exist with defaults
+            if "venue_id" not in order:
+                order["venue_id"] = order.get("venue_name", "unknown")
+            if "delivery_address" not in order:
+                order["delivery_address"] = "Address not specified"
+            if "subtotal" not in order:
+                order["subtotal"] = 0.0
+            if "tax_amount" not in order:
+                order["tax_amount"] = 0.0
+            if "total_amount" not in order:
+                order["total_amount"] = 0.0
+            
+            # Fix items structure
+            if "items" in order:
+                for item in order["items"]:
+                    if "unit_of_measure" not in item:
+                        item["unit_of_measure"] = "units"
+            
+            # Fix date fields
+            if "delivery_date" in order and order["delivery_date"]:
+                if isinstance(order["delivery_date"], str):
+                    # Already a string, keep as is
+                    pass
+                else:
+                    # Convert datetime to date string
+                    order["delivery_date"] = order["delivery_date"].date().isoformat()
+            
+            valid_orders.append(Order(**order))
+        except Exception as e:
+            # Skip invalid orders
+            print(f"Skipping invalid order {order.get('id', 'unknown')}: {e}")
+            continue
+    
+    return valid_orders
 
 @api_router.put("/orders/{order_id}/status")
 async def update_order_status(order_id: str, status: OrderStatus):
