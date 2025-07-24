@@ -1812,6 +1812,15 @@ class KitchenAPITester:
 
 if __name__ == "__main__":
     tester = KitchenAPITester()
-    # Run the debug tests instead of the full visual ordering tests
-    success = tester.run_debug_tests()
-    sys.exit(0 if success else 1)
+    
+    # Run notification system and PDF export tests as requested
+    print("🎯 RUNNING NOTIFICATION SYSTEM AND PDF EXPORT TESTS")
+    print("=" * 80)
+    success = tester.run_notification_and_pdf_tests()
+    
+    if success:
+        print("\n🎉 All notification and PDF export tests passed!")
+        sys.exit(0)
+    else:
+        print("\n💥 Some tests failed. Check the output above for details.")
+        sys.exit(1)
