@@ -1479,6 +1479,235 @@ class KitchenAPITester:
         except Exception as e:
             self.log_result("Complete Notification Workflow", False, f"Exception: {str(e)}")
 
+    def test_production_item_edit_functionality(self):
+        """Test production item edit functionality for managers"""
+        print("\n=== Testing Production Item Edit Functionality ===")
+        
+        try:
+            # Step 1: Create a test production item to edit
+            test_item = {
+                "name": "Original Test Item",
+                "category": "Main Course",
+                "quantity": 10,
+                "unit_of_measure": "portions",
+                "assigned_staff": "chef_alice",
+                "base_cost": 12.0
+            }
+            
+            response = self.session.post(
+                f"{BASE_URL}/production-items?created_by=manager",
+                json=test_item
+            )
+            
+            if response.status_code != 200:
+                self.log_result("Create test item for editing", False, f"Status: {response.status_code}")
+                return
+            
+            created_item = response.json()
+            item_id = created_item["id"]
+            self.log_result("Create test item for editing", True, f"Item ID: {item_id}")
+            
+            # Verify initial unit_price calculation (base_cost * 1.15)
+            expected_unit_price = 12.0 * 1.15  # 13.80
+            if abs(created_item.get("unit_price", 0) - expected_unit_price) < 0.01:
+                self.log_result("Initial unit_price calculation", True, 
+                              f"Unit price: ${created_item['unit_price']:.2f} (15% markup)")
+            else:
+                self.log_result("Initial unit_price calculation", False,
+                              f"Expected ${expected_unit_price:.2f}, got ${created_item.get('unit_price', 0):.2f}")
+            
+            # Step 2: Test updating all fields using PUT /api/production-items/{id}
+            updated_data = {
+                "name": "Updated Test Item Name",
+                "category": "Dessert",
+                "quantity": 25,
+                "unit_of_measure": "slices",
+                "assigned_staff": "chef_bob",
+                "base_cost": 15.0
+            }
+            
+            response = self.session.put(
+                f"{BASE_URL}/production-items/{item_id}",
+                json=updated_data
+            )
+            
+            if response.status_code == 200:
+                updated_item = response.json()
+                self.log_result("PUT /api/production-items/{id} endpoint", True, "Item updated successfully")
+                
+                # Verify all fields were updated correctly
+                for field, expected_value in updated_data.items():
+                    if field == "base_cost":
+                        continue  # We'll check this separately with unit_price
+                    
+                    actual_value = updated_item.get(field)
+                    if actual_value == expected_value:
+                        self.log_result(f"Update {field} field", True, f"{field}: {actual_value}")
+                    else:
+                        self.log_result(f"Update {field} field", False,
+                                      f"Expected {expected_value}, got {actual_value}")
+                
+                # Verify automatic unit_price recalculation after edit
+                expected_new_unit_price = 15.0 * 1.15  # 17.25
+                actual_unit_price = updated_item.get("unit_price", 0)
+                if abs(actual_unit_price - expected_new_unit_price) < 0.01:
+                    self.log_result("Unit_price recalculation after edit", True,
+                                  f"New unit price: ${actual_unit_price:.2f} (15% markup on ${updated_data['base_cost']:.2f})")
+                else:
+                    self.log_result("Unit_price recalculation after edit", False,
+                                  f"Expected ${expected_new_unit_price:.2f}, got ${actual_unit_price:.2f}")
+                
+                # Verify base_cost was updated
+                actual_base_cost = updated_item.get("base_cost", 0)
+                if abs(actual_base_cost - updated_data["base_cost"]) < 0.01:
+                    self.log_result("Update base_cost field", True, f"Base cost: ${actual_base_cost:.2f}")
+                else:
+                    self.log_result("Update base_cost field", False,
+                                  f"Expected ${updated_data['base_cost']:.2f}, got ${actual_base_cost:.2f}")
+                
+            else:
+                self.log_result("PUT /api/production-items/{id} endpoint", False,
+                              f"Status: {response.status_code}, Response: {response.text}")
+                return
+            
+            # Step 3: Verify edited item appears correctly in production items list
+            response = self.session.get(f"{BASE_URL}/production-items")
+            if response.status_code == 200:
+                all_items = response.json()
+                edited_item = next((item for item in all_items if item["id"] == item_id), None)
+                
+                if edited_item:
+                    self.log_result("Edited item in production list", True, "Item found in list")
+                    
+                    # Verify the item in the list has all updated values
+                    for field, expected_value in updated_data.items():
+                        if field == "base_cost":
+                            continue
+                        actual_value = edited_item.get(field)
+                        if actual_value == expected_value:
+                            self.log_result(f"List shows updated {field}", True, f"{field}: {actual_value}")
+                        else:
+                            self.log_result(f"List shows updated {field}", False,
+                                          f"Expected {expected_value}, got {actual_value}")
+                else:
+                    self.log_result("Edited item in production list", False, "Item not found in list")
+            else:
+                self.log_result("Edited item in production list", False, f"Status: {response.status_code}")
+            
+            # Step 4: Test error handling for invalid data
+            invalid_data_tests = [
+                {
+                    "name": "Test invalid item ID",
+                    "item_id": "invalid-id-12345",
+                    "data": {"name": "Test", "category": "Main Course", "quantity": 5, "unit_of_measure": "units", "base_cost": 10.0},
+                    "expected_status": 404
+                },
+                {
+                    "name": "Test missing required fields",
+                    "item_id": item_id,
+                    "data": {"name": "Test"},  # Missing required fields
+                    "expected_status": 422
+                }
+            ]
+            
+            for test_case in invalid_data_tests:
+                response = self.session.put(
+                    f"{BASE_URL}/production-items/{test_case['item_id']}",
+                    json=test_case["data"]
+                )
+                
+                if response.status_code == test_case["expected_status"]:
+                    self.log_result(f"Error handling: {test_case['name']}", True,
+                                  f"Correctly returned {response.status_code}")
+                else:
+                    self.log_result(f"Error handling: {test_case['name']}", False,
+                                  f"Expected {test_case['expected_status']}, got {response.status_code}")
+            
+            # Step 5: Test that orderable items are updated if availability changes
+            # First, set the item as available for ordering
+            availability_data = {
+                "available_for_order": 10,
+                "availability_status": "available"
+            }
+            
+            response = self.session.put(
+                f"{BASE_URL}/production-items/{item_id}/availability",
+                json=availability_data
+            )
+            
+            if response.status_code == 200:
+                self.log_result("Set item availability for ordering", True, "Item made available")
+                
+                # Check if item appears in orderable items (with new workflow, no completion needed)
+                response = self.session.get(f"{BASE_URL}/orderable-items")
+                if response.status_code == 200:
+                    orderable_items = response.json()
+                    orderable_item = next((item for item in orderable_items if item["id"] == item_id), None)
+                    
+                    if orderable_item:
+                        # Verify the orderable item shows updated information
+                        if orderable_item.get("name") == updated_data["name"]:
+                            self.log_result("Orderable items reflect edit changes", True,
+                                          f"Name updated to: {orderable_item['name']}")
+                        else:
+                            self.log_result("Orderable items reflect edit changes", False,
+                                          f"Expected {updated_data['name']}, got {orderable_item.get('name')}")
+                        
+                        if orderable_item.get("category") == updated_data["category"]:
+                            self.log_result("Orderable items category updated", True,
+                                          f"Category: {orderable_item['category']}")
+                        else:
+                            self.log_result("Orderable items category updated", False,
+                                          f"Expected {updated_data['category']}, got {orderable_item.get('category')}")
+                        
+                        if orderable_item.get("unit_of_measure") == updated_data["unit_of_measure"]:
+                            self.log_result("Orderable items unit_of_measure updated", True,
+                                          f"Unit: {orderable_item['unit_of_measure']}")
+                        else:
+                            self.log_result("Orderable items unit_of_measure updated", False,
+                                          f"Expected {updated_data['unit_of_measure']}, got {orderable_item.get('unit_of_measure')}")
+                    else:
+                        self.log_result("Orderable items reflect edit changes", False, "Item not found in orderable items")
+                else:
+                    self.log_result("Check orderable items after edit", False, f"Status: {response.status_code}")
+            else:
+                self.log_result("Set item availability for ordering", False, f"Status: {response.status_code}")
+            
+            return item_id
+            
+        except Exception as e:
+            self.log_result("Production Item Edit Functionality", False, f"Exception: {str(e)}")
+            return None
+
+    def run_production_item_edit_tests(self):
+        """Run tests specifically for production item edit functionality"""
+        print("🧪 Starting Production Item Edit Functionality Testing")
+        print(f"🔗 Testing against: {BASE_URL}")
+        print("Focus: Testing production item edit functionality for managers")
+        print("=" * 80)
+        
+        # Test production item edit functionality
+        self.test_production_item_edit_functionality()
+        
+        # Print summary
+        print("\n" + "=" * 80)
+        print("🏁 PRODUCTION ITEM EDIT TEST SUMMARY")
+        print("=" * 80)
+        print(f"✅ Passed: {self.test_results['passed']}")
+        print(f"❌ Failed: {self.test_results['failed']}")
+        
+        if self.test_results['errors']:
+            print("\n🚨 FAILED TESTS:")
+            for error in self.test_results['errors']:
+                print(f"   • {error}")
+        
+        if self.test_results['passed'] + self.test_results['failed'] > 0:
+            success_rate = (self.test_results['passed'] / 
+                           (self.test_results['passed'] + self.test_results['failed']) * 100)
+            print(f"\n📊 Success Rate: {success_rate:.1f}%")
+        
+        return self.test_results['failed'] == 0
+
     def run_notification_and_pdf_tests(self):
         """Run comprehensive tests for notification system and PDF export"""
         print("🧪 Starting Notification System and PDF Export Testing")
