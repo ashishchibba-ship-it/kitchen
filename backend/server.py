@@ -128,6 +128,30 @@ class ProductionItemCreate(BaseModel):
     assigned_staff: Optional[str] = None
     image: Optional[str] = None
 
+class ProductionItemUpdate(BaseModel):
+    available_for_order: Optional[int] = None
+    unit_price: Optional[float] = None
+    availability_status: Optional[ItemAvailability] = None
+
+class OrderableItem(BaseModel):
+    id: str
+    name: str
+    category: str
+    available_quantity: int
+    unit_of_measure: str
+    unit_price: float
+    image: Optional[str] = None
+    availability_status: ItemAvailability
+
+class OrderHistory(BaseModel):
+    item_id: str
+    item_name: str
+    category: str
+    total_ordered: int
+    last_ordered: datetime
+    times_ordered: int
+    average_quantity: float
+
 class OrderItem(BaseModel):
     production_item_id: str
     production_item_name: str
