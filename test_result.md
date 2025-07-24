@@ -431,8 +431,21 @@ backend:
           agent: "main"
           comment: "Completely reorganized kitchen dashboard into workflow sections: 1) New Orders (pending) - each order separate with Start Preparing button 2) Currently Preparing - orders in progress with Mark Ready button 3) Ready for Pickup/Delivery - completed orders with Mark Delivered button 4) Completed Orders - delivered orders history. Each section shows order details, items, and venue information separately."
 
+  - task: "Production item edit functionality for managers"
+    implemented: true
+    working: false
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added edit functionality for production items in manager dashboard. Added Edit button next to Delete button, created edit modal with form fields for all production item properties (name, category, quantity, unit_of_measure, base_cost, assigned_staff), and handleEditProductionItem function that uses PUT /api/production-items/{id} endpoint."
+
 test_plan:
   current_focus:
+    - "Production item edit functionality for managers"
     - "Organized kitchen dashboard workflow"
     - "Order notification system for kitchen and managers"
     - "Invoice PDF export for Xero integration"
@@ -442,7 +455,7 @@ test_plan:
 
 agent_communication:
     - agent: "main"
-      message: "Implemented organized kitchen dashboard workflow. WORKFLOW SECTIONS: 1) New Orders (red) - pending orders with order details, items list, and 'Start Preparing' button 2) Currently Preparing (yellow) - orders in progress with 'Mark Ready' button 3) Ready for Pickup/Delivery (green) - completed orders waiting for delivery with 'Mark Delivered' button 4) Completed Orders (gray) - delivered orders history with timestamps. Each order is displayed separately with complete details including order number, venue, items, delivery address, and total amount. Kitchen staff can move orders through the workflow stages with clear action buttons."
+      message: "Added edit functionality for production items. FEATURES: 1) Edit button added next to Delete button in production items table 2) Edit modal with form fields for all item properties: name, category, quantity, unit_of_measure, base_cost, assigned_staff 3) Category dropdown populated from existing categories 4) Staff dropdown filtered to kitchen staff only 5) handleEditProductionItem function uses PUT /api/production-items/{id} endpoint 6) Modal includes Update and Cancel buttons with proper styling 7) Form preserves existing image data and updates all other fields. Complete edit functionality now available for managers alongside existing delete functionality."
     - agent: "main"
       message: "Initial implementation complete. Full production kitchen management system with multi-role authentication, production scheduling, status tracking, inter-venue ordering with 15% markup, and comprehensive dashboard. Ready for backend API testing to verify all endpoints work correctly."
     - agent: "main"
