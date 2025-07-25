@@ -85,7 +85,7 @@ class ForceDeleteAndValidationTester:
             venue_user = venue_users[0]
             venue_id = venue_user["id"]
             venue_name = venue_user["name"]
-            venue_address = venue_user.get("address", "123 Test Street")
+            venue_address = venue_user.get("address") or "123 Test Street, Test City"
             
             # Step 4: Create an order that references this item
             order_data = {
