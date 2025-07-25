@@ -756,7 +756,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                             Edit
                           </button>
                           <button
-                            onClick={() => handleDeleteProductionItem(item.id)}
+                            onClick={() => handleDeleteProductionItem(item.id, item.name)}
                             className="text-red-600 hover:text-red-900 transition-colors"
                             title="Delete production item"
                           >
