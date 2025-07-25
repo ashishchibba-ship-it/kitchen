@@ -118,15 +118,6 @@ class NotificationEvent(BaseModel):
     created_at: datetime
     read_by: List[str] = []  # user_ids who have read this notification
 
-class AppSettingsUpdate(BaseModel):
-    primary_color: Optional[str] = None
-    secondary_color: Optional[str] = None
-    accent_color: Optional[str] = None
-    font_family: Optional[str] = None
-    app_name: Optional[str] = None
-    logo_url: Optional[str] = None
-    layout_style: Optional[str] = None
-
 class ProductionItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
