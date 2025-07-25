@@ -873,6 +873,13 @@ async def create_order(order: OrderCreate):
     await create_invoice_for_order(new_order)
     await create_purchase_order_for_order(new_order)
     
+    # Create notification for order placed
+    await create_notification(
+        event_type="order_placed",
+        order_id=new_order.id,
+        message=f"New order #{invoice_number} from {new_order.venue_name} - ${total_amount:.2f}"
+    )
+    
     return new_order
 
 async def create_invoice_for_order(order: Order):
