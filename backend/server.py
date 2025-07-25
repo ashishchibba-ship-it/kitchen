@@ -508,20 +508,13 @@ async def mark_notification_read(notification_id: str, user_id: str):
 # Production management endpoints
 @api_router.post("/production-items", response_model=ProductionItem)
 async def create_production_item(item: ProductionItemCreate, created_by: str):
-    """Create a new production item"""
+    """Create a new production item - immediately available for ordering"""
     try:
         # Create item with auto-generated fields
         item_dict = item.dict()
         item_dict["id"] = str(uuid.uuid4())
-        item_dict["production_date"] = date.today().isoformat()
-        item_dict["status"] = "pending"
         item_dict["created_at"] = datetime.utcnow()
         item_dict["updated_at"] = datetime.utcnow()
-        item_dict["target_time"] = "12:00"
-        
-        # Set default quantity if not provided (for manager creation)
-        if item_dict.get("quantity") is None:
-            item_dict["quantity"] = 1  # Default quantity
         
         # Ensure unit_of_measure defaults to kg
         if not item_dict.get("unit_of_measure"):
