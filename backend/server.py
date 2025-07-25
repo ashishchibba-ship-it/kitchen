@@ -644,16 +644,9 @@ async def delete_production_item(item_id: str, force: bool = False):
         raise HTTPException(status_code=500, detail=f"Error deleting production item: {str(e)}")
 
 @api_router.get("/production-items", response_model=List[ProductionItem])
-async def get_production_items(production_date: Optional[str] = None, status: Optional[str] = None, category: Optional[str] = None):
-    filter_dict = {}
-    if production_date:
-        filter_dict["production_date"] = production_date
-    if status:
-        filter_dict["status"] = status
-    if category:
-        filter_dict["category"] = category
-    
-    items = await db.production_items.find(filter_dict).sort("target_time", 1).to_list(1000)
+async def get_production_items():
+    """Get all production items"""
+    items = await db.production_items.find({}).sort("name", 1).to_list(1000)
     
     # Handle backward compatibility for items missing required fields
     valid_items = []
