@@ -2442,18 +2442,697 @@ class KitchenAPITester:
         
         return self.test_results
 
+    def test_notification_management_endpoints(self):
+        """Test notification management endpoints comprehensively"""
+        print("\n=== TESTING NOTIFICATION MANAGEMENT ENDPOINTS ===")
+        
+        try:
+            # Test 1: GET /api/notification-preferences - verify it creates default preferences for all users
+            response = self.session.get(f"{BASE_URL}/notification-preferences")
+            if response.status_code == 200:
+                preferences = response.json()
+                self.log_result("GET /api/notification-preferences", True, 
+                              f"Retrieved preferences for {len(preferences)} users")
+                
+                # Verify structure of preferences
+                if preferences:
+                    first_pref = preferences[0]
+                    required_fields = ["id", "user_id", "user_name", "user_role", "order_placed", 
+                                     "order_preparing", "order_ready", "order_delivered", "created_at", "updated_at"]
+                    missing_fields = [field for field in required_fields if field not in first_pref]
+                    
+                    if not missing_fields:
+                        self.log_result("Notification preferences structure", True, "All required fields present")
+                    else:
+                        self.log_result("Notification preferences structure", False, f"Missing fields: {missing_fields}")
+                    
+                    # Verify default values
+                    default_notifications = ["order_placed", "order_preparing", "order_ready", "order_delivered"]
+                    for notification_type in default_notifications:
+                        if first_pref.get(notification_type) == True:
+                            self.log_result(f"Default {notification_type} preference", True, "Enabled by default")
+                        else:
+                            self.log_result(f"Default {notification_type} preference", False, "Not enabled by default")
+                
+                # Store user IDs for testing updates
+                self.test_user_ids = [pref["user_id"] for pref in preferences[:2]]  # Use first 2 users
+                
+            else:
+                self.log_result("GET /api/notification-preferences", False, f"Status: {response.status_code}")
+                return
+            
+            # Test 2: PUT /api/notification-preferences/{user_id} - update a user's notification settings
+            if hasattr(self, 'test_user_ids') and self.test_user_ids:
+                test_user_id = self.test_user_ids[0]
+                
+                # Update preferences
+                update_data = {
+                    "order_placed": True,
+                    "order_preparing": False,  # Disable this one
+                    "order_ready": True,
+                    "order_delivered": False,  # Disable this one
+                    "email": "test@example.com",
+                    "phone": "+1234567890",
+                    "notify_email": True,
+                    "notify_sms": False,
+                    "notify_in_app": True
+                }
+                
+                response = self.session.put(f"{BASE_URL}/notification-preferences/{test_user_id}", json=update_data)
+                if response.status_code == 200:
+                    self.log_result("PUT /api/notification-preferences/{user_id}", True, 
+                                  f"Updated preferences for user {test_user_id}")
+                    
+                    # Verify the update by fetching preferences again
+                    response = self.session.get(f"{BASE_URL}/notification-preferences")
+                    if response.status_code == 200:
+                        updated_preferences = response.json()
+                        updated_user_pref = next((pref for pref in updated_preferences 
+                                                if pref["user_id"] == test_user_id), None)
+                        
+                        if updated_user_pref:
+                            # Verify specific updates
+                            if (updated_user_pref.get("order_preparing") == False and 
+                                updated_user_pref.get("order_delivered") == False and
+                                updated_user_pref.get("email") == "test@example.com"):
+                                self.log_result("Verify notification preferences update", True, 
+                                              "Preferences updated correctly")
+                            else:
+                                self.log_result("Verify notification preferences update", False, 
+                                              "Some preferences not updated correctly")
+                        else:
+                            self.log_result("Verify notification preferences update", False, 
+                                          "Updated user preferences not found")
+                    else:
+                        self.log_result("Verify notification preferences update", False, 
+                                      "Cannot verify update")
+                else:
+                    self.log_result("PUT /api/notification-preferences/{user_id}", False, 
+                                  f"Status: {response.status_code}, Response: {response.text}")
+            
+            # Test 3: Test that preferences are properly stored and retrieved
+            response = self.session.get(f"{BASE_URL}/notification-preferences")
+            if response.status_code == 200:
+                final_preferences = response.json()
+                
+                # Verify all users have preferences
+                response = self.session.get(f"{BASE_URL}/users")
+                if response.status_code == 200:
+                    all_users = response.json()
+                    
+                    if len(final_preferences) >= len(all_users):
+                        self.log_result("All users have notification preferences", True, 
+                                      f"Preferences: {len(final_preferences)}, Users: {len(all_users)}")
+                    else:
+                        self.log_result("All users have notification preferences", False, 
+                                      f"Missing preferences for some users")
+                else:
+                    self.log_result("All users have notification preferences", False, 
+                                  "Cannot verify user count")
+            else:
+                self.log_result("Preferences storage verification", False, f"Status: {response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Notification Management Endpoints", False, f"Exception: {str(e)}")
+
+    def test_automatic_notification_triggers(self):
+        """Test automatic notification triggers during order workflow"""
+        print("\n=== TESTING AUTOMATIC NOTIFICATION TRIGGERS ===")
+        
+        try:
+            # First, create a test order to trigger notifications
+            # Get venue information
+            response = self.session.get(f"{BASE_URL}/users")
+            if response.status_code != 200:
+                self.log_result("Automatic Notification Triggers", False, "Cannot retrieve users")
+                return
+            
+            users = response.json()
+            venue_users = [user for user in users if user.get("role") == "venue_staff"]
+            
+            if not venue_users:
+                self.log_result("Automatic Notification Triggers", False, "No venue users found")
+                return
+            
+            venue_user = venue_users[0]
+            venue_id = venue_user["id"]
+            venue_name = venue_user["name"]
+            venue_address = venue_user.get("address") or "123 Test Street, Test City"
+            
+            # Get orderable items
+            response = self.session.get(f"{BASE_URL}/orderable-items")
+            if response.status_code != 200 or not response.json():
+                # Create a test item if none exist
+                test_item = {
+                    "name": "Notification Test Item",
+                    "category": "Main Course",
+                    "quantity": 10,
+                    "unit_of_measure": "portions",
+                    "base_cost": 15.0
+                }
+                
+                response = self.session.post(f"{BASE_URL}/production-items?created_by=manager", json=test_item)
+                if response.status_code == 200:
+                    created_item = response.json()
+                    
+                    # Set availability
+                    availability_data = {
+                        "available_for_order": 5,
+                        "unit_price": 17.25,
+                        "availability_status": "available"
+                    }
+                    
+                    response = self.session.put(
+                        f"{BASE_URL}/production-items/{created_item['id']}/availability",
+                        json=availability_data
+                    )
+                    
+                    if response.status_code == 200:
+                        self.log_result("Create test item for notifications", True, 
+                                      f"Created and set availability for {test_item['name']}")
+                    else:
+                        self.log_result("Create test item for notifications", False, 
+                                      "Failed to set availability")
+                        return
+                else:
+                    self.log_result("Create test item for notifications", False, 
+                                  "Failed to create test item")
+                    return
+            
+            # Get orderable items again
+            response = self.session.get(f"{BASE_URL}/orderable-items")
+            if response.status_code != 200:
+                self.log_result("Get orderable items for notification test", False, f"Status: {response.status_code}")
+                return
+            
+            orderable_items = response.json()
+            if not orderable_items:
+                self.log_result("Get orderable items for notification test", False, "No orderable items available")
+                return
+            
+            # Test 1: Create a test order and verify "order_placed" notification is created
+            order_items = [
+                {
+                    "production_item_id": orderable_items[0]["id"],
+                    "production_item_name": orderable_items[0]["name"],
+                    "quantity": 2,
+                    "unit_of_measure": orderable_items[0]["unit_of_measure"],
+                    "unit_price": orderable_items[0]["unit_price"]
+                }
+            ]
+            
+            order_data = {
+                "venue_name": venue_name,
+                "venue_id": venue_id,
+                "delivery_address": venue_address,
+                "items": order_items,
+                "delivery_date": "2024-12-20"
+            }
+            
+            response = self.session.post(f"{BASE_URL}/orders", json=order_data)
+            if response.status_code == 200:
+                test_order = response.json()
+                order_id = test_order["id"]
+                invoice_number = test_order.get("invoice_number", "N/A")
+                
+                self.log_result("Create test order for notifications", True, 
+                              f"Order ID: {order_id}, Invoice: {invoice_number}")
+                
+                # Check if order_placed notification was created
+                time.sleep(1)  # Brief delay to ensure notification is created
+                
+                # Get all notification events to verify order_placed notification
+                response = self.session.get(f"{BASE_URL}/notifications/{venue_id}")
+                if response.status_code == 200:
+                    notifications = response.json()
+                    order_placed_notifications = [n for n in notifications if n.get("event_type") == "order_placed" 
+                                                and n.get("order_id") == order_id]
+                    
+                    if order_placed_notifications:
+                        notification = order_placed_notifications[0]
+                        expected_message = f"New order #{invoice_number} from {venue_name}"
+                        if expected_message in notification.get("message", ""):
+                            self.log_result("Order placed notification created", True, 
+                                          f"Message: {notification['message']}")
+                        else:
+                            self.log_result("Order placed notification created", False, 
+                                          f"Unexpected message: {notification.get('message')}")
+                    else:
+                        self.log_result("Order placed notification created", False, 
+                                      "No order_placed notification found")
+                else:
+                    self.log_result("Order placed notification created", False, 
+                                  f"Cannot retrieve notifications: {response.status_code}")
+                
+                # Test 2: Update order status to "preparing" and verify "order_preparing" notification
+                response = self.session.put(f"{BASE_URL}/orders/{order_id}/status?status=preparing")
+                if response.status_code == 200:
+                    self.log_result("Update order status to preparing", True, "Status updated successfully")
+                    
+                    time.sleep(1)  # Brief delay
+                    
+                    # Check for order_preparing notification
+                    response = self.session.get(f"{BASE_URL}/notifications/{venue_id}")
+                    if response.status_code == 200:
+                        notifications = response.json()
+                        preparing_notifications = [n for n in notifications if n.get("event_type") == "order_preparing" 
+                                                 and n.get("order_id") == order_id]
+                        
+                        if preparing_notifications:
+                            notification = preparing_notifications[0]
+                            expected_message = f"Order #{invoice_number} is now being prepared"
+                            if expected_message in notification.get("message", ""):
+                                self.log_result("Order preparing notification created", True, 
+                                              f"Message: {notification['message']}")
+                            else:
+                                self.log_result("Order preparing notification created", False, 
+                                              f"Unexpected message: {notification.get('message')}")
+                        else:
+                            self.log_result("Order preparing notification created", False, 
+                                          "No order_preparing notification found")
+                    else:
+                        self.log_result("Order preparing notification created", False, 
+                                      f"Cannot retrieve notifications: {response.status_code}")
+                else:
+                    self.log_result("Update order status to preparing", False, f"Status: {response.status_code}")
+                
+                # Test 3: Update order status to "ready" and verify "order_ready" notification
+                response = self.session.put(f"{BASE_URL}/orders/{order_id}/status?status=ready")
+                if response.status_code == 200:
+                    self.log_result("Update order status to ready", True, "Status updated successfully")
+                    
+                    time.sleep(1)  # Brief delay
+                    
+                    # Check for order_ready notification
+                    response = self.session.get(f"{BASE_URL}/notifications/{venue_id}")
+                    if response.status_code == 200:
+                        notifications = response.json()
+                        ready_notifications = [n for n in notifications if n.get("event_type") == "order_ready" 
+                                             and n.get("order_id") == order_id]
+                        
+                        if ready_notifications:
+                            notification = ready_notifications[0]
+                            expected_message = f"Order #{invoice_number} is ready for pickup/delivery"
+                            if expected_message in notification.get("message", ""):
+                                self.log_result("Order ready notification created", True, 
+                                              f"Message: {notification['message']}")
+                            else:
+                                self.log_result("Order ready notification created", False, 
+                                              f"Unexpected message: {notification.get('message')}")
+                        else:
+                            self.log_result("Order ready notification created", False, 
+                                          "No order_ready notification found")
+                    else:
+                        self.log_result("Order ready notification created", False, 
+                                      f"Cannot retrieve notifications: {response.status_code}")
+                else:
+                    self.log_result("Update order status to ready", False, f"Status: {response.status_code}")
+                
+                # Test 4: Update order status to "delivered" and verify "order_delivered" notification
+                response = self.session.put(f"{BASE_URL}/orders/{order_id}/status?status=delivered")
+                if response.status_code == 200:
+                    self.log_result("Update order status to delivered", True, "Status updated successfully")
+                    
+                    time.sleep(1)  # Brief delay
+                    
+                    # Check for order_delivered notification
+                    response = self.session.get(f"{BASE_URL}/notifications/{venue_id}")
+                    if response.status_code == 200:
+                        notifications = response.json()
+                        delivered_notifications = [n for n in notifications if n.get("event_type") == "order_delivered" 
+                                                 and n.get("order_id") == order_id]
+                        
+                        if delivered_notifications:
+                            notification = delivered_notifications[0]
+                            expected_message = f"Order #{invoice_number} has been delivered to {venue_name}"
+                            if expected_message in notification.get("message", ""):
+                                self.log_result("Order delivered notification created", True, 
+                                              f"Message: {notification['message']}")
+                            else:
+                                self.log_result("Order delivered notification created", False, 
+                                              f"Unexpected message: {notification.get('message')}")
+                        else:
+                            self.log_result("Order delivered notification created", False, 
+                                          "No order_delivered notification found")
+                    else:
+                        self.log_result("Order delivered notification created", False, 
+                                      f"Cannot retrieve notifications: {response.status_code}")
+                else:
+                    self.log_result("Update order status to delivered", False, f"Status: {response.status_code}")
+                
+                # Store order ID for later tests
+                self.test_order_id = order_id
+                
+            else:
+                self.log_result("Create test order for notifications", False, 
+                              f"Status: {response.status_code}, Response: {response.text}")
+                
+        except Exception as e:
+            self.log_result("Automatic Notification Triggers", False, f"Exception: {str(e)}")
+
+    def test_notification_creation_and_retrieval(self):
+        """Test notification creation and retrieval endpoints"""
+        print("\n=== TESTING NOTIFICATION CREATION AND RETRIEVAL ===")
+        
+        try:
+            # Test 1: POST /api/notifications endpoint for creating notifications
+            test_notification_data = {
+                "event_type": "order_placed",
+                "order_id": getattr(self, 'test_order_id', 'test-order-123'),
+                "message": "Test notification message for API testing"
+            }
+            
+            # Create notification using query parameters (as per the API design)
+            response = self.session.post(
+                f"{BASE_URL}/notifications",
+                params={
+                    "event_type": test_notification_data["event_type"],
+                    "order_id": test_notification_data["order_id"],
+                    "message": test_notification_data["message"]
+                }
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                self.log_result("POST /api/notifications", True, 
+                              f"Created notification: {result.get('message', 'Success')}")
+                
+                # Store notification ID for later tests
+                self.test_notification_id = result.get("notification_id")
+                
+            else:
+                self.log_result("POST /api/notifications", False, 
+                              f"Status: {response.status_code}, Response: {response.text}")
+            
+            # Test 2: GET /api/notifications/{user_id} to retrieve user notifications
+            # Get a test user ID
+            response = self.session.get(f"{BASE_URL}/users")
+            if response.status_code == 200:
+                users = response.json()
+                if users:
+                    test_user_id = users[0]["id"]
+                    
+                    response = self.session.get(f"{BASE_URL}/notifications/{test_user_id}")
+                    if response.status_code == 200:
+                        notifications = response.json()
+                        self.log_result("GET /api/notifications/{user_id}", True, 
+                                      f"Retrieved {len(notifications)} notifications for user")
+                        
+                        # Verify notification structure
+                        if notifications:
+                            first_notification = notifications[0]
+                            required_fields = ["id", "event_type", "order_id", "message", "recipients", "created_at"]
+                            missing_fields = [field for field in required_fields if field not in first_notification]
+                            
+                            if not missing_fields:
+                                self.log_result("Notification structure", True, "All required fields present")
+                            else:
+                                self.log_result("Notification structure", False, f"Missing fields: {missing_fields}")
+                            
+                            # Verify user is in recipients
+                            if test_user_id in first_notification.get("recipients", []):
+                                self.log_result("User in notification recipients", True, "User correctly included in recipients")
+                            else:
+                                self.log_result("User in notification recipients", False, "User not in recipients list")
+                        
+                    else:
+                        self.log_result("GET /api/notifications/{user_id}", False, 
+                                      f"Status: {response.status_code}")
+                else:
+                    self.log_result("GET /api/notifications/{user_id}", False, "No users found for testing")
+            else:
+                self.log_result("GET /api/notifications/{user_id}", False, "Cannot retrieve users for testing")
+            
+            # Test 3: PUT /api/notifications/{notification_id}/read for marking as read
+            if hasattr(self, 'test_notification_id') and self.test_notification_id:
+                # Use the notification ID from the created notification
+                notification_id = self.test_notification_id
+                test_user_id = users[0]["id"] if users else "test-user-id"
+                
+                response = self.session.put(
+                    f"{BASE_URL}/notifications/{notification_id}/read",
+                    params={"user_id": test_user_id}
+                )
+                
+                if response.status_code == 200:
+                    self.log_result("PUT /api/notifications/{notification_id}/read", True, 
+                                  "Notification marked as read successfully")
+                else:
+                    self.log_result("PUT /api/notifications/{notification_id}/read", False, 
+                                  f"Status: {response.status_code}, Response: {response.text}")
+            else:
+                # Try with any existing notification
+                if hasattr(self, 'test_user_id') and users:
+                    test_user_id = users[0]["id"]
+                    response = self.session.get(f"{BASE_URL}/notifications/{test_user_id}")
+                    if response.status_code == 200:
+                        notifications = response.json()
+                        if notifications:
+                            notification_id = notifications[0]["id"]
+                            
+                            response = self.session.put(
+                                f"{BASE_URL}/notifications/{notification_id}/read",
+                                params={"user_id": test_user_id}
+                            )
+                            
+                            if response.status_code == 200:
+                                self.log_result("PUT /api/notifications/{notification_id}/read", True, 
+                                              "Notification marked as read successfully")
+                            else:
+                                self.log_result("PUT /api/notifications/{notification_id}/read", False, 
+                                              f"Status: {response.status_code}")
+                        else:
+                            self.log_result("PUT /api/notifications/{notification_id}/read", False, 
+                                          "No notifications available to mark as read")
+                    else:
+                        self.log_result("PUT /api/notifications/{notification_id}/read", False, 
+                                      "Cannot retrieve notifications for read test")
+                
+        except Exception as e:
+            self.log_result("Notification Creation and Retrieval", False, f"Exception: {str(e)}")
+
+    def test_complete_notification_workflow(self):
+        """Test complete notification workflow end-to-end"""
+        print("\n=== TESTING COMPLETE NOTIFICATION WORKFLOW ===")
+        
+        try:
+            # Test 1: Place order → verify notification created with proper message format
+            # Get venue and orderable items
+            response = self.session.get(f"{BASE_URL}/users")
+            if response.status_code != 200:
+                self.log_result("Complete Notification Workflow", False, "Cannot retrieve users")
+                return
+            
+            users = response.json()
+            venue_users = [user for user in users if user.get("role") == "venue_staff"]
+            
+            if not venue_users:
+                self.log_result("Complete Notification Workflow", False, "No venue users found")
+                return
+            
+            venue_user = venue_users[0]
+            venue_id = venue_user["id"]
+            venue_name = venue_user["name"]
+            venue_address = venue_user.get("address") or "123 Test Street, Test City"
+            
+            # Get orderable items
+            response = self.session.get(f"{BASE_URL}/orderable-items")
+            if response.status_code != 200 or not response.json():
+                self.log_result("Complete Notification Workflow", False, "No orderable items available")
+                return
+            
+            orderable_items = response.json()
+            
+            # Create workflow test order
+            order_items = [
+                {
+                    "production_item_id": orderable_items[0]["id"],
+                    "production_item_name": orderable_items[0]["name"],
+                    "quantity": 1,
+                    "unit_of_measure": orderable_items[0]["unit_of_measure"],
+                    "unit_price": orderable_items[0]["unit_price"]
+                }
+            ]
+            
+            order_data = {
+                "venue_name": venue_name,
+                "venue_id": venue_id,
+                "delivery_address": venue_address,
+                "items": order_items,
+                "delivery_date": "2024-12-21"
+            }
+            
+            response = self.session.post(f"{BASE_URL}/orders", json=order_data)
+            if response.status_code == 200:
+                workflow_order = response.json()
+                order_id = workflow_order["id"]
+                invoice_number = workflow_order.get("invoice_number", "N/A")
+                total_amount = workflow_order.get("total_amount", 0)
+                
+                self.log_result("Place order for workflow test", True, 
+                              f"Order ID: {order_id}, Total: ${total_amount:.2f}")
+                
+                time.sleep(1)  # Brief delay
+                
+                # Verify notification created with proper message format
+                response = self.session.get(f"{BASE_URL}/notifications/{venue_id}")
+                if response.status_code == 200:
+                    notifications = response.json()
+                    order_placed_notifications = [n for n in notifications if n.get("event_type") == "order_placed" 
+                                                and n.get("order_id") == order_id]
+                    
+                    if order_placed_notifications:
+                        notification = order_placed_notifications[0]
+                        message = notification.get("message", "")
+                        
+                        # Verify message format contains key elements
+                        message_checks = [
+                            (f"#{invoice_number}" in message, "Invoice number in message"),
+                            (venue_name in message, "Venue name in message"),
+                            (f"${total_amount:.2f}" in message, "Total amount in message"),
+                            ("New order" in message, "Order type in message")
+                        ]
+                        
+                        for check, description in message_checks:
+                            self.log_result(description, check, f"Message: {message}")
+                        
+                    else:
+                        self.log_result("Order placed notification format", False, 
+                                      "No order_placed notification found")
+                else:
+                    self.log_result("Order placed notification format", False, 
+                                  f"Cannot retrieve notifications: {response.status_code}")
+                
+                # Test 2: Change status through workflow → verify each notification has correct content
+                status_transitions = [
+                    ("preparing", "is now being prepared in the kitchen"),
+                    ("ready", "is ready for pickup/delivery"),
+                    ("delivered", f"has been delivered to {venue_name}")
+                ]
+                
+                for status, expected_content in status_transitions:
+                    response = self.session.put(f"{BASE_URL}/orders/{order_id}/status?status={status}")
+                    if response.status_code == 200:
+                        self.log_result(f"Update order to {status}", True, f"Status updated to {status}")
+                        
+                        time.sleep(1)  # Brief delay
+                        
+                        # Check notification content
+                        response = self.session.get(f"{BASE_URL}/notifications/{venue_id}")
+                        if response.status_code == 200:
+                            notifications = response.json()
+                            status_notifications = [n for n in notifications if n.get("event_type") == f"order_{status}" 
+                                                  and n.get("order_id") == order_id]
+                            
+                            if status_notifications:
+                                notification = status_notifications[0]
+                                message = notification.get("message", "")
+                                
+                                # Verify message content
+                                content_checks = [
+                                    (f"#{invoice_number}" in message, f"Invoice number in {status} message"),
+                                    (expected_content in message, f"Expected content in {status} message")
+                                ]
+                                
+                                for check, description in content_checks:
+                                    self.log_result(description, check, f"Message: {message}")
+                                
+                            else:
+                                self.log_result(f"Order {status} notification content", False, 
+                                              f"No order_{status} notification found")
+                        else:
+                            self.log_result(f"Order {status} notification content", False, 
+                                          f"Cannot retrieve notifications: {response.status_code}")
+                    else:
+                        self.log_result(f"Update order to {status}", False, f"Status: {response.status_code}")
+                
+                # Test 3: Check that notifications are sent to users with proper preferences enabled
+                # Get notification preferences to verify targeting
+                response = self.session.get(f"{BASE_URL}/notification-preferences")
+                if response.status_code == 200:
+                    preferences = response.json()
+                    
+                    # Count users with each notification type enabled
+                    notification_counts = {
+                        "order_placed": len([p for p in preferences if p.get("order_placed", False)]),
+                        "order_preparing": len([p for p in preferences if p.get("order_preparing", False)]),
+                        "order_ready": len([p for p in preferences if p.get("order_ready", False)]),
+                        "order_delivered": len([p for p in preferences if p.get("order_delivered", False)])
+                    }
+                    
+                    self.log_result("Notification preference targeting", True, 
+                                  f"Users with preferences - Placed: {notification_counts['order_placed']}, "
+                                  f"Preparing: {notification_counts['order_preparing']}, "
+                                  f"Ready: {notification_counts['order_ready']}, "
+                                  f"Delivered: {notification_counts['order_delivered']}")
+                    
+                    # Verify notifications were created for users with preferences enabled
+                    for event_type, user_count in notification_counts.items():
+                        if user_count > 0:
+                            # Check if notifications exist for this event type
+                            test_user_with_pref = next((p for p in preferences if p.get(event_type, False)), None)
+                            if test_user_with_pref:
+                                response = self.session.get(f"{BASE_URL}/notifications/{test_user_with_pref['user_id']}")
+                                if response.status_code == 200:
+                                    user_notifications = response.json()
+                                    event_notifications = [n for n in user_notifications 
+                                                         if n.get("event_type") == event_type and n.get("order_id") == order_id]
+                                    
+                                    if event_notifications:
+                                        self.log_result(f"Notification sent to users with {event_type} preference", True, 
+                                                      f"Found {len(event_notifications)} notifications")
+                                    else:
+                                        self.log_result(f"Notification sent to users with {event_type} preference", False, 
+                                                      f"No {event_type} notifications found for user with preference enabled")
+                                else:
+                                    self.log_result(f"Notification sent to users with {event_type} preference", False, 
+                                                  f"Cannot retrieve notifications for user: {response.status_code}")
+                        else:
+                            self.log_result(f"Users with {event_type} preference", True, 
+                                          f"No users have {event_type} preference enabled (expected)")
+                else:
+                    self.log_result("Notification preference targeting", False, 
+                                  f"Cannot retrieve preferences: {response.status_code}")
+                
+            else:
+                self.log_result("Place order for workflow test", False, 
+                              f"Status: {response.status_code}, Response: {response.text}")
+                
+        except Exception as e:
+            self.log_result("Complete Notification Workflow", False, f"Exception: {str(e)}")
+
+    def run_notification_system_tests(self):
+        """Run comprehensive notification system tests"""
+        print("🔔 STARTING COMPREHENSIVE NOTIFICATION SYSTEM TESTING")
+        print("=" * 70)
+        
+        # Run all notification system tests
+        self.test_notification_management_endpoints()
+        self.test_automatic_notification_triggers()
+        self.test_notification_creation_and_retrieval()
+        self.test_complete_notification_workflow()
+        
+        # Print summary
+        print("\n" + "=" * 70)
+        print("🔔 NOTIFICATION SYSTEM TEST SUMMARY")
+        print("=" * 70)
+        print(f"✅ Tests Passed: {self.test_results['passed']}")
+        print(f"❌ Tests Failed: {self.test_results['failed']}")
+        print(f"📊 Success Rate: {(self.test_results['passed'] / (self.test_results['passed'] + self.test_results['failed']) * 100):.1f}%")
+        
+        if self.test_results['errors']:
+            print("\n🚨 FAILED TESTS:")
+            for error in self.test_results['errors']:
+                print(f"   • {error}")
+        
+        return self.test_results
+
 if __name__ == "__main__":
     tester = KitchenAPITester()
     
-    # Run debug tests for specific user issues
-    print("🔍 RUNNING DEBUG TESTS FOR USER ISSUES")
-    print("=" * 80)
-    results = tester.run_debug_tests()
+    # Run notification system tests as requested
+    results = tester.run_notification_system_tests()
     
-    if isinstance(results, dict) and results.get("failed", 0) == 0:
-        print("\n🎉 All debug tests passed!")
-        sys.exit(0)
-    else:
-        failed_count = results.get("failed", 1) if isinstance(results, dict) else 1
-        print(f"\n💥 {failed_count} tests failed. Check the output above for details.")
+    # Exit with error code if any tests failed
+    if results["failed"] > 0:
         sys.exit(1)
