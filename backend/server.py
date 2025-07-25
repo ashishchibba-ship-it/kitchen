@@ -89,17 +89,34 @@ class UserUpdate(BaseModel):
     username: Optional[str] = None
     address: Optional[str] = None
 
-class AppSettings(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    primary_color: str = "#3b82f6"
-    secondary_color: str = "#1f2937"
-    accent_color: str = "#10b981"
-    font_family: str = "Inter"
-    app_name: str = "Production Kitchen"
-    logo_url: Optional[str] = None
-    layout_style: str = "modern"  # modern, classic, compact
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+class NotificationPreference(BaseModel):
+    id: str
+    user_id: str
+    user_name: str
+    user_role: str
+    # Notification types
+    order_placed: bool = True
+    order_preparing: bool = True  
+    order_ready: bool = True
+    order_delivered: bool = True
+    # Future contact methods
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    # Notification methods (for future use)
+    notify_email: bool = True
+    notify_sms: bool = False
+    notify_in_app: bool = True
+    created_at: datetime
+    updated_at: datetime
+
+class NotificationEvent(BaseModel):
+    id: str
+    event_type: str  # 'order_placed', 'order_preparing', 'order_ready', 'order_delivered'
+    order_id: str
+    message: str
+    recipients: List[str]  # user_ids
+    created_at: datetime
+    read_by: List[str] = []  # user_ids who have read this notification
 
 class AppSettingsUpdate(BaseModel):
     primary_color: Optional[str] = None
