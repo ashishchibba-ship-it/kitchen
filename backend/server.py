@@ -240,12 +240,6 @@ async def init_predefined_data():
         for user in predefined_users:
             await db.users.insert_one(user.dict())
     
-    # Initialize default app settings
-    existing_settings = await db.app_settings.count_documents({})
-    if existing_settings == 0:
-        default_settings = AppSettings()
-        await db.app_settings.insert_one(default_settings.dict())
-    
     # Initialize default categories
     existing_categories = await db.categories.count_documents({})
     if existing_categories == 0:
