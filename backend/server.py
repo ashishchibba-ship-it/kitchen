@@ -133,7 +133,6 @@ class ProductionItem(BaseModel):
 class ProductionItemCreate(BaseModel):
     name: str
     category: str
-    quantity: Optional[int] = None  # Optional for manager creation
     unit_of_measure: str = "kg"  # Default to kg
     assigned_staff: Optional[str] = None
     image: Optional[str] = None
