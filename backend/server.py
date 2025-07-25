@@ -666,7 +666,28 @@ async def get_production_items(production_date: Optional[str] = None, status: Op
         filter_dict["category"] = category
     
     items = await db.production_items.find(filter_dict).sort("target_time", 1).to_list(1000)
-    return [ProductionItem(**item) for item in items]
+    
+    # Handle backward compatibility for items missing required fields
+    valid_items = []
+    for item in items:
+        try:
+            # Ensure required fields exist with defaults
+            if "category" not in item:
+                item["category"] = "Main Course"
+            if "unit_of_measure" not in item:
+                item["unit_of_measure"] = "kg"
+            if "base_cost" not in item:
+                item["base_cost"] = 10.0
+            if "unit_price" not in item:
+                item["unit_price"] = item.get("base_cost", 10.0) * 1.15
+            
+            valid_items.append(ProductionItem(**item))
+        except Exception as e:
+            # Skip invalid items
+            print(f"Skipping invalid production item {item.get('id', 'unknown')}: {e}")
+            continue
+    
+    return valid_items
 
 @api_router.put("/production-items/{item_id}/status")
 async def update_production_status(item_id: str, status: ProductionStatus):
