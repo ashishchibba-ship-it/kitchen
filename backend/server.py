@@ -513,24 +513,36 @@ async def mark_notification_read(notification_id: str, user_id: str):
 # Production management endpoints
 @api_router.post("/production-items", response_model=ProductionItem)
 async def create_production_item(item: ProductionItemCreate, created_by: str):
-    item_dict = item.dict()
-    item_dict["created_by"] = created_by
-    # Set automatic defaults for production items
-    item_dict["production_date"] = date.today()
-    item_dict["target_time"] = "12:00"  # Default target time
-    
-    production_item = ProductionItem(**item_dict)
-    
-    # Auto-calculate unit_price with 15% markup if base_cost is provided
-    production_item.unit_price = production_item.base_cost * 1.15
-    
-    # Convert date objects to strings for MongoDB storage
-    item_data = production_item.dict()
-    if isinstance(item_data.get("production_date"), date):
-        item_data["production_date"] = item_data["production_date"].isoformat()
-    
-    await db.production_items.insert_one(item_data)
-    return production_item
+    """Create a new production item"""
+    try:
+        # Create item with auto-generated fields
+        item_dict = item.dict()
+        item_dict["id"] = str(uuid.uuid4())
+        item_dict["production_date"] = date.today().isoformat()
+        item_dict["status"] = "pending"
+        item_dict["created_at"] = datetime.utcnow()
+        item_dict["updated_at"] = datetime.utcnow()
+        item_dict["target_time"] = "12:00"
+        
+        # Set default quantity if not provided (for manager creation)
+        if item_dict.get("quantity") is None:
+            item_dict["quantity"] = 1  # Default quantity
+        
+        # Ensure unit_of_measure defaults to kg
+        if not item_dict.get("unit_of_measure"):
+            item_dict["unit_of_measure"] = "kg"
+        
+        # Calculate unit price (15% markup on base_cost)
+        base_cost = item_dict.get("base_cost", 10.0)
+        item_dict["unit_price"] = base_cost * 1.15
+        
+        # Insert the item
+        await db.production_items.insert_one(item_dict)
+        
+        return ProductionItem(**item_dict)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating production item: {str(e)}")
 
 @api_router.put("/production-items/{item_id}", response_model=ProductionItem)
 async def update_production_item(item_id: str, item_update: ProductionItemCreate):
