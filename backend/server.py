@@ -385,25 +385,92 @@ async def update_production_item(item_id: str, item_update: ProductionItemCreate
     return ProductionItem(**updated_item)
 
 @api_router.delete("/production-items/{item_id}")
-async def delete_production_item(item_id: str):
+async def delete_production_item(item_id: str, force: bool = False):
     """Delete a production item"""
-    # Check if item is referenced in any orders
-    orders_with_item = await db.orders.count_documents({
-        "items.production_item_id": item_id
-    })
-    
-    if orders_with_item > 0:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Cannot delete item. It is referenced in {orders_with_item} order(s). Consider updating it instead."
-        )
-    
-    result = await db.production_items.delete_one({"id": item_id})
-    
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Production item not found")
-    
-    return {"message": "Production item deleted successfully"}
+    try:
+        # Check if item exists
+        item = await db.production_items.find_one({"id": item_id})
+        if not item:
+            raise HTTPException(status_code=404, detail="Production item not found")
+        
+        if not force:
+            # Check if item is referenced in any orders (protection mechanism)
+            orders_with_item = await db.orders.find({
+                "items.production_item_id": item_id
+            }).to_list(100)
+            
+            if orders_with_item:
+                order_count = len(orders_with_item)
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Cannot delete item. It is referenced in {order_count} order(s). Consider updating it instead, or use force delete."
+                )
+        
+        # Delete the item
+        result = await db.production_items.delete_one({"id": item_id})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Production item not found")
+        
+        if force:
+            # If force delete, also remove references from orders
+            orders_with_item = await db.orders.find({
+                "items.production_item_id": item_id
+            }).to_list(100)
+            
+            for order in orders_with_item:
+                # Remove the item from order's items list
+                updated_items = [item for item in order.get("items", []) if item.get("production_item_id") != item_id]
+                
+                # Recalculate order totals
+                new_subtotal = sum(item.get("quantity", 0) * item.get("unit_price", 0) for item in updated_items)
+                new_tax = new_subtotal * 0.08
+                new_total = new_subtotal + new_tax
+                
+                await db.orders.update_one(
+                    {"id": order["id"]},
+                    {
+                        "$set": {
+                            "items": updated_items,
+                            "subtotal": new_subtotal,
+                            "tax_amount": new_tax,
+                            "total_amount": new_total
+                        }
+                    }
+                )
+            
+            # Update related invoices
+            invoices_with_item = await db.invoices.find({
+                "items.production_item_id": item_id
+            }).to_list(100)
+            
+            for invoice in invoices_with_item:
+                # Remove the item from invoice's items list
+                updated_items = [item for item in invoice.get("items", []) if item.get("production_item_id") != item_id]
+                
+                # Recalculate invoice totals
+                new_subtotal = sum(item.get("quantity", 0) * item.get("unit_price", 0) for item in updated_items)
+                new_tax = new_subtotal * 0.08
+                new_total = new_subtotal + new_tax
+                
+                await db.invoices.update_one(
+                    {"id": invoice["id"]},
+                    {
+                        "$set": {
+                            "items": updated_items,
+                            "subtotal": new_subtotal,
+                            "tax_amount": new_tax,
+                            "total_amount": new_total
+                        }
+                    }
+                )
+        
+        return {"message": "Production item deleted successfully"}
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting production item: {str(e)}")
 
 @api_router.get("/production-items", response_model=List[ProductionItem])
 async def get_production_items(production_date: Optional[str] = None, status: Optional[str] = None, category: Optional[str] = None):
