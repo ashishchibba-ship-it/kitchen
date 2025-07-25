@@ -308,31 +308,6 @@ async def delete_user(user_id: str):
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "User deleted successfully"}
 
-# App Settings endpoints
-@api_router.get("/settings", response_model=AppSettings)
-async def get_app_settings():
-    settings = await db.app_settings.find_one()
-    if not settings:
-        # Create default settings if none exist
-        default_settings = AppSettings()
-        await db.app_settings.insert_one(default_settings.dict())
-        return default_settings
-    return AppSettings(**settings)
-
-@api_router.put("/settings", response_model=AppSettings)
-async def update_app_settings(settings_update: AppSettingsUpdate):
-    update_data = {k: v for k, v in settings_update.dict().items() if v is not None}
-    update_data["updated_at"] = datetime.utcnow()
-    
-    result = await db.app_settings.update_one(
-        {},
-        {"$set": update_data},
-        upsert=True
-    )
-    
-    settings = await db.app_settings.find_one()
-    return AppSettings(**settings)
-
 # Production management endpoints
 @api_router.post("/production-items", response_model=ProductionItem)
 async def create_production_item(item: ProductionItemCreate, created_by: str):
