@@ -461,7 +461,7 @@ class ForceDeleteAndValidationTester:
             order_data = {
                 "venue_name": venue_user["name"],
                 "venue_id": venue_user["id"],
-                "delivery_address": venue_user.get("address", "123 Test Street"),
+                "delivery_address": venue_user.get("address") or "123 Test Street, Test City",
                 "items": [
                     {
                         "production_item_id": item_id,
