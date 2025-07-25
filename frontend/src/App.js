@@ -621,7 +621,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                 </p>
               </div>
               <form onSubmit={handleCreateItem} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Item Name <span className="text-red-500">*</span>
@@ -655,32 +655,15 @@ const ManagerDashboard = ({ user, appSettings }) => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Quantity <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="e.g., 50"
-                      value={newItem.quantity}
-                      onChange={(e) => setNewItem({...newItem, quantity: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                      min="1"
-                    />
-                    {!newItem.quantity && <p className="text-xs text-red-500 mt-1">Quantity is required</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Unit of Measure <span className="text-red-500">*</span>
+                      Unit of Measure
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g., portions, kg, liters"
-                      value={newItem.unit_of_measure}
-                      onChange={(e) => setNewItem({...newItem, unit_of_measure: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
+                      value="kg"
+                      disabled
+                      className="w-full p-3 border border-gray-300 rounded-md bg-gray-100 text-gray-600"
                     />
-                    {!newItem.unit_of_measure && <p className="text-xs text-red-500 mt-1">Unit of measure is required</p>}
+                    <p className="text-xs text-gray-500 mt-1">All items use kilograms (kg)</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -729,15 +712,15 @@ const ManagerDashboard = ({ user, appSettings }) => {
                 
                 <button
                   type="submit"
-                  disabled={!newItem.name || !newItem.category || !newItem.quantity || !newItem.unit_of_measure || !newItem.base_cost}
+                  disabled={!newItem.name || !newItem.category || !newItem.base_cost}
                   className={`w-full py-3 px-4 rounded-md transition-colors ${
-                    (!newItem.name || !newItem.category || !newItem.quantity || !newItem.unit_of_measure || !newItem.base_cost)
+                    (!newItem.name || !newItem.category || !newItem.base_cost)
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : 'text-white hover:opacity-90'
                   }`}
-                  style={(!newItem.name || !newItem.category || !newItem.quantity || !newItem.unit_of_measure || !newItem.base_cost) ? {} : primaryButtonStyle}
+                  style={(!newItem.name || !newItem.category || !newItem.base_cost) ? {} : primaryButtonStyle}
                 >
-                  {(!newItem.name || !newItem.category || !newItem.quantity || !newItem.unit_of_measure || !newItem.base_cost) 
+                  {(!newItem.name || !newItem.category || !newItem.base_cost) 
                     ? 'Please fill in all required fields' 
                     : 'Add Production Item'
                   }
