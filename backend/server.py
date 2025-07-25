@@ -977,19 +977,46 @@ async def get_orders(venue_name: Optional[str] = None, venue_id: Optional[str] =
 
 @api_router.put("/orders/{order_id}/status")
 async def update_order_status(order_id: str, status: OrderStatus):
-    update_data = {"status": status}
-    if status == OrderStatus.DELIVERED:
-        update_data["delivered_at"] = datetime.utcnow()
-    
-    result = await db.orders.update_one(
-        {"id": order_id},
-        {"$set": update_data}
-    )
-    
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Order not found")
-    
-    return {"message": "Order status updated successfully"}
+    """Update order status and trigger notifications"""
+    try:
+        # Get the order first
+        order = await db.orders.find_one({"id": order_id})
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+        # Update the order status
+        update_data = {"status": status, "updated_at": datetime.utcnow()}
+        if status == OrderStatus.DELIVERED:
+            update_data["delivered_at"] = datetime.utcnow()
+        
+        result = await db.orders.update_one(
+            {"id": order_id},
+            {"$set": update_data}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+        # Create notification based on status change
+        status_messages = {
+            "preparing": f"Order #{order['invoice_number']} is now being prepared in the kitchen",
+            "ready": f"Order #{order['invoice_number']} is ready for pickup/delivery",
+            "delivered": f"Order #{order['invoice_number']} has been delivered to {order['venue_name']}"
+        }
+        
+        if status.value in status_messages:
+            await create_notification(
+                event_type=f"order_{status.value}",
+                order_id=order_id,
+                message=status_messages[status.value]
+            )
+        
+        return {"message": f"Order status updated to {status.value}"}
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating order status: {str(e)}")
 
 @api_router.put("/orders/{order_id}/delivery-date")
 async def update_delivery_date(order_id: str, delivery_date: date):
