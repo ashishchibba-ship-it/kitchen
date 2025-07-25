@@ -270,7 +270,7 @@ class ForceDeleteAndValidationTester:
                 self.log_result("Valid item creation", False, f"Status: {response.status_code}")
             
             # Step 2: Test missing required fields
-            required_fields = ["name", "category", "quantity", "unit_of_measure", "base_cost"]
+            required_fields = ["name", "category", "quantity", "unit_of_measure"]  # base_cost has default
             
             for missing_field in required_fields:
                 test_item = valid_item.copy()
