@@ -419,19 +419,26 @@ class KitchenAPITester:
         except Exception as e:
             self.log_result("Complete CRUD Workflow", False, f"Exception: {str(e)}")
 
-    def run_debug_tests(self):
-        """Run all debug tests for the specific user issues"""
-        print("🔍 STARTING DEBUG TESTS FOR USER ISSUES")
+    def test_simplified_ordering_system(self):
+        """Test the complete simplified ordering system workflow"""
+        print("🔍 STARTING SIMPLIFIED ORDERING SYSTEM TESTS")
         print("=" * 60)
         
-        # Debug the specific issues mentioned in the review request
-        self.debug_delete_issues()
-        self.debug_adding_items_issues()
-        self.test_complete_crud_workflow()
+        # Test 1: Production Item Creation without quantity field
+        self.test_production_item_creation_without_quantity()
+        
+        # Test 2: Orderable Items Without Limitations
+        self.test_orderable_items_without_limitations()
+        
+        # Test 3: Order Creation Without Inventory Reduction
+        self.test_order_creation_without_inventory_reduction()
+        
+        # Test 4: Complete Simplified Workflow
+        self.test_complete_simplified_workflow()
         
         # Print summary
         print("\n" + "=" * 60)
-        print("🔍 DEBUG TEST SUMMARY")
+        print("🔍 SIMPLIFIED ORDERING SYSTEM TEST SUMMARY")
         print("=" * 60)
         print(f"✅ Tests Passed: {self.test_results['passed']}")
         print(f"❌ Tests Failed: {self.test_results['failed']}")
@@ -443,6 +450,478 @@ class KitchenAPITester:
                 print(f"   • {error}")
         
         return self.test_results
+
+    def test_production_item_creation_without_quantity(self):
+        """Test Production Item Creation without quantity field (manager creation)"""
+        print("\n=== TEST 1: Production Item Creation Without Quantity Field ===")
+        
+        try:
+            # Test creating items without quantity field - should default to 1
+            test_items = [
+                {
+                    "name": "Manager Created Pasta",
+                    "category": "Main Course",
+                    "base_cost": 12.0
+                },
+                {
+                    "name": "Manager Created Salad", 
+                    "category": "Salad",
+                    "base_cost": 8.0,
+                    "assigned_staff": "chef_alice"
+                },
+                {
+                    "name": "Manager Created Dessert",
+                    "category": "Dessert", 
+                    "base_cost": 6.0,
+                    "image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                }
+            ]
+            
+            created_items = []
+            
+            for item_data in test_items:
+                response = self.session.post(
+                    f"{BASE_URL}/production-items?created_by=manager",
+                    json=item_data
+                )
+                
+                if response.status_code == 200:
+                    item = response.json()
+                    created_items.append(item)
+                    
+                    # Verify default quantity of 1 is set when not provided
+                    if item.get("quantity") == 1:
+                        self.log_result(f"Default quantity for {item_data['name']}", True, 
+                                      f"Quantity defaulted to 1")
+                    else:
+                        self.log_result(f"Default quantity for {item_data['name']}", False,
+                                      f"Expected 1, got {item.get('quantity')}")
+                    
+                    # Verify unit_of_measure defaults to "kg"
+                    if item.get("unit_of_measure") == "kg":
+                        self.log_result(f"Default unit_of_measure for {item_data['name']}", True,
+                                      f"Unit of measure defaulted to 'kg'")
+                    else:
+                        self.log_result(f"Default unit_of_measure for {item_data['name']}", False,
+                                      f"Expected 'kg', got {item.get('unit_of_measure')}")
+                    
+                    # Verify unit_price is calculated correctly (base_cost * 1.15)
+                    expected_unit_price = item_data["base_cost"] * 1.15
+                    actual_unit_price = item.get("unit_price")
+                    if abs(actual_unit_price - expected_unit_price) < 0.01:  # Allow for floating point precision
+                        self.log_result(f"Unit price calculation for {item_data['name']}", True,
+                                      f"Unit price: ${actual_unit_price:.2f} (15% markup on ${item_data['base_cost']:.2f})")
+                    else:
+                        self.log_result(f"Unit price calculation for {item_data['name']}", False,
+                                      f"Expected ${expected_unit_price:.2f}, got ${actual_unit_price:.2f}")
+                    
+                    self.log_result(f"Create production item without quantity: {item_data['name']}", True,
+                                  f"ID: {item['id']}")
+                else:
+                    self.log_result(f"Create production item without quantity: {item_data['name']}", False,
+                                  f"Status: {response.status_code}, Response: {response.text}")
+            
+            return created_items
+            
+        except Exception as e:
+            self.log_result("Production Item Creation Without Quantity", False, f"Exception: {str(e)}")
+            return []
+
+    def test_orderable_items_without_limitations(self):
+        """Test Orderable Items Without Limitations - verify ALL production items are returned"""
+        print("\n=== TEST 2: Orderable Items Without Limitations ===")
+        
+        try:
+            # Get all production items first
+            response = self.session.get(f"{BASE_URL}/production-items")
+            if response.status_code != 200:
+                self.log_result("Get all production items", False, f"Status: {response.status_code}")
+                return
+            
+            all_production_items = response.json()
+            self.log_result("Get all production items", True, f"Found {len(all_production_items)} total production items")
+            
+            # Test GET /api/orderable-items - should return ALL production items
+            response = self.session.get(f"{BASE_URL}/orderable-items")
+            if response.status_code == 200:
+                orderable_items = response.json()
+                self.log_result("GET /api/orderable-items", True, f"Retrieved {len(orderable_items)} orderable items")
+                
+                # Verify ALL production items are returned (no limitations)
+                if len(orderable_items) == len(all_production_items):
+                    self.log_result("All items available for ordering", True, 
+                                  f"All {len(all_production_items)} production items are orderable")
+                else:
+                    self.log_result("All items available for ordering", False,
+                                  f"Expected {len(all_production_items)} items, got {len(orderable_items)}")
+                
+                # Verify items show as always available (no quantity restrictions)
+                for item in orderable_items:
+                    if item.get("available_quantity") == 1000:  # Always show as available
+                        self.log_result(f"Always available quantity for {item['name']}", True,
+                                      f"Quantity: {item['available_quantity']}")
+                    else:
+                        self.log_result(f"Always available quantity for {item['name']}", False,
+                                      f"Expected 1000, got {item.get('available_quantity')}")
+                    
+                    # Verify availability_status is always "available"
+                    if item.get("availability_status") == "available":
+                        self.log_result(f"Always available status for {item['name']}", True,
+                                      f"Status: {item['availability_status']}")
+                    else:
+                        self.log_result(f"Always available status for {item['name']}", False,
+                                      f"Expected 'available', got {item.get('availability_status')}")
+                    
+                    # Confirm unit_of_measure shows as "kg" for all items
+                    if item.get("unit_of_measure") == "kg":
+                        self.log_result(f"Unit of measure for {item['name']}", True,
+                                      f"Unit: {item['unit_of_measure']}")
+                    else:
+                        self.log_result(f"Unit of measure for {item['name']}", False,
+                                      f"Expected 'kg', got {item.get('unit_of_measure')}")
+            else:
+                self.log_result("GET /api/orderable-items", False, f"Status: {response.status_code}")
+            
+            # Test GET /api/orderable-items/by-category - verify all items in all categories
+            response = self.session.get(f"{BASE_URL}/orderable-items/by-category")
+            if response.status_code == 200:
+                items_by_category = response.json()
+                self.log_result("GET /api/orderable-items/by-category", True,
+                              f"Retrieved items organized by {len(items_by_category)} categories")
+                
+                # Count total items across all categories
+                total_items_by_category = sum(len(items) for items in items_by_category.values())
+                
+                if total_items_by_category == len(all_production_items):
+                    self.log_result("All items in categories", True,
+                                  f"All {len(all_production_items)} items found across categories")
+                else:
+                    self.log_result("All items in categories", False,
+                                  f"Expected {len(all_production_items)}, found {total_items_by_category}")
+                
+                # Verify each category has items with proper structure
+                for category, items in items_by_category.items():
+                    if items:
+                        self.log_result(f"Category {category} has items", True, f"{len(items)} items")
+                        
+                        # Check first item structure
+                        first_item = items[0]
+                        required_fields = ["id", "name", "category", "available_quantity", "unit_of_measure", "unit_price"]
+                        missing_fields = [field for field in required_fields if field not in first_item]
+                        
+                        if not missing_fields:
+                            self.log_result(f"Category {category} item structure", True, "All required fields present")
+                        else:
+                            self.log_result(f"Category {category} item structure", False, f"Missing: {missing_fields}")
+            else:
+                self.log_result("GET /api/orderable-items/by-category", False, f"Status: {response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Orderable Items Without Limitations", False, f"Exception: {str(e)}")
+
+    def test_order_creation_without_inventory_reduction(self):
+        """Test Order Creation Without Inventory Reduction"""
+        print("\n=== TEST 3: Order Creation Without Inventory Reduction ===")
+        
+        try:
+            # Get orderable items for testing
+            response = self.session.get(f"{BASE_URL}/orderable-items")
+            if response.status_code != 200:
+                self.log_result("Get orderable items for order test", False, f"Status: {response.status_code}")
+                return
+            
+            orderable_items = response.json()
+            if not orderable_items:
+                self.log_result("Get orderable items for order test", False, "No orderable items available")
+                return
+            
+            # Get venue user for order
+            response = self.session.get(f"{BASE_URL}/users")
+            if response.status_code != 200:
+                self.log_result("Get venue user", False, f"Status: {response.status_code}")
+                return
+            
+            users = response.json()
+            venue_users = [user for user in users if user.get("role") == "venue_staff"]
+            if not venue_users:
+                self.log_result("Get venue user", False, "No venue users found")
+                return
+            
+            venue_user = venue_users[0]
+            
+            # Create test order with production items
+            test_items = orderable_items[:3]  # Use first 3 items
+            order_items = []
+            
+            for item in test_items:
+                order_items.append({
+                    "production_item_id": item["id"],
+                    "production_item_name": item["name"],
+                    "quantity": 5,  # Order 5 of each
+                    "unit_of_measure": item["unit_of_measure"],
+                    "unit_price": item["unit_price"]
+                })
+            
+            order_data = {
+                "venue_name": venue_user["name"],
+                "venue_id": venue_user["id"],
+                "delivery_address": venue_user.get("address", "123 Test Street"),
+                "items": order_items
+            }
+            
+            # Store original quantities before order
+            original_quantities = {}
+            for item in test_items:
+                original_quantities[item["id"]] = item["available_quantity"]
+            
+            # Create the order
+            response = self.session.post(f"{BASE_URL}/orders", json=order_data)
+            if response.status_code == 200:
+                order = response.json()
+                self.log_result("Create test order", True, f"Order ID: {order['id']}, Total: ${order['total_amount']:.2f}")
+                
+                # Verify order is created successfully with proper structure
+                required_fields = ["id", "venue_name", "venue_id", "items", "total_amount", "status"]
+                missing_fields = [field for field in required_fields if field not in order]
+                
+                if not missing_fields:
+                    self.log_result("Order structure verification", True, "All required fields present")
+                else:
+                    self.log_result("Order structure verification", False, f"Missing fields: {missing_fields}")
+                
+                # Confirm production item quantities are NOT reduced
+                response = self.session.get(f"{BASE_URL}/orderable-items")
+                if response.status_code == 200:
+                    updated_orderable_items = response.json()
+                    
+                    quantities_unchanged = True
+                    for item in updated_orderable_items:
+                        if item["id"] in original_quantities:
+                            original_qty = original_quantities[item["id"]]
+                            current_qty = item["available_quantity"]
+                            
+                            if current_qty == original_qty:
+                                self.log_result(f"No inventory reduction for {item['name']}", True,
+                                              f"Quantity remains {current_qty}")
+                            else:
+                                self.log_result(f"No inventory reduction for {item['name']}", False,
+                                              f"Quantity changed from {original_qty} to {current_qty}")
+                                quantities_unchanged = False
+                    
+                    if quantities_unchanged:
+                        self.log_result("Overall inventory unchanged", True, "No production item quantities were reduced")
+                    else:
+                        self.log_result("Overall inventory unchanged", False, "Some quantities were unexpectedly reduced")
+                else:
+                    self.log_result("Verify no inventory reduction", False, "Cannot verify inventory levels")
+                
+                # Test notification system still works with orders
+                # Check if notification was created for the order
+                response = self.session.get(f"{BASE_URL}/notifications/{venue_user['id']}")
+                if response.status_code == 200:
+                    notifications = response.json()
+                    order_notifications = [n for n in notifications if order["id"] in n.get("message", "")]
+                    
+                    if order_notifications:
+                        self.log_result("Order notification created", True, f"Found {len(order_notifications)} notifications")
+                    else:
+                        self.log_result("Order notification created", False, "No notifications found for this order")
+                else:
+                    self.log_result("Order notification created", False, f"Cannot check notifications: {response.status_code}")
+                
+                return order
+            else:
+                self.log_result("Create test order", False, f"Status: {response.status_code}, Response: {response.text}")
+                return None
+                
+        except Exception as e:
+            self.log_result("Order Creation Without Inventory Reduction", False, f"Exception: {str(e)}")
+            return None
+
+    def test_complete_simplified_workflow(self):
+        """Test Complete Simplified Workflow"""
+        print("\n=== TEST 4: Complete Simplified Workflow ===")
+        
+        try:
+            # Step 1: Manager creates item → item immediately available for ordering
+            print("\n--- Step 1: Manager creates item ---")
+            
+            workflow_item = {
+                "name": "Workflow Test Burger",
+                "category": "Main Course",
+                "base_cost": 15.0,
+                "assigned_staff": "chef_alice"
+            }
+            
+            response = self.session.post(
+                f"{BASE_URL}/production-items?created_by=manager",
+                json=workflow_item
+            )
+            
+            if response.status_code == 200:
+                created_item = response.json()
+                self.log_result("Manager creates item", True, f"Created: {created_item['name']}")
+                
+                # Verify item immediately available for ordering
+                response = self.session.get(f"{BASE_URL}/orderable-items")
+                if response.status_code == 200:
+                    orderable_items = response.json()
+                    item_found = any(item["id"] == created_item["id"] for item in orderable_items)
+                    
+                    if item_found:
+                        self.log_result("Item immediately available for ordering", True,
+                                      "Item appears in orderable-items immediately")
+                    else:
+                        self.log_result("Item immediately available for ordering", False,
+                                      "Item not found in orderable-items")
+                else:
+                    self.log_result("Item immediately available for ordering", False,
+                                  f"Cannot check orderable items: {response.status_code}")
+            else:
+                self.log_result("Manager creates item", False, f"Status: {response.status_code}")
+                return
+            
+            # Step 2: Venue places order → no inventory reduction
+            print("\n--- Step 2: Venue places order ---")
+            
+            # Get venue user
+            response = self.session.get(f"{BASE_URL}/users")
+            if response.status_code == 200:
+                users = response.json()
+                venue_users = [user for user in users if user.get("role") == "venue_staff"]
+                if venue_users:
+                    venue_user = venue_users[0]
+                    
+                    # Place order for the workflow item
+                    order_data = {
+                        "venue_name": venue_user["name"],
+                        "venue_id": venue_user["id"],
+                        "delivery_address": venue_user.get("address", "123 Test Street"),
+                        "items": [{
+                            "production_item_id": created_item["id"],
+                            "production_item_name": created_item["name"],
+                            "quantity": 3,
+                            "unit_of_measure": created_item["unit_of_measure"],
+                            "unit_price": created_item["unit_price"]
+                        }]
+                    }
+                    
+                    response = self.session.post(f"{BASE_URL}/orders", json=order_data)
+                    if response.status_code == 200:
+                        order = response.json()
+                        self.log_result("Venue places order", True, f"Order placed: {order['id']}")
+                        
+                        # Verify no inventory reduction
+                        response = self.session.get(f"{BASE_URL}/orderable-items")
+                        if response.status_code == 200:
+                            updated_orderable_items = response.json()
+                            workflow_item_updated = next((item for item in updated_orderable_items 
+                                                       if item["id"] == created_item["id"]), None)
+                            
+                            if workflow_item_updated and workflow_item_updated["available_quantity"] == 1000:
+                                self.log_result("No inventory reduction after order", True,
+                                              "Item quantity remains at 1000 (always available)")
+                            else:
+                                self.log_result("No inventory reduction after order", False,
+                                              f"Quantity changed to {workflow_item_updated['available_quantity'] if workflow_item_updated else 'item not found'}")
+                    else:
+                        self.log_result("Venue places order", False, f"Status: {response.status_code}")
+                        return
+                else:
+                    self.log_result("Get venue user for workflow", False, "No venue users found")
+                    return
+            else:
+                self.log_result("Get venue user for workflow", False, f"Status: {response.status_code}")
+                return
+            
+            # Step 3: Kitchen receives notification → can process order
+            print("\n--- Step 3: Kitchen receives notification ---")
+            
+            # Get kitchen staff user
+            kitchen_users = [user for user in users if user.get("role") == "kitchen_staff"]
+            if kitchen_users:
+                kitchen_user = kitchen_users[0]
+                
+                # Check if kitchen staff received notification
+                response = self.session.get(f"{BASE_URL}/notifications/{kitchen_user['id']}")
+                if response.status_code == 200:
+                    notifications = response.json()
+                    order_notifications = [n for n in notifications if order["id"] in n.get("message", "")]
+                    
+                    if order_notifications:
+                        self.log_result("Kitchen receives notification", True,
+                                      f"Kitchen staff received {len(order_notifications)} notifications")
+                    else:
+                        self.log_result("Kitchen receives notification", False,
+                                      "No order notifications found for kitchen staff")
+                else:
+                    self.log_result("Kitchen receives notification", False,
+                                  f"Cannot check kitchen notifications: {response.status_code}")
+                
+                # Verify kitchen can see and process the order
+                response = self.session.get(f"{BASE_URL}/orders?status=pending")
+                if response.status_code == 200:
+                    pending_orders = response.json()
+                    workflow_order = next((o for o in pending_orders if o["id"] == order["id"]), None)
+                    
+                    if workflow_order:
+                        self.log_result("Kitchen can see order for processing", True,
+                                      f"Order {order['id']} visible in pending orders")
+                        
+                        # Test kitchen can update order status
+                        response = self.session.put(f"{BASE_URL}/orders/{order['id']}/status?status=preparing")
+                        if response.status_code == 200:
+                            self.log_result("Kitchen can process order", True,
+                                          "Successfully updated order status to 'preparing'")
+                        else:
+                            self.log_result("Kitchen can process order", False,
+                                          f"Cannot update order status: {response.status_code}")
+                    else:
+                        self.log_result("Kitchen can see order for processing", False,
+                                      "Order not found in pending orders")
+                else:
+                    self.log_result("Kitchen can see order for processing", False,
+                                  f"Cannot get pending orders: {response.status_code}")
+            else:
+                self.log_result("Get kitchen user for workflow", False, "No kitchen users found")
+            
+            # Step 4: Verify all items always remain "available" status
+            print("\n--- Step 4: Verify items always remain available ---")
+            
+            response = self.session.get(f"{BASE_URL}/orderable-items")
+            if response.status_code == 200:
+                final_orderable_items = response.json()
+                
+                all_available = all(item.get("availability_status") == "available" for item in final_orderable_items)
+                all_quantity_1000 = all(item.get("available_quantity") == 1000 for item in final_orderable_items)
+                
+                if all_available:
+                    self.log_result("All items always remain available status", True,
+                                  f"All {len(final_orderable_items)} items have 'available' status")
+                else:
+                    unavailable_items = [item["name"] for item in final_orderable_items 
+                                       if item.get("availability_status") != "available"]
+                    self.log_result("All items always remain available status", False,
+                                  f"Items not available: {unavailable_items}")
+                
+                if all_quantity_1000:
+                    self.log_result("All items always show quantity 1000", True,
+                                  f"All {len(final_orderable_items)} items show quantity 1000")
+                else:
+                    different_quantities = [(item["name"], item.get("available_quantity")) 
+                                          for item in final_orderable_items 
+                                          if item.get("available_quantity") != 1000]
+                    self.log_result("All items always show quantity 1000", False,
+                                  f"Items with different quantities: {different_quantities}")
+            else:
+                self.log_result("Verify items always remain available", False,
+                              f"Cannot check final item status: {response.status_code}")
+            
+            self.log_result("Complete Simplified Workflow", True,
+                          "Full workflow completed: Manager creates → immediately available → venue orders → no inventory reduction → kitchen processes → items remain available")
+                
+        except Exception as e:
+            self.log_result("Complete Simplified Workflow", False, f"Exception: {str(e)}")
         """Test simplified production item creation without target_time and production_date"""
         print("\n=== Testing Simplified Production Item Creation ===")
         
