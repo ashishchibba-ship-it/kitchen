@@ -1083,6 +1083,185 @@ const ManagerDashboard = ({ user, appSettings }) => {
           </div>
         )}
 
+        {activeTab === 'notifications' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-800">Notification Management</h3>
+                <div className="text-sm text-gray-600">
+                  Configure notification preferences for all users
+                </div>
+              </div>
+              
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="font-semibold text-blue-800 mb-2">📱 Notification System Setup</h4>
+                <p className="text-sm text-blue-700 mb-2">
+                  <strong>Current Status:</strong> In-app notifications are active. Email and SMS features will be available soon.
+                </p>
+                <p className="text-xs text-blue-600">
+                  💡 <strong>Future Features:</strong> Email notifications, SMS alerts, and push notifications can be added in the "Contact Methods" section below.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid gap-4">
+                  {notificationPreferences.map(pref => (
+                    <div key={pref.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="font-medium text-gray-800">{pref.user_name}</h4>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            pref.user_role === 'manager' ? 'bg-purple-100 text-purple-800' :
+                            pref.user_role === 'kitchen_staff' ? 'bg-green-100 text-green-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {pref.user_role.replace('_', ' ')}
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Last updated: {new Date(pref.updated_at).toLocaleDateString()}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Notification Types */}
+                        <div>
+                          <h5 className="text-sm font-medium text-gray-700 mb-2">📋 Order Notifications</h5>
+                          <div className="space-y-2">
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={pref.order_placed}
+                                onChange={(e) => updateNotificationPreferences(pref.user_id, {
+                                  ...pref,
+                                  order_placed: e.target.checked
+                                })}
+                                className="mr-2"
+                              />
+                              <span className="text-sm">🔔 When food is ordered</span>
+                            </label>
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={pref.order_preparing}
+                                onChange={(e) => updateNotificationPreferences(pref.user_id, {
+                                  ...pref,
+                                  order_preparing: e.target.checked
+                                })}
+                                className="mr-2"
+                              />
+                              <span className="text-sm">👨‍🍳 When order is being prepared</span>
+                            </label>
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={pref.order_ready}
+                                onChange={(e) => updateNotificationPreferences(pref.user_id, {
+                                  ...pref,
+                                  order_ready: e.target.checked
+                                })}
+                                className="mr-2"
+                              />
+                              <span className="text-sm">✅ When order is ready for delivery</span>
+                            </label>
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={pref.order_delivered}
+                                onChange={(e) => updateNotificationPreferences(pref.user_id, {
+                                  ...pref,
+                                  order_delivered: e.target.checked
+                                })}
+                                className="mr-2"
+                              />
+                              <span className="text-sm">🚚 When order is delivered</span>
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* Contact Methods (Future Features) */}
+                        <div>
+                          <h5 className="text-sm font-medium text-gray-700 mb-2">📞 Contact Methods</h5>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Email Address</label>
+                              <input
+                                type="email"
+                                placeholder="user@example.com (Coming Soon)"
+                                value={pref.email || ''}
+                                onChange={(e) => updateNotificationPreferences(pref.user_id, {
+                                  ...pref,
+                                  email: e.target.value
+                                })}
+                                className="w-full text-xs p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                disabled
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Phone Number</label>
+                              <input
+                                type="tel"
+                                placeholder="+1 (555) 123-4567 (Coming Soon)"
+                                value={pref.phone || ''}
+                                onChange={(e) => updateNotificationPreferences(pref.user_id, {
+                                  ...pref,
+                                  phone: e.target.value
+                                })}
+                                className="w-full text-xs p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                disabled
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="flex items-center text-xs text-gray-600">
+                                <input
+                                  type="checkbox"
+                                  checked={pref.notify_email}
+                                  disabled
+                                  className="mr-2 opacity-50"
+                                />
+                                📧 Email notifications (Coming Soon)
+                              </label>
+                              <label className="flex items-center text-xs text-gray-600">
+                                <input
+                                  type="checkbox"
+                                  checked={pref.notify_sms}
+                                  disabled
+                                  className="mr-2 opacity-50"
+                                />
+                                📱 SMS notifications (Coming Soon)
+                              </label>
+                              <label className="flex items-center text-xs">
+                                <input
+                                  type="checkbox"
+                                  checked={pref.notify_in_app}
+                                  onChange={(e) => updateNotificationPreferences(pref.user_id, {
+                                    ...pref,
+                                    notify_in_app: e.target.checked
+                                  })}
+                                  className="mr-2"
+                                />
+                                <span className="text-green-600">💻 In-app notifications (Active)</span>
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {notificationPreferences.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <div className="text-lg mb-2">📭</div>
+                    <p>No notification preferences found.</p>
+                    <p className="text-sm">Preferences will be created automatically for all users.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'categories' && (
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-lg shadow">
