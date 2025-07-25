@@ -122,12 +122,8 @@ class ProductionItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     category: str
-    quantity: int
     unit_of_measure: str = "kg"  # Default to kg
     assigned_staff: Optional[str] = None
-    production_date: str = Field(default_factory=lambda: date.today().isoformat())
-    target_time: str = "12:00"
-    status: str = "pending"  # pending, in_progress, completed
     image: Optional[str] = None  # Base64 encoded image
     base_cost: float = 10.0
     unit_price: float = Field(default=0.0)  # Will be calculated as base_cost * 1.15
