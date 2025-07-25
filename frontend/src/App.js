@@ -147,6 +147,8 @@ const ManagerDashboard = ({ user, appSettings }) => {
   const [invoices, setInvoices] = useState([]);
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [settings, setSettings] = useState(appSettings || {});
+  const [notificationPreferences, setNotificationPreferences] = useState([]);
+  const [notifications, setNotifications] = useState([]);
 
   const [newItem, setNewItem] = useState({
     name: '',
