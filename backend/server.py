@@ -757,22 +757,23 @@ async def update_item_availability(item_id: str, update: ProductionItemUpdate):
 
 @api_router.get("/orderable-items", response_model=List[OrderableItem])
 async def get_orderable_items():
-    """Get items available for ordering"""
-    items = await db.production_items.find({
-        "available_for_order": {"$gt": 0}
-    }).sort("name", 1).to_list(1000)
+    """Get all items available for ordering (all production items are always available)"""
+    items = await db.production_items.find({}).sort("name", 1).to_list(1000)
     
     orderable_items = []
     for item in items:
+        # Calculate unit price (15% markup on base_cost)
+        unit_price = item.get("base_cost", 10.0) * 1.15
+        
         orderable_item = OrderableItem(
             id=item["id"],
             name=item["name"],
             category=item.get("category", "Main Course"),
-            available_quantity=item.get("available_for_order", 0),
-            unit_of_measure=item.get("unit_of_measure", "units"),
-            unit_price=item.get("unit_price", 15.0),
+            available_quantity=1000,  # Always show as available
+            unit_of_measure=item.get("unit_of_measure", "kg"),
+            unit_price=unit_price,
             image=item.get("image"),
-            availability_status=item.get("availability_status", "available")
+            availability_status="available"
         )
         orderable_items.append(orderable_item)
     
@@ -780,24 +781,25 @@ async def get_orderable_items():
 
 @api_router.get("/orderable-items/by-category")
 async def get_orderable_items_by_category():
-    """Get orderable items organized by category"""
-    items = await db.production_items.find({
-        "available_for_order": {"$gt": 0}
-    }).sort("name", 1).to_list(1000)
+    """Get all items available for ordering organized by category"""
+    items = await db.production_items.find({}).sort("name", 1).to_list(1000)
     
     categories = defaultdict(list)
     
     for item in items:
+        # Calculate unit price (15% markup on base_cost)
+        unit_price = item.get("base_cost", 10.0) * 1.15
+        
         category = item.get("category", "Main Course")
         orderable_item = OrderableItem(
             id=item["id"],
             name=item["name"],
             category=category,
-            available_quantity=item.get("available_for_order", 0),
-            unit_of_measure=item.get("unit_of_measure", "units"),
-            unit_price=item.get("unit_price", 15.0),
+            available_quantity=1000,  # Always show as available
+            unit_of_measure=item.get("unit_of_measure", "kg"),
+            unit_price=unit_price,
             image=item.get("image"),
-            availability_status=item.get("availability_status", "available")
+            availability_status="available"
         )
         categories[category].append(orderable_item)
     
