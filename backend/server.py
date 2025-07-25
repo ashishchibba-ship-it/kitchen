@@ -230,6 +230,25 @@ class PurchaseOrder(BaseModel):
     total_amount: float
     status: str = "pending"  # pending, approved, completed
 
+class AppSettings(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    app_name: str = "Production Kitchen Management"
+    company_name: str = "Kitchen Co."
+    tax_rate: float = 0.08
+    default_markup: float = 0.15
+    currency: str = "USD"
+    timezone: str = "UTC"
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class AppSettingsUpdate(BaseModel):
+    app_name: Optional[str] = None
+    company_name: Optional[str] = None
+    tax_rate: Optional[float] = None
+    default_markup: Optional[float] = None
+    currency: Optional[str] = None
+    timezone: Optional[str] = None
+
 # Initialize predefined users and settings
 async def init_predefined_data():
     # Initialize users
