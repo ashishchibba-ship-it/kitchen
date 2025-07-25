@@ -121,30 +121,27 @@ class NotificationEvent(BaseModel):
 class ProductionItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
-    category: Optional[str] = "Main Course"  # Make optional with default for backward compatibility
-    quantity: int  # Total produced
-    available_for_order: int = 0  # Available for ordering (set by manager)
-    unit_of_measure: Optional[str] = "units"  # Make optional with default for backward compatibility
-    target_time: str  # Format: "HH:MM"
-    production_date: date
-    status: ProductionStatus = ProductionStatus.PENDING
+    category: str
+    quantity: int
+    unit_of_measure: str = "kg"  # Default to kg
     assigned_staff: Optional[str] = None
+    production_date: str = Field(default_factory=lambda: date.today().isoformat())
+    target_time: str = "12:00"
+    status: str = "pending"  # pending, in_progress, completed
     image: Optional[str] = None  # Base64 encoded image
-    base_cost: float = 10.0  # Base cost per unit (manager sets this)
-    unit_price: float = 11.5  # Selling price with 15% markup (auto-calculated)
-    availability_status: ItemAvailability = ItemAvailability.AVAILABLE
-    created_by: str
+    base_cost: float = 10.0
+    unit_price: float = Field(default=0.0)  # Will be calculated as base_cost * 1.15
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    completed_at: Optional[datetime] = None
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class ProductionItemCreate(BaseModel):
     name: str
     category: str
-    quantity: int
-    unit_of_measure: str
+    quantity: Optional[int] = None  # Optional for manager creation
+    unit_of_measure: str = "kg"  # Default to kg
     assigned_staff: Optional[str] = None
     image: Optional[str] = None
-    base_cost: float = 10.0  # Base cost per unit
+    base_cost: float = 10.0
 
 class ProductionItemUpdate(BaseModel):
     available_for_order: Optional[int] = None
