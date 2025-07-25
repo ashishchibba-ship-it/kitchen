@@ -2445,14 +2445,14 @@ class KitchenAPITester:
 if __name__ == "__main__":
     tester = KitchenAPITester()
     
-    # Run production item edit functionality tests as requested
-    print("🎯 RUNNING PRODUCTION ITEM EDIT FUNCTIONALITY TESTS")
+    # Run debug tests for specific user issues
+    print("🔍 RUNNING DEBUG TESTS FOR USER ISSUES")
     print("=" * 80)
-    success = tester.run_production_item_edit_tests()
+    results = tester.run_debug_tests()
     
-    if success:
-        print("\n🎉 All production item edit tests passed!")
+    if results["failed"] == 0:
+        print("\n🎉 All debug tests passed!")
         sys.exit(0)
     else:
-        print("\n💥 Some tests failed. Check the output above for details.")
+        print(f"\n💥 {results['failed']} tests failed. Check the output above for details.")
         sys.exit(1)
