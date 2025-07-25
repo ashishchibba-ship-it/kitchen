@@ -368,15 +368,27 @@ const ManagerDashboard = ({ user, appSettings }) => {
     }
   };
 
-  const handleDeleteProductionItem = async (itemId) => {
-    if (window.confirm('Are you sure you want to delete this production item?')) {
+  const handleDeleteProductionItem = async (itemId, itemName, forceDelete = false) => {
+    const confirmMessage = forceDelete 
+      ? `Are you sure you want to FORCE DELETE "${itemName}"? This will remove it from all orders and cannot be undone.`
+      : `Are you sure you want to delete "${itemName}"?`;
+    
+    if (window.confirm(confirmMessage)) {
       try {
-        await axios.delete(`${API}/production-items/${itemId}`);
+        const url = `${API}/production-items/${itemId}${forceDelete ? '?force=true' : ''}`;
+        await axios.delete(url);
         fetchProductionItems();
+        alert(forceDelete ? 'Item force deleted successfully!' : 'Item deleted successfully!');
       } catch (error) {
         console.error('Error deleting production item:', error);
         if (error.response?.status === 400) {
-          alert('Cannot delete item. It is referenced in existing orders. Consider updating it instead.');
+          // Show force delete option
+          const forceConfirm = window.confirm(
+            `${error.response.data.detail}\n\nWould you like to FORCE DELETE this item? This will remove it from all orders and cannot be undone.`
+          );
+          if (forceConfirm) {
+            handleDeleteProductionItem(itemId, itemName, true);
+          }
         } else {
           alert('Error deleting production item.');
         }
