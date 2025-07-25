@@ -589,69 +589,132 @@ const ManagerDashboard = ({ user, appSettings }) => {
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Add Production Item</h3>
-              <form onSubmit={handleCreateItem} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="Item Name"
-                  value={newItem.name}
-                  onChange={(e) => setNewItem({...newItem, name: e.target.value})}
-                  className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                <select
-                  value={newItem.category}
-                  onChange={(e) => setNewItem({...newItem, category: e.target.value})}
-                  className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="">Select Category</option>
-                  {categories.map(category => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-                <div className="flex space-x-2">
-                  <input
-                    type="number"
-                    placeholder="Quantity"
-                    value={newItem.quantity}
-                    onChange={(e) => setNewItem({...newItem, quantity: e.target.value})}
-                    className="flex-1 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                  <input
-                    type="text"
-                    placeholder="Unit (kg, pcs, etc.)"
-                    value={newItem.unit_of_measure}
-                    onChange={(e) => setNewItem({...newItem, unit_of_measure: e.target.value})}
-                    className="w-32 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                <p className="text-sm text-blue-800">
+                  <strong>Required Fields:</strong> Item Name, Category, Quantity, Unit of Measure, and Base Cost are all required to create a production item.
+                </p>
+              </div>
+              <form onSubmit={handleCreateItem} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Item Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Grilled Chicken Breast"
+                      value={newItem.name}
+                      onChange={(e) => setNewItem({...newItem, name: e.target.value})}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                    {!newItem.name && <p className="text-xs text-red-500 mt-1">Item name is required</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Category <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={newItem.category}
+                      onChange={(e) => setNewItem({...newItem, category: e.target.value})}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Select Category</option>
+                      {categories.map(category => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
+                    </select>
+                    {!newItem.category && <p className="text-xs text-red-500 mt-1">Category is required</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Quantity <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="e.g., 50"
+                      value={newItem.quantity}
+                      onChange={(e) => setNewItem({...newItem, quantity: e.target.value})}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                      min="1"
+                    />
+                    {!newItem.quantity && <p className="text-xs text-red-500 mt-1">Quantity is required</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Unit of Measure <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., portions, kg, liters"
+                      value={newItem.unit_of_measure}
+                      onChange={(e) => setNewItem({...newItem, unit_of_measure: e.target.value})}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                    {!newItem.unit_of_measure && <p className="text-xs text-red-500 mt-1">Unit of measure is required</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Base Cost <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="e.g., 12.50"
+                      value={newItem.base_cost}
+                      onChange={(e) => setNewItem({...newItem, base_cost: parseFloat(e.target.value) || ''})}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                      min="0.01"
+                    />
+                    {!newItem.base_cost && <p className="text-xs text-red-500 mt-1">Base cost is required</p>}
+                    <p className="text-xs text-gray-500 mt-1">Selling price will be calculated with 15% markup</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Assigned Staff (Optional)
+                    </label>
+                    <select
+                      value={newItem.assigned_staff}
+                      onChange={(e) => setNewItem({...newItem, assigned_staff: e.target.value})}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Staff (Optional)</option>
+                      {users.filter(user => user.role === 'kitchen_staff').map(user => (
+                        <option key={user.id} value={user.username}>{user.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Base Cost per Unit</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="10.00"
-                    value={newItem.base_cost}
-                    onChange={(e) => setNewItem({...newItem, base_cost: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Selling price: ${(parseFloat(newItem.base_cost || 0) * 1.15).toFixed(2)} (15% markup)</p>
-                </div>
-                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Item Image (Optional)
+                  </label>
                   <ImageUpload 
                     onImageSelect={(image) => setNewItem({...newItem, image})}
                     currentImage={newItem.image}
                   />
+                  <p className="text-xs text-gray-500 mt-1">Upload an image to display in the ordering interface</p>
                 </div>
+                
                 <button
                   type="submit"
-                  className="md:col-span-2 text-white py-3 px-4 rounded-md hover:opacity-90 transition-colors"
-                  style={primaryButtonStyle}
+                  disabled={!newItem.name || !newItem.category || !newItem.quantity || !newItem.unit_of_measure || !newItem.base_cost}
+                  className={`w-full py-3 px-4 rounded-md transition-colors ${
+                    (!newItem.name || !newItem.category || !newItem.quantity || !newItem.unit_of_measure || !newItem.base_cost)
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'text-white hover:opacity-90'
+                  }`}
+                  style={(!newItem.name || !newItem.category || !newItem.quantity || !newItem.unit_of_measure || !newItem.base_cost) ? {} : primaryButtonStyle}
                 >
-                  Add Item
+                  {(!newItem.name || !newItem.category || !newItem.quantity || !newItem.unit_of_measure || !newItem.base_cost) 
+                    ? 'Please fill in all required fields' 
+                    : 'Add Production Item'
+                  }
                 </button>
               </form>
             </div>
