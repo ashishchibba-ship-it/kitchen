@@ -2440,7 +2440,7 @@ class KitchenAPITester:
                            (self.test_results['passed'] + self.test_results['failed']) * 100)
             print(f"\n📊 Success Rate: {success_rate:.1f}%")
         
-        return self.test_results['failed'] == 0
+        return self.test_results
 
 if __name__ == "__main__":
     tester = KitchenAPITester()
