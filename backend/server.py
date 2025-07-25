@@ -335,6 +335,160 @@ async def delete_user(user_id: str):
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "User deleted successfully"}
 
+@api_router.get("/settings", response_model=AppSettings)
+async def get_app_settings():
+    settings = await db.app_settings.find_one()
+    if not settings:
+        # Create default settings if none exist
+        default_settings = AppSettings()
+        await db.app_settings.insert_one(default_settings.dict())
+        return default_settings
+    return AppSettings(**settings)
+
+@api_router.put("/settings", response_model=AppSettings)
+async def update_app_settings(settings_update: AppSettingsUpdate):
+    update_data = {k: v for k, v in settings_update.dict().items() if v is not None}
+    update_data["updated_at"] = datetime.utcnow()
+    
+    result = await db.app_settings.update_one(
+        {},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    settings = await db.app_settings.find_one()
+    return AppSettings(**settings)
+
+# Notification Management Endpoints
+@api_router.get("/notification-preferences", response_model=List[NotificationPreference])
+async def get_all_notification_preferences():
+    """Get notification preferences for all users"""
+    try:
+        # Get all users first
+        users = await db.users.find({}).to_list(1000)
+        preferences = []
+        
+        for user in users:
+            # Check if preferences exist for this user
+            existing_pref = await db.notification_preferences.find_one({"user_id": user["id"]})
+            
+            if existing_pref:
+                preferences.append(NotificationPreference(**existing_pref))
+            else:
+                # Create default preferences for new users
+                default_pref = NotificationPreference(
+                    id=str(uuid.uuid4()),
+                    user_id=user["id"],
+                    user_name=user["name"],
+                    user_role=user["role"],
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
+                )
+                await db.notification_preferences.insert_one(default_pref.dict())
+                preferences.append(default_pref)
+        
+        return preferences
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching notification preferences: {str(e)}")
+
+@api_router.put("/notification-preferences/{user_id}")
+async def update_notification_preferences(user_id: str, preferences: dict):
+    """Update notification preferences for a specific user"""
+    try:
+        # Prepare update data
+        update_data = {
+            "order_placed": preferences.get("order_placed", True),
+            "order_preparing": preferences.get("order_preparing", True),
+            "order_ready": preferences.get("order_ready", True),
+            "order_delivered": preferences.get("order_delivered", True),
+            "email": preferences.get("email"),
+            "phone": preferences.get("phone"),
+            "notify_email": preferences.get("notify_email", True),
+            "notify_sms": preferences.get("notify_sms", False),
+            "notify_in_app": preferences.get("notify_in_app", True),
+            "updated_at": datetime.utcnow()
+        }
+        
+        result = await db.notification_preferences.update_one(
+            {"user_id": user_id},
+            {"$set": update_data}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="User notification preferences not found")
+        
+        return {"message": "Notification preferences updated successfully"}
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating notification preferences: {str(e)}")
+
+@api_router.post("/notifications")
+async def create_notification(event_type: str, order_id: str, message: str):
+    """Create and send notifications based on event type"""
+    try:
+        # Get users who should receive this notification
+        preferences = await db.notification_preferences.find({
+            event_type: True,
+            "notify_in_app": True
+        }).to_list(1000)
+        
+        if not preferences:
+            return {"message": "No users configured to receive this notification"}
+        
+        # Create notification event
+        notification = NotificationEvent(
+            id=str(uuid.uuid4()),
+            event_type=event_type,
+            order_id=order_id,
+            message=message,
+            recipients=[pref["user_id"] for pref in preferences],
+            created_at=datetime.utcnow()
+        )
+        
+        await db.notification_events.insert_one(notification.dict())
+        
+        # In the future, this is where we'll add email/SMS sending logic
+        
+        return {"message": f"Notification created for {len(preferences)} users", "notification_id": notification.id}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating notification: {str(e)}")
+
+@api_router.get("/notifications/{user_id}")
+async def get_user_notifications(user_id: str):
+    """Get notifications for a specific user"""
+    try:
+        notifications = await db.notification_events.find({
+            "recipients": user_id
+        }).sort("created_at", -1).limit(50).to_list(50)
+        
+        return notifications
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching notifications: {str(e)}")
+
+@api_router.put("/notifications/{notification_id}/read")
+async def mark_notification_read(notification_id: str, user_id: str):
+    """Mark a notification as read by a user"""
+    try:
+        result = await db.notification_events.update_one(
+            {"id": notification_id},
+            {"$addToSet": {"read_by": user_id}}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Notification not found")
+        
+        return {"message": "Notification marked as read"}
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error marking notification as read: {str(e)}")
+
 # Production management endpoints
 @api_router.post("/production-items", response_model=ProductionItem)
 async def create_production_item(item: ProductionItemCreate, created_by: str):
