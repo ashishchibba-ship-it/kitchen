@@ -2702,25 +2702,6 @@ function App() {
     }
   };
 
-  const fetchNotificationPreferences = async () => {
-    try {
-      const response = await axios.get(`${API}/notification-preferences`);
-      setNotificationPreferences(response.data);
-    } catch (error) {
-      console.error('Error fetching notification preferences:', error);
-    }
-  };
-
-  const updateNotificationPreferences = async (userId, preferences) => {
-    try {
-      await axios.put(`${API}/notification-preferences/${userId}`, preferences);
-      fetchNotificationPreferences();
-    } catch (error) {
-      console.error('Error updating notification preferences:', error);
-      alert('Error updating notification preferences.');
-    }
-  };
-
   const handleLogin = (user) => {
     setCurrentUser(user);
   };
