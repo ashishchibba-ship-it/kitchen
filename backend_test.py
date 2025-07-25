@@ -3610,10 +3610,12 @@ class KitchenAPITester:
 
 if __name__ == "__main__":
     tester = KitchenAPITester()
+    results = tester.test_simplified_ordering_system()
     
-    # Run notification system tests as requested
-    results = tester.run_notification_system_tests()
-    
-    # Exit with error code if any tests failed
-    if results["failed"] > 0:
+    # Exit with appropriate code
+    if results["failed"] == 0:
+        print("\n🎉 ALL TESTS PASSED!")
+        sys.exit(0)
+    else:
+        print(f"\n⚠️  {results['failed']} TESTS FAILED")
         sys.exit(1)
