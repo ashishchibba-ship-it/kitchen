@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
 Backend API Testing for Production Kitchen Management System
-Focus: Debugging specific user issues with delete and add functionality
-Key Issues to Debug:
-1. Delete Issues: User can't delete items they don't want anymore - getting error "cannot be deleted"
-2. Adding Items Issues: User says they tried adding more items but "it just won't work"
+Focus: Testing the simplified ordering system after removing "available for order" limitations
+Key Tests:
+1. Production Item Creation without quantity field (manager creation)
+2. Orderable Items Without Limitations - ALL production items are returned
+3. Order Creation Without Inventory Reduction
+4. Complete Simplified Workflow
 """
 
 import requests
