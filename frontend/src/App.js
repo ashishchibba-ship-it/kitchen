@@ -154,6 +154,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
     quantity: '',
     unit_of_measure: '',
     base_cost: '10.00',
+    assigned_staff: '',
     image: null
   });
   const [editingItem, setEditingItem] = useState(null);
