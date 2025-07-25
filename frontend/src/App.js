@@ -2488,6 +2488,7 @@ const VenueStaffDashboardOriginal = ({ user, appSettings }) => {
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [appSettings, setAppSettings] = useState({});
+  const [notificationPreferences, setNotificationPreferences] = useState([]);
 
   useEffect(() => {
     fetchAppSettings();
