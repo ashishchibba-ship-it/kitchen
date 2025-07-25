@@ -9,7 +9,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List, Optional
 import uuid
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from enum import Enum
 from collections import defaultdict, Counter
 from reportlab.lib.pagesizes import letter
