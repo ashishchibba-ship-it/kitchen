@@ -449,18 +449,41 @@ backend:
           agent: "testing"
           comment: "✅ COMPREHENSIVE UI TESTING COMPLETED - Production item edit functionality working excellently in manager dashboard. DETAILED VERIFICATION: 1) EDIT BUTTON FUNCTIONALITY: Found 38 Edit buttons next to Delete buttons in production items table, all working correctly 2) EDIT MODAL: Opens successfully with all current item details pre-populated (name, category, quantity, unit_of_measure, base_cost, assigned_staff) 3) FORM FIELDS: All 6 required fields present and editable - category dropdown populated with 6 categories, staff dropdown shows kitchen staff only (Chef Alice, Chef Bob) 4) EDIT FUNCTIONALITY: Successfully modified item name, quantity, base_cost, unit_of_measure - changes saved and reflected in table immediately 5) UPDATE BUTTON: Works correctly, closes modal after successful update 6) CANCEL FUNCTIONALITY: Works perfectly - modal closes without saving changes when Cancel clicked 7) FORM VALIDATION: Prevents submission with empty required fields (HTML5 validation working) 8) UI/UX: Modal is user-friendly, responsive, and provides smooth editing experience. Minor: Automatic unit_price calculation display in table needs refresh to show updated markup, but backend calculation is working correctly. Overall: Production item edit functionality is fully functional and production-ready."
 
+  - task: "Force delete functionality for managers"
+    implemented: true
+    working: false
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Added force delete functionality for production items. Backend updated with force parameter in DELETE endpoint that removes item from all orders/invoices and recalculates totals. Frontend updated with two-step confirmation: first shows regular error with force option, then confirms force delete with warning message."
+
+  - task: "Enhanced add item form with validation and helper text"
+    implemented: true
+    working: false
+    file: "App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Completely enhanced add production item form with: 1) Required field labels with red asterisks 2) Individual field validation messages 3) Helper text and examples for all fields 4) Blue information banner explaining requirements 5) Disabled submit button when fields are missing 6) Better responsive layout and visual design 7) Improved user guidance throughout form."
+
 test_plan:
   current_focus:
-    - "Organized kitchen dashboard workflow"
-    - "Order notification system for kitchen and managers"
-    - "Invoice PDF export for Xero integration"
+    - "Force delete functionality for managers"
+    - "Enhanced add item form with validation and helper text"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
     - agent: "main"
-      message: "Added edit functionality for production items. FEATURES: 1) Edit button added next to Delete button in production items table 2) Edit modal with form fields for all item properties: name, category, quantity, unit_of_measure, base_cost, assigned_staff 3) Category dropdown populated from existing categories 4) Staff dropdown filtered to kitchen staff only 5) handleEditProductionItem function uses PUT /api/production-items/{id} endpoint 6) Modal includes Update and Cancel buttons with proper styling 7) Form preserves existing image data and updates all other fields. Complete edit functionality now available for managers alongside existing delete functionality."
+      message: "Implemented force delete and enhanced add item form to resolve user issues. FORCE DELETE: 1) Added force parameter to DELETE /api/production-items/{id} endpoint 2) When force=true, removes item from all orders/invoices and recalculates totals 3) Frontend shows two-step confirmation with clear warnings 4) Maintains data integrity while allowing manager override. ENHANCED ADD FORM: 1) Added required field indicators and validation messages 2) Blue info banner explaining requirements 3) Individual field labels with helper text 4) Disabled submit button with clear messaging when fields missing 5) Better responsive 3-column layout 6) Enhanced user experience with examples and guidance. Ready for testing both new features."
     - agent: "main"
       message: "Initial implementation complete. Full production kitchen management system with multi-role authentication, production scheduling, status tracking, inter-venue ordering with 15% markup, and comprehensive dashboard. Ready for backend API testing to verify all endpoints work correctly."
     - agent: "main"
