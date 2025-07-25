@@ -2450,9 +2450,10 @@ if __name__ == "__main__":
     print("=" * 80)
     results = tester.run_debug_tests()
     
-    if results["failed"] == 0:
+    if isinstance(results, dict) and results.get("failed", 0) == 0:
         print("\n🎉 All debug tests passed!")
         sys.exit(0)
     else:
-        print(f"\n💥 {results['failed']} tests failed. Check the output above for details.")
+        failed_count = results.get("failed", 1) if isinstance(results, dict) else 1
+        print(f"\n💥 {failed_count} tests failed. Check the output above for details.")
         sys.exit(1)
