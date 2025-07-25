@@ -465,7 +465,31 @@ async def get_user_notifications(user_id: str):
             "recipients": user_id
         }).sort("created_at", -1).limit(50).to_list(50)
         
-        return notifications
+        # Convert to NotificationEvent objects to ensure proper serialization
+        serialized_notifications = []
+        for notification in notifications:
+            try:
+                # Convert datetime objects to strings if needed
+                if isinstance(notification.get("created_at"), datetime):
+                    notification["created_at"] = notification["created_at"].isoformat()
+                
+                # Ensure all fields are properly serialized
+                serialized_notification = {
+                    "id": notification.get("id", ""),
+                    "event_type": notification.get("event_type", ""),
+                    "order_id": notification.get("order_id", ""),
+                    "message": notification.get("message", ""),
+                    "recipients": notification.get("recipients", []),
+                    "created_at": notification.get("created_at", ""),
+                    "read_by": notification.get("read_by", [])
+                }
+                serialized_notifications.append(serialized_notification)
+            except Exception as e:
+                # Skip invalid notifications
+                print(f"Skipping invalid notification: {e}")
+                continue
+        
+        return serialized_notifications
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching notifications: {str(e)}")
