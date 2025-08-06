@@ -670,21 +670,6 @@ async def get_production_items():
     
     return valid_items
 
-@api_router.put("/production-items/{item_id}/status")
-async def update_production_status(item_id: str, status: ProductionStatus):
-    update_data = {"status": status}
-    if status == ProductionStatus.COMPLETED:
-        update_data["completed_at"] = datetime.utcnow()
-    
-    result = await db.production_items.update_one(
-        {"id": item_id},
-        {"$set": update_data}
-    )
-    
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Production item not found")
-    
-    return {"message": "Status updated successfully"}
 
 @api_router.get("/production-items/completed", response_model=List[ProductionItem])
 async def get_completed_items():
