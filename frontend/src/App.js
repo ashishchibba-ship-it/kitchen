@@ -1626,20 +1626,17 @@ const ManagerDashboard = ({ user, appSettings }) => {
 
 // Kitchen Staff Dashboard
 const KitchenStaffDashboard = ({ user, appSettings }) => {
-  const [productionItems, setProductionItems] = useState([]);
   const [pendingOrders, setPendingOrders] = useState([]);
   const [preparingOrders, setPreparingOrders] = useState([]);
   const [readyOrders, setReadyOrders] = useState([]);
   const [deliveredOrders, setDeliveredOrders] = useState([]);
 
   useEffect(() => {
-    fetchProductionItems();
     fetchAllOrders();
     
     // Poll for orders every 30 seconds
     const interval = setInterval(() => {
       fetchAllOrders();
-      fetchProductionItems();
     }, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -1659,25 +1656,6 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
       setDeliveredOrders(deliveredRes.data);
     } catch (error) {
       console.error('Error fetching orders:', error);
-    }
-  };
-
-  const fetchProductionItems = async () => {
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const response = await axios.get(`${API}/production-items?production_date=${today}`);
-      setProductionItems(response.data);
-    } catch (error) {
-      console.error('Error fetching production items:', error);
-    }
-  };
-
-  const updateItemStatus = async (itemId, status) => {
-    try {
-      await axios.put(`${API}/production-items/${itemId}/status?status=${status}`);
-      fetchProductionItems();
-    } catch (error) {
-      console.error('Error updating item status:', error);
     }
   };
 
