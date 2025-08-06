@@ -735,24 +735,7 @@ async def delete_category(category_id: str):
         raise HTTPException(status_code=404, detail="Category not found")
     return {"message": "Category deleted successfully"}
 
-@api_router.put("/production-items/{item_id}/availability")
-async def update_item_availability(item_id: str, update: ProductionItemUpdate):
-    update_data = {k: v for k, v in update.dict().items() if v is not None}
-    
-    # If base_cost is being updated, automatically calculate unit_price with 15% markup
-    if 'base_cost' in update_data:
-        update_data['unit_price'] = update_data['base_cost'] * 1.15
-    
-    if update_data:
-        result = await db.production_items.update_one(
-            {"id": item_id},
-            {"$set": update_data}
-        )
-        
-        if result.matched_count == 0:
-            raise HTTPException(status_code=404, detail="Production item not found")
-    
-    return {"message": "Item availability updated successfully"}
+
 
 @api_router.get("/orderable-items", response_model=List[OrderableItem])
 async def get_orderable_items():
