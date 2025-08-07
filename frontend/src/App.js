@@ -1131,7 +1131,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
 
               <div className="space-y-4">
                 <div className="grid gap-4">
-                  {notificationPreferences.map(pref => (
+                  {localNotificationPreferences.map(pref => (
                     <div key={pref.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
                       <div className="flex items-center justify-between mb-3">
                         <div>
