@@ -369,7 +369,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
 
             if (itemId.startsWith('temp_')) {
               // New item - create
-              const { id, ...itemData } = localItem;
+              const { id, unit_price, created_at, updated_at, ...itemData } = localItem;
               const response = await axios.post(`${API}/production-items?created_by=${user.username}`, itemData);
               
               // Update local state with real ID
