@@ -3874,18 +3874,203 @@ class KitchenAPITester:
         except Exception as e:
             self.log_result("Notification Contact Editing", False, f"Exception: {str(e)}")
 
+    def test_production_item_save_functionality(self):
+        """Test the fixed save functionality for production items"""
+        print("\n=== Testing Production Item Save Functionality ===")
+        
+        try:
+            # Test 1: Create a test production item with specific base_cost
+            print("\n--- Test 1: Production Item Update Workflow ---")
+            
+            test_item_data = {
+                "name": "Test Save Item",
+                "category": "Main Course",
+                "unit_of_measure": "portions",
+                "base_cost": 15.00,
+                "assigned_staff": "Chef Alice"
+            }
+            
+            # Create the item
+            response = self.session.post(f"{BASE_URL}/production-items", 
+                                       json=test_item_data, 
+                                       params={"created_by": "manager"})
+            
+            if response.status_code != 200:
+                self.log_result("Create test production item", False, f"Status: {response.status_code}, Response: {response.text}")
+                return
+            
+            created_item = response.json()
+            item_id = created_item["id"]
+            
+            # Verify initial creation
+            if created_item["base_cost"] == 15.00 and abs(created_item["unit_price"] - 17.25) < 0.01:
+                self.log_result("Initial item creation with base_cost", True, 
+                              f"base_cost: ${created_item['base_cost']:.2f}, unit_price: ${created_item['unit_price']:.2f}")
+            else:
+                self.log_result("Initial item creation with base_cost", False, 
+                              f"Expected base_cost: $15.00, unit_price: $17.25, Got: ${created_item.get('base_cost', 0):.2f}, ${created_item.get('unit_price', 0):.2f}")
+            
+            # Test 2: Update the item with new base_cost using PUT /api/production-items/{id}
+            print("\n--- Test 2: Data Format Compatibility ---")
+            
+            update_data = {
+                "name": "Updated Save Test Item",
+                "category": "Main Course", 
+                "unit_of_measure": "kg",
+                "base_cost": 25.00,
+                "assigned_staff": "Chef Bob"
+            }
+            
+            response = self.session.put(f"{BASE_URL}/production-items/{item_id}", json=update_data)
+            
+            if response.status_code != 200:
+                self.log_result("Update production item via PUT", False, f"Status: {response.status_code}, Response: {response.text}")
+                return
+            
+            updated_item = response.json()
+            
+            # Verify the update was successful and unit_price recalculated
+            expected_unit_price = 25.00 * 1.15  # 28.75
+            if (updated_item["base_cost"] == 25.00 and 
+                abs(updated_item["unit_price"] - expected_unit_price) < 0.01 and
+                updated_item["name"] == "Updated Save Test Item" and
+                updated_item["unit_of_measure"] == "kg"):
+                self.log_result("Production item update with automatic markup", True,
+                              f"base_cost: ${updated_item['base_cost']:.2f}, unit_price: ${updated_item['unit_price']:.2f}")
+            else:
+                self.log_result("Production item update with automatic markup", False,
+                              f"Expected: base_cost=$25.00, unit_price=$28.75, name='Updated Save Test Item', unit='kg'. Got: base_cost=${updated_item.get('base_cost', 0):.2f}, unit_price=${updated_item.get('unit_price', 0):.2f}, name='{updated_item.get('name', '')}', unit='{updated_item.get('unit_of_measure', '')}'")
+            
+            # Test 3: Verify data persistence by retrieving the item
+            print("\n--- Test 3: Save Function Data Flow ---")
+            
+            response = self.session.get(f"{BASE_URL}/production-items")
+            if response.status_code != 200:
+                self.log_result("Retrieve production items after update", False, f"Status: {response.status_code}")
+                return
+            
+            all_items = response.json()
+            updated_item_from_list = None
+            
+            for item in all_items:
+                if item["id"] == item_id:
+                    updated_item_from_list = item
+                    break
+            
+            if updated_item_from_list:
+                if (updated_item_from_list["base_cost"] == 25.00 and 
+                    abs(updated_item_from_list["unit_price"] - 28.75) < 0.01 and
+                    updated_item_from_list["name"] == "Updated Save Test Item"):
+                    self.log_result("Data persistence verification", True, 
+                                  "Updated item appears correctly in production items list")
+                else:
+                    self.log_result("Data persistence verification", False,
+                                  f"Item data not persisted correctly: {updated_item_from_list}")
+            else:
+                self.log_result("Data persistence verification", False, "Updated item not found in production items list")
+            
+            # Test 4: End-to-End Persistence - Check orderable items
+            print("\n--- Test 4: End-to-End Persistence ---")
+            
+            response = self.session.get(f"{BASE_URL}/orderable-items")
+            if response.status_code != 200:
+                self.log_result("Retrieve orderable items", False, f"Status: {response.status_code}")
+                return
+            
+            orderable_items = response.json()
+            orderable_item = None
+            
+            for item in orderable_items:
+                if item["id"] == item_id:
+                    orderable_item = item
+                    break
+            
+            if orderable_item:
+                if (orderable_item["name"] == "Updated Save Test Item" and
+                    abs(orderable_item["unit_price"] - 28.75) < 0.01 and
+                    orderable_item["unit_of_measure"] == "kg"):
+                    self.log_result("Updated item in orderable items", True,
+                                  f"Item correctly appears in orderable items with updated pricing: ${orderable_item['unit_price']:.2f}")
+                else:
+                    self.log_result("Updated item in orderable items", False,
+                                  f"Item data incorrect in orderable items: {orderable_item}")
+            else:
+                self.log_result("Updated item in orderable items", False, "Updated item not found in orderable items")
+            
+            # Test 5: Test orderable items by category
+            response = self.session.get(f"{BASE_URL}/orderable-items/by-category")
+            if response.status_code == 200:
+                items_by_category = response.json()
+                main_course_items = items_by_category.get("Main Course", [])
+                
+                category_item = None
+                for item in main_course_items:
+                    if item["id"] == item_id:
+                        category_item = item
+                        break
+                
+                if category_item and abs(category_item["unit_price"] - 28.75) < 0.01:
+                    self.log_result("Updated item in orderable items by category", True,
+                                  "Item correctly appears in category view with updated pricing")
+                else:
+                    self.log_result("Updated item in orderable items by category", False,
+                                  f"Item not found or incorrect in category view")
+            else:
+                self.log_result("Retrieve orderable items by category", False, f"Status: {response.status_code}")
+            
+            # Test 6: Test multiple price updates to verify save functionality
+            print("\n--- Test 6: Multiple Save Operations ---")
+            
+            price_tests = [
+                {"base_cost": 12.00, "expected_unit_price": 13.80},
+                {"base_cost": 20.00, "expected_unit_price": 23.00},
+                {"base_cost": 8.50, "expected_unit_price": 9.78}
+            ]
+            
+            for i, price_test in enumerate(price_tests):
+                update_data = {
+                    "name": f"Multi-Save Test Item {i+1}",
+                    "category": "Main Course",
+                    "unit_of_measure": "portions",
+                    "base_cost": price_test["base_cost"],
+                    "assigned_staff": "Chef Alice"
+                }
+                
+                response = self.session.put(f"{BASE_URL}/production-items/{item_id}", json=update_data)
+                
+                if response.status_code == 200:
+                    updated_item = response.json()
+                    if abs(updated_item["unit_price"] - price_test["expected_unit_price"]) < 0.01:
+                        self.log_result(f"Multiple save test {i+1}", True,
+                                      f"${price_test['base_cost']:.2f} → ${updated_item['unit_price']:.2f}")
+                    else:
+                        self.log_result(f"Multiple save test {i+1}", False,
+                                      f"Expected ${price_test['expected_unit_price']:.2f}, got ${updated_item['unit_price']:.2f}")
+                else:
+                    self.log_result(f"Multiple save test {i+1}", False, f"Status: {response.status_code}")
+            
+            # Clean up - delete the test item
+            response = self.session.delete(f"{BASE_URL}/production-items/{item_id}")
+            if response.status_code == 200:
+                self.log_result("Cleanup test item", True, "Test item deleted successfully")
+            else:
+                self.log_result("Cleanup test item", False, f"Could not delete test item: {response.status_code}")
+            
+        except Exception as e:
+            self.log_result("Production Item Save Functionality", False, f"Exception: {str(e)}")
+
 if __name__ == "__main__":
     tester = KitchenAPITester()
     
-    # Run the notification contact editing tests
-    print("🔍 STARTING NOTIFICATION CONTACT EDITING TESTS")
+    # Run the production item save functionality tests
+    print("🔍 STARTING PRODUCTION ITEM SAVE FUNCTIONALITY TESTS")
     print("=" * 60)
     
-    tester.test_notification_contact_editing()
+    tester.test_production_item_save_functionality()
     
     # Print summary
     print("\n" + "=" * 60)
-    print("🔍 NOTIFICATION CONTACT EDITING TEST SUMMARY")
+    print("🔍 PRODUCTION ITEM SAVE FUNCTIONALITY TEST SUMMARY")
     print("=" * 60)
     print(f"✅ Tests Passed: {tester.test_results['passed']}")
     print(f"❌ Tests Failed: {tester.test_results['failed']}")
