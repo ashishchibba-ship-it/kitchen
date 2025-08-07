@@ -149,6 +149,9 @@ const ManagerDashboard = ({ user, appSettings }) => {
   const [settings, setSettings] = useState(appSettings || {});
   const [notificationPreferences, setNotificationPreferences] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [localNotificationPreferences, setLocalNotificationPreferences] = useState([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [newItem, setNewItem] = useState({
     name: '',
