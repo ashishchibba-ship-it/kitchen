@@ -1082,12 +1082,12 @@ const ManagerDashboard = ({ user, appSettings }) => {
               </div>
               
               <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h4 className="font-semibold text-blue-800 mb-2">📱 Notification System Setup</h4>
+                <h4 className="font-semibold text-blue-800 mb-2">📱 Notification System Status</h4>
                 <p className="text-sm text-blue-700 mb-2">
-                  <strong>Current Status:</strong> In-app notifications are active. Email and SMS features will be available soon.
+                  <strong>✅ Active Features:</strong> In-app notifications, email & phone contact management
                 </p>
                 <p className="text-xs text-blue-600">
-                  💡 <strong>Future Features:</strong> Email notifications, SMS alerts, and push notifications can be added in the "Contact Methods" section below.
+                  💡 <strong>Ready for Integration:</strong> Contact information is saved and ready for email/SMS service integration when needed.
                 </p>
               </div>
 
