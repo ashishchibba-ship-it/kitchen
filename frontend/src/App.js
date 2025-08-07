@@ -1069,14 +1069,14 @@ const ManagerDashboard = ({ user, appSettings }) => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <input
                             type="text"
-                            defaultValue={item.unit_of_measure || 'units'}
-                            className="w-20 p-1 border border-gray-300 rounded text-sm"
-                            onBlur={(e) => {
-                              if (e.target.value !== (item.unit_of_measure || 'units')) {
-                                updateItemAvailability(item.id, item.available_for_order || 0, item.base_cost || 10.0, e.target.value);
-                              }
+                            value={item.unit_of_measure || 'kg'}
+                            onChange={(e) => {
+                              updateLocalProductionItem(item.id, { 
+                                unit_of_measure: e.target.value || 'kg'
+                              });
                             }}
-                            placeholder="units"
+                            className="w-20 p-1 border border-gray-300 rounded text-sm"
+                            placeholder="kg"
                           />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
