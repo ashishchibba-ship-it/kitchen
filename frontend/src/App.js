@@ -1215,7 +1215,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                                 type="email"
                                 placeholder="user@example.com"
                                 value={pref.email || ''}
-                                onChange={(e) => updateNotificationPreferences(pref.user_id, {
+                                onChange={(e) => updateLocalNotificationPreferences(pref.user_id, {
                                   ...pref,
                                   email: e.target.value
                                 })}
@@ -1228,7 +1228,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                                 type="tel"
                                 placeholder="+1 (555) 123-4567"
                                 value={pref.phone || ''}
-                                onChange={(e) => updateNotificationPreferences(pref.user_id, {
+                                onChange={(e) => updateLocalNotificationPreferences(pref.user_id, {
                                   ...pref,
                                   phone: e.target.value
                                 })}
