@@ -1099,9 +1099,6 @@ const ManagerDashboard = ({ user, appSettings }) => {
                             Available
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(item.created_at).toLocaleDateString()}
-                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <button
                             onClick={() => setEditingItem(item)}
