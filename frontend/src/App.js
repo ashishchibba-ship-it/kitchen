@@ -540,23 +540,29 @@ const ManagerDashboard = ({ user, appSettings }) => {
   const handleCreateItem = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/production-items?created_by=${user.username}`, {
+      // Add to local state instead of immediately saving
+      const newItemData = {
         ...newItem,
-        base_cost: parseFloat(newItem.base_cost)
-      });
+        base_cost: parseFloat(newItem.base_cost),
+        unit_price: parseFloat(newItem.base_cost) * 1.15,
+        created_at: new Date().toISOString()
+      };
+      
+      addLocalProductionItem(newItemData);
+      
+      // Reset form
       setNewItem({
         name: '',
         category: '',
-        quantity: '',
-        unit_of_measure: '',
-        base_cost: '10.00',
+        unit_of_measure: 'kg',
         assigned_staff: '',
-        image: null
+        image: null,
+        base_cost: 10.0
       });
-      fetchProductionItems();
-      fetchStats();
+      
     } catch (error) {
-      console.error('Error creating production item:', error);
+      console.error('Error adding item to local state:', error);
+      alert('Error adding production item locally.');
     }
   };
 
