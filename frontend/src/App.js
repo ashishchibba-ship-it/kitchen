@@ -1175,28 +1175,26 @@ const ManagerDashboard = ({ user, appSettings }) => {
                               <label className="block text-xs text-gray-600 mb-1">Email Address</label>
                               <input
                                 type="email"
-                                placeholder="user@example.com (Coming Soon)"
+                                placeholder="user@example.com"
                                 value={pref.email || ''}
                                 onChange={(e) => updateNotificationPreferences(pref.user_id, {
                                   ...pref,
                                   email: e.target.value
                                 })}
                                 className="w-full text-xs p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                disabled
                               />
                             </div>
                             <div>
                               <label className="block text-xs text-gray-600 mb-1">Phone Number</label>
                               <input
                                 type="tel"
-                                placeholder="+1 (555) 123-4567 (Coming Soon)"
+                                placeholder="+1 (555) 123-4567"
                                 value={pref.phone || ''}
                                 onChange={(e) => updateNotificationPreferences(pref.user_id, {
                                   ...pref,
                                   phone: e.target.value
                                 })}
                                 className="w-full text-xs p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                disabled
                               />
                             </div>
                             <div className="space-y-1">
@@ -1204,19 +1202,25 @@ const ManagerDashboard = ({ user, appSettings }) => {
                                 <input
                                   type="checkbox"
                                   checked={pref.notify_email}
-                                  disabled
-                                  className="mr-2 opacity-50"
+                                  onChange={(e) => updateNotificationPreferences(pref.user_id, {
+                                    ...pref,
+                                    notify_email: e.target.checked
+                                  })}
+                                  className="mr-2"
                                 />
-                                📧 Email notifications (Coming Soon)
+                                📧 Email notifications (Ready for future integration)
                               </label>
                               <label className="flex items-center text-xs text-gray-600">
                                 <input
                                   type="checkbox"
                                   checked={pref.notify_sms}
-                                  disabled
-                                  className="mr-2 opacity-50"
+                                  onChange={(e) => updateNotificationPreferences(pref.user_id, {
+                                    ...pref,
+                                    notify_sms: e.target.checked
+                                  })}
+                                  className="mr-2"
                                 />
-                                📱 SMS notifications (Coming Soon)
+                                📱 SMS notifications (Ready for future integration)
                               </label>
                               <label className="flex items-center text-xs">
                                 <input
