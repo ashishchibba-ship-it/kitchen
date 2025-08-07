@@ -362,13 +362,18 @@ const ManagerDashboard = ({ user, appSettings }) => {
     try {
       // Save Production Items
       if (pendingChanges.productionItems.length > 0) {
+        console.log('Saving production items:', pendingChanges.productionItems);
         for (const itemId of pendingChanges.productionItems) {
           try {
             const localItem = localProductionItems.find(item => item.id === itemId);
-            if (!localItem) continue;
+            if (!localItem) {
+              console.log(`Skipping missing item: ${itemId}`);
+              continue;
+            }
 
             if (itemId.startsWith('temp_')) {
               // New item - create
+              console.log('Creating new item:', localItem.name);
               const { id, unit_price, created_at, updated_at, ...itemData } = localItem;
               const response = await axios.post(`${API}/production-items?created_by=${user.username}`, itemData);
               
@@ -376,10 +381,12 @@ const ManagerDashboard = ({ user, appSettings }) => {
               setLocalProductionItems(prev => 
                 prev.map(item => item.id === itemId ? { ...item, id: response.data.id } : item)
               );
+              console.log('Created item with ID:', response.data.id);
             } else {
               // Existing item - update
               const originalItem = productionItems.find(item => item.id === itemId);
               if (originalItem) {
+                console.log('Updating existing item:', localItem.name, 'ID:', itemId);
                 // Filter to only send fields expected by backend ProductionItemCreate model
                 const updateData = {
                   name: localItem.name,
@@ -389,12 +396,15 @@ const ManagerDashboard = ({ user, appSettings }) => {
                   image: localItem.image,
                   base_cost: localItem.base_cost
                 };
-                await axios.put(`${API}/production-items/${itemId}`, updateData);
+                console.log('Update data being sent:', updateData);
+                const response = await axios.put(`${API}/production-items/${itemId}`, updateData);
+                console.log('Update response status:', response.status);
               }
             }
             successCount++;
           } catch (error) {
             console.error(`Error saving production item ${itemId}:`, error);
+            console.error('Error response:', error.response?.data);
             errors.push(`Production item: ${error.response?.data?.detail || error.message}`);
             errorCount++;
           }
