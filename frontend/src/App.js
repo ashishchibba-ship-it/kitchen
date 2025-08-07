@@ -1097,13 +1097,15 @@ const ManagerDashboard = ({ user, appSettings }) => {
                           <input
                             type="number"
                             step="0.01"
-                            defaultValue={item.base_cost || 10.0}
-                            className="w-20 p-1 border border-gray-300 rounded text-sm"
-                            onBlur={(e) => {
-                              if (e.target.value !== (item.base_cost || 10.0).toString()) {
-                                updateItemAvailability(item.id, item.available_for_order || 0, e.target.value);
-                              }
+                            value={item.base_cost || 10.0}
+                            onChange={(e) => {
+                              const newBaseCost = parseFloat(e.target.value) || 10.0;
+                              updateLocalProductionItem(item.id, { 
+                                base_cost: newBaseCost,
+                                unit_price: newBaseCost * 1.15 
+                              });
                             }}
+                            className="w-20 p-1 border border-gray-300 rounded text-sm"
                           />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
