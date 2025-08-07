@@ -775,7 +775,36 @@ const ManagerDashboard = ({ user, appSettings }) => {
             <h1 className="text-xl font-semibold text-gray-800" style={{ fontFamily: settings?.font_family }}>
               {settings?.app_name || 'Production Kitchen'} - Manager Dashboard
             </h1>
-            <span className="text-gray-600">Welcome, {user.name}</span>
+            <div className="flex items-center space-x-4">
+              <span className="text-gray-600">Welcome, {user.name}</span>
+              
+              {hasUnsavedChanges && (
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center text-orange-600 bg-orange-50 px-3 py-2 rounded-lg">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full mr-2 animate-pulse"></span>
+                    <span className="text-sm font-medium">
+                      {Object.values(pendingChanges).flat().length + (pendingChanges.settings ? 1 : 0)} unsaved changes
+                    </span>
+                  </div>
+                  <button
+                    onClick={discardAllChanges}
+                    disabled={isSaving}
+                    className="px-3 py-1 text-sm text-gray-600 bg-gray-200 rounded hover:bg-gray-300 transition-colors disabled:opacity-50"
+                  >
+                    Discard
+                  </button>
+                  <button
+                    onClick={saveAllChanges}
+                    disabled={isSaving}
+                    className={`px-4 py-1 text-sm text-white rounded transition-colors disabled:opacity-50 ${
+                      isSaving ? 'bg-green-400' : 'bg-green-600 hover:bg-green-700'
+                    }`}
+                  >
+                    {isSaving ? 'Saving...' : 'Save All'}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex space-x-6">
             {['dashboard', 'production', 'orders', 'users', 'notifications', 'categories', 'invoices', 'purchase-orders', 'settings'].map(tab => (
