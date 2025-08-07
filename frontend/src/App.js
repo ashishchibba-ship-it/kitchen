@@ -1240,7 +1240,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                                 <input
                                   type="checkbox"
                                   checked={pref.notify_email}
-                                  onChange={(e) => updateNotificationPreferences(pref.user_id, {
+                                  onChange={(e) => updateLocalNotificationPreferences(pref.user_id, {
                                     ...pref,
                                     notify_email: e.target.checked
                                   })}
@@ -1252,7 +1252,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                                 <input
                                   type="checkbox"
                                   checked={pref.notify_sms}
-                                  onChange={(e) => updateNotificationPreferences(pref.user_id, {
+                                  onChange={(e) => updateLocalNotificationPreferences(pref.user_id, {
                                     ...pref,
                                     notify_sms: e.target.checked
                                   })}
@@ -1264,7 +1264,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                                 <input
                                   type="checkbox"
                                   checked={pref.notify_in_app}
-                                  onChange={(e) => updateNotificationPreferences(pref.user_id, {
+                                  onChange={(e) => updateLocalNotificationPreferences(pref.user_id, {
                                     ...pref,
                                     notify_in_app: e.target.checked
                                   })}
