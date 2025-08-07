@@ -350,7 +350,157 @@ const ManagerDashboard = ({ user, appSettings }) => {
         pref.user_id === userId ? { ...pref, ...preferences } : pref
       )
     );
-    setHasUnsavedChanges(true);
+    markChangesUnsaved('notifications', userId);
+  };
+
+  const saveAllChanges = async () => {
+    setIsSaving(true);
+    let successCount = 0;
+    let errorCount = 0;
+    const errors = [];
+
+    try {
+      // Save Production Items
+      if (pendingChanges.productionItems.length > 0) {
+        for (const itemId of pendingChanges.productionItems) {
+          try {
+            const localItem = localProductionItems.find(item => item.id === itemId);
+            if (!localItem) continue;
+
+            if (itemId.startsWith('temp_')) {
+              // New item - create
+              const { id, ...itemData } = localItem;
+              const response = await axios.post(`${API}/production-items?created_by=${user.username}`, itemData);
+              
+              // Update local state with real ID
+              setLocalProductionItems(prev => 
+                prev.map(item => item.id === itemId ? { ...item, id: response.data.id } : item)
+              );
+            } else {
+              // Existing item - update or delete
+              const originalItem = productionItems.find(item => item.id === itemId);
+              if (originalItem) {
+                await axios.put(`${API}/production-items/${itemId}`, localItem);
+              }
+            }
+            successCount++;
+          } catch (error) {
+            console.error(`Error saving production item ${itemId}:`, error);
+            errors.push(`Production item: ${error.response?.data?.detail || error.message}`);
+            errorCount++;
+          }
+        }
+      }
+
+      // Save Users
+      if (pendingChanges.users.length > 0) {
+        for (const userId of pendingChanges.users) {
+          try {
+            const localUser = localUsers.find(user => user.id === userId);
+            if (!localUser) continue;
+
+            if (userId.startsWith('temp_')) {
+              // New user - create
+              const { id, ...userData } = localUser;
+              const response = await axios.post(`${API}/users`, userData);
+              
+              // Update local state with real ID
+              setLocalUsers(prev => 
+                prev.map(user => user.id === userId ? { ...user, id: response.data.id } : user)
+              );
+            } else {
+              // Existing user - update
+              const originalUser = users.find(user => user.id === userId);
+              if (originalUser) {
+                await axios.put(`${API}/users/${userId}`, localUser);
+              }
+            }
+            successCount++;
+          } catch (error) {
+            console.error(`Error saving user ${userId}:`, error);
+            errors.push(`User: ${error.response?.data?.detail || error.message}`);
+            errorCount++;
+          }
+        }
+      }
+
+      // Save Notification Preferences
+      if (pendingChanges.notifications.length > 0) {
+        for (const userId of pendingChanges.notifications) {
+          try {
+            const localPref = localNotificationPreferences.find(pref => pref.user_id === userId);
+            if (localPref) {
+              await axios.put(`${API}/notification-preferences/${userId}`, localPref);
+              successCount++;
+            }
+          } catch (error) {
+            console.error(`Error saving notification preferences for ${userId}:`, error);
+            errors.push(`Notifications: ${error.response?.data?.detail || error.message}`);
+            errorCount++;
+          }
+        }
+      }
+
+      // Save Settings
+      if (pendingChanges.settings) {
+        try {
+          await axios.put(`${API}/settings`, localSettings);
+          successCount++;
+        } catch (error) {
+          console.error('Error saving settings:', error);
+          errors.push(`Settings: ${error.response?.data?.detail || error.message}`);
+          errorCount++;
+        }
+      }
+
+      // Update main state with saved changes and reset pending changes
+      if (successCount > 0) {
+        setProductionItems([...localProductionItems]);
+        setUsers([...localUsers]);
+        setNotificationPreferences([...localNotificationPreferences]);
+        setSettings({ ...localSettings });
+        
+        setHasUnsavedChanges(false);
+        setPendingChanges({
+          productionItems: [],
+          users: [],
+          notifications: [],
+          settings: false
+        });
+
+        if (errorCount === 0) {
+          alert(`✅ All changes saved successfully! (${successCount} items updated)`);
+        } else {
+          alert(`⚠️ Partially saved: ${successCount} items saved, ${errorCount} failed.\n\nErrors:\n${errors.join('\n')}`);
+        }
+      } else if (errorCount > 0) {
+        alert(`❌ Save failed: ${errorCount} errors occurred.\n\nErrors:\n${errors.join('\n')}`);
+      }
+
+    } catch (error) {
+      console.error('Error saving changes:', error);
+      alert('❌ Unexpected error occurred while saving. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const discardAllChanges = () => {
+    if (window.confirm('Are you sure you want to discard all unsaved changes? This cannot be undone.')) {
+      // Reset all local state to original values
+      setLocalProductionItems([...productionItems]);
+      setLocalUsers([...users]);
+      setLocalNotificationPreferences([...notificationPreferences]);
+      setLocalSettings({ ...settings });
+      
+      setHasUnsavedChanges(false);
+      setPendingChanges({
+        productionItems: [],
+        users: [],
+        notifications: [],
+        settings: false
+      });
+    }
   };
 
   const saveAllNotificationChanges = async () => {
