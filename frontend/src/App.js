@@ -270,19 +270,54 @@ const ManagerDashboard = ({ user, appSettings }) => {
     try {
       const response = await axios.get(`${API}/notification-preferences`);
       setNotificationPreferences(response.data);
+      setLocalNotificationPreferences(response.data); // Initialize local state
+      setHasUnsavedChanges(false);
     } catch (error) {
       console.error('Error fetching notification preferences:', error);
     }
   };
 
-  const updateNotificationPreferences = async (userId, preferences) => {
+  const updateLocalNotificationPreferences = (userId, preferences) => {
+    setLocalNotificationPreferences(prevLocal => 
+      prevLocal.map(pref => 
+        pref.user_id === userId ? { ...pref, ...preferences } : pref
+      )
+    );
+    setHasUnsavedChanges(true);
+  };
+
+  const saveAllNotificationChanges = async () => {
+    setIsSaving(true);
     try {
-      await axios.put(`${API}/notification-preferences/${userId}`, preferences);
-      fetchNotificationPreferences();
+      // Find all users with changes and save them
+      const savePromises = localNotificationPreferences.map(async (localPref) => {
+        const originalPref = notificationPreferences.find(p => p.user_id === localPref.user_id);
+        
+        // Check if there are changes
+        const hasChanges = !originalPref || JSON.stringify(localPref) !== JSON.stringify(originalPref);
+        
+        if (hasChanges) {
+          await axios.put(`${API}/notification-preferences/${localPref.user_id}`, localPref);
+        }
+      });
+
+      await Promise.all(savePromises);
+      
+      // Update the main state with saved changes
+      setNotificationPreferences([...localNotificationPreferences]);
+      setHasUnsavedChanges(false);
+      alert('All notification preferences saved successfully!');
     } catch (error) {
-      console.error('Error updating notification preferences:', error);
-      alert('Error updating notification preferences.');
+      console.error('Error saving notification preferences:', error);
+      alert('Error saving notification preferences. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  const discardNotificationChanges = () => {
+    setLocalNotificationPreferences([...notificationPreferences]);
+    setHasUnsavedChanges(false);
   };
 
   const handleCreateItem = async (e) => {
