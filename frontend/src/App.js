@@ -1158,7 +1158,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                               <input
                                 type="checkbox"
                                 checked={pref.order_placed}
-                                onChange={(e) => updateNotificationPreferences(pref.user_id, {
+                                onChange={(e) => updateLocalNotificationPreferences(pref.user_id, {
                                   ...pref,
                                   order_placed: e.target.checked
                                 })}
