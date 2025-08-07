@@ -1170,7 +1170,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                               <input
                                 type="checkbox"
                                 checked={pref.order_preparing}
-                                onChange={(e) => updateNotificationPreferences(pref.user_id, {
+                                onChange={(e) => updateLocalNotificationPreferences(pref.user_id, {
                                   ...pref,
                                   order_preparing: e.target.checked
                                 })}
@@ -1182,7 +1182,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                               <input
                                 type="checkbox"
                                 checked={pref.order_ready}
-                                onChange={(e) => updateNotificationPreferences(pref.user_id, {
+                                onChange={(e) => updateLocalNotificationPreferences(pref.user_id, {
                                   ...pref,
                                   order_ready: e.target.checked
                                 })}
@@ -1194,7 +1194,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                               <input
                                 type="checkbox"
                                 checked={pref.order_delivered}
-                                onChange={(e) => updateNotificationPreferences(pref.user_id, {
+                                onChange={(e) => updateLocalNotificationPreferences(pref.user_id, {
                                   ...pref,
                                   order_delivered: e.target.checked
                                 })}
