@@ -847,8 +847,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                   const updatedData = {
                     name: formData.get('name'),
                     category: formData.get('category'),
-                    quantity: parseInt(formData.get('quantity')),
-                    unit_of_measure: formData.get('unit_of_measure'),
+                    unit_of_measure: 'kg',
                     assigned_staff: formData.get('assigned_staff'),
                     base_cost: parseFloat(formData.get('base_cost')),
                     image: editingItem.image // Keep existing image for now
