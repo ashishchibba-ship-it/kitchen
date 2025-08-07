@@ -776,7 +776,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                           <input
                             type="number"
                             defaultValue={item.available_for_order || 0}
-                            max={item.quantity}
+                            max={1000}
                             min={0}
                             className="w-20 p-1 border border-gray-300 rounded text-sm"
                             onBlur={(e) => {
