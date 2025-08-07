@@ -216,6 +216,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
     try {
       const response = await axios.get(`${API}/production-items`);
       setProductionItems(response.data);
+      setLocalProductionItems(response.data); // Initialize local state
     } catch (error) {
       console.error('Error fetching production items:', error);
     }
@@ -234,6 +235,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
     try {
       const response = await axios.get(`${API}/users`);
       setUsers(response.data);
+      setLocalUsers(response.data); // Initialize local state
     } catch (error) {
       console.error('Error fetching users:', error);
     }
@@ -280,10 +282,66 @@ const ManagerDashboard = ({ user, appSettings }) => {
       const response = await axios.get(`${API}/notification-preferences`);
       setNotificationPreferences(response.data);
       setLocalNotificationPreferences(response.data); // Initialize local state
-      setHasUnsavedChanges(false);
     } catch (error) {
       console.error('Error fetching notification preferences:', error);
     }
+  };
+
+  const markChangesUnsaved = (changeType, itemId = null) => {
+    setHasUnsavedChanges(true);
+    setPendingChanges(prev => {
+      const newChanges = { ...prev };
+      if (itemId && !newChanges[changeType].includes(itemId)) {
+        newChanges[changeType] = [...newChanges[changeType], itemId];
+      } else if (!itemId && changeType === 'settings') {
+        newChanges.settings = true;
+      }
+      return newChanges;
+    });
+  };
+
+  // Local state update functions
+  const updateLocalProductionItem = (itemId, updates) => {
+    setLocalProductionItems(prev => 
+      prev.map(item => item.id === itemId ? { ...item, ...updates } : item)
+    );
+    markChangesUnsaved('productionItems', itemId);
+  };
+
+  const addLocalProductionItem = (newItem) => {
+    const itemWithId = { ...newItem, id: `temp_${Date.now()}` };
+    setLocalProductionItems(prev => [...prev, itemWithId]);
+    markChangesUnsaved('productionItems', itemWithId.id);
+    return itemWithId;
+  };
+
+  const removeLocalProductionItem = (itemId) => {
+    setLocalProductionItems(prev => prev.filter(item => item.id !== itemId));
+    markChangesUnsaved('productionItems', itemId);
+  };
+
+  const updateLocalUser = (userId, updates) => {
+    setLocalUsers(prev => 
+      prev.map(user => user.id === userId ? { ...user, ...updates } : user)
+    );
+    markChangesUnsaved('users', userId);
+  };
+
+  const addLocalUser = (newUser) => {
+    const userWithId = { ...newUser, id: `temp_${Date.now()}` };
+    setLocalUsers(prev => [...prev, userWithId]);
+    markChangesUnsaved('users', userWithId.id);
+    return userWithId;
+  };
+
+  const removeLocalUser = (userId) => {
+    setLocalUsers(prev => prev.filter(user => user.id !== userId));
+    markChangesUnsaved('users', userId);
+  };
+
+  const updateLocalSettings = (updates) => {
+    setLocalSettings(prev => ({ ...prev, ...updates }));
+    markChangesUnsaved('settings');
   };
 
   const updateLocalNotificationPreferences = (userId, preferences) => {
