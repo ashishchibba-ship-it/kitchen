@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
 Backend API Testing for Production Kitchen Management System
-Focus: Testing the simplified ordering system after removing "available for order" limitations
+Focus: Testing the fixed production items system after removing status management
 Key Tests:
-1. Production Item Creation without quantity field (manager creation)
-2. Orderable Items Without Limitations - ALL production items are returned
-3. Order Creation Without Inventory Reduction
-4. Complete Simplified Workflow
+1. Production Items Creation - POST /api/production-items without quantity/status fields
+2. Production Items Retrieval - GET /api/production-items returns clean data
+3. Orderable Items - GET /api/orderable-items and GET /api/orderable-items/by-category
+4. Manager Production Screen Fix - verify clean data structure without status/quantity issues
 """
 
 import requests
