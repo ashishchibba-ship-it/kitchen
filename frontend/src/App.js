@@ -150,8 +150,17 @@ const ManagerDashboard = ({ user, appSettings }) => {
   const [notificationPreferences, setNotificationPreferences] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [localNotificationPreferences, setLocalNotificationPreferences] = useState([]);
+  const [localProductionItems, setLocalProductionItems] = useState([]);
+  const [localUsers, setLocalUsers] = useState([]);
+  const [localSettings, setLocalSettings] = useState({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [pendingChanges, setPendingChanges] = useState({
+    productionItems: [],
+    users: [],
+    notifications: [],
+    settings: false
+  });
 
   const [newItem, setNewItem] = useState({
     name: '',
