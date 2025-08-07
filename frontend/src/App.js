@@ -1029,7 +1029,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {productionItems.map(item => (
+                    {localProductionItems.map(item => (
                       <tr key={item.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {item.image ? (
