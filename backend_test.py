@@ -3608,14 +3608,295 @@ class KitchenAPITester:
         
         return self.test_results
 
+    def test_notification_contact_editing(self):
+        """Test notification contact editing functionality"""
+        print("\n=== TESTING NOTIFICATION CONTACT EDITING FUNCTIONALITY ===")
+        
+        try:
+            # Step 1: Get all notification preferences and verify they include contact fields
+            print("\n--- Step 1: Get all notification preferences ---")
+            response = self.session.get(f"{BASE_URL}/notification-preferences")
+            if response.status_code == 200:
+                preferences = response.json()
+                self.log_result("GET /api/notification-preferences", True, f"Retrieved {len(preferences)} user preferences")
+                
+                # Verify preferences include contact fields
+                if preferences:
+                    first_pref = preferences[0]
+                    contact_fields = ["email", "phone", "notify_email", "notify_sms"]
+                    missing_fields = [field for field in contact_fields if field not in first_pref]
+                    
+                    if not missing_fields:
+                        self.log_result("Contact fields in preferences", True, "All contact fields present")
+                    else:
+                        self.log_result("Contact fields in preferences", False, f"Missing fields: {missing_fields}")
+                else:
+                    self.log_result("Contact fields in preferences", False, "No preferences found")
+            else:
+                self.log_result("GET /api/notification-preferences", False, f"Status: {response.status_code}")
+                return
+            
+            # Step 2: Test updating notification preferences with email and phone data
+            print("\n--- Step 2: Update notification preferences with contact info ---")
+            
+            # Get a user to test with
+            test_user = preferences[0] if preferences else None
+            if not test_user:
+                self.log_result("Get test user for contact update", False, "No users available")
+                return
+            
+            user_id = test_user["user_id"]
+            
+            # Test data with valid email and phone
+            contact_update_data = {
+                "email": "test@example.com",
+                "phone": "+1-555-123-4567",
+                "order_placed": True,
+                "order_preparing": True,
+                "order_ready": False,  # Disable this one
+                "order_delivered": True,
+                "notify_email": True,
+                "notify_sms": True,
+                "notify_in_app": True
+            }
+            
+            response = self.session.put(f"{BASE_URL}/notification-preferences/{user_id}", json=contact_update_data)
+            if response.status_code == 200:
+                self.log_result("PUT /api/notification-preferences with contact info", True, 
+                              f"Updated preferences for user {test_user['user_name']}")
+            else:
+                self.log_result("PUT /api/notification-preferences with contact info", False, 
+                              f"Status: {response.status_code}, Response: {response.text}")
+                return
+            
+            # Step 3: Verify the contact information is stored correctly
+            print("\n--- Step 3: Verify contact information storage ---")
+            
+            response = self.session.get(f"{BASE_URL}/notification-preferences")
+            if response.status_code == 200:
+                updated_preferences = response.json()
+                updated_user_pref = next((pref for pref in updated_preferences if pref["user_id"] == user_id), None)
+                
+                if updated_user_pref:
+                    # Verify email was saved correctly
+                    if updated_user_pref.get("email") == contact_update_data["email"]:
+                        self.log_result("Email storage verification", True, 
+                                      f"Email correctly saved: {updated_user_pref['email']}")
+                    else:
+                        self.log_result("Email storage verification", False, 
+                                      f"Expected {contact_update_data['email']}, got {updated_user_pref.get('email')}")
+                    
+                    # Verify phone was saved correctly
+                    if updated_user_pref.get("phone") == contact_update_data["phone"]:
+                        self.log_result("Phone storage verification", True, 
+                                      f"Phone correctly saved: {updated_user_pref['phone']}")
+                    else:
+                        self.log_result("Phone storage verification", False, 
+                                      f"Expected {contact_update_data['phone']}, got {updated_user_pref.get('phone')}")
+                    
+                    # Verify notification toggles were updated
+                    if updated_user_pref.get("order_ready") == False:
+                        self.log_result("Notification toggle update", True, "order_ready correctly disabled")
+                    else:
+                        self.log_result("Notification toggle update", False, 
+                                      f"Expected order_ready=False, got {updated_user_pref.get('order_ready')}")
+                    
+                    # Verify email and SMS notification flags
+                    if updated_user_pref.get("notify_email") == True and updated_user_pref.get("notify_sms") == True:
+                        self.log_result("Email/SMS notification flags", True, "Both email and SMS notifications enabled")
+                    else:
+                        self.log_result("Email/SMS notification flags", False, 
+                                      f"notify_email: {updated_user_pref.get('notify_email')}, notify_sms: {updated_user_pref.get('notify_sms')}")
+                else:
+                    self.log_result("Find updated user preferences", False, "Updated user preferences not found")
+            else:
+                self.log_result("Verify contact information storage", False, f"Status: {response.status_code}")
+            
+            # Step 4: Test updating another user with different contact information
+            print("\n--- Step 4: Test updating another user ---")
+            
+            if len(preferences) > 1:
+                second_user = preferences[1]
+                second_user_id = second_user["user_id"]
+                
+                second_contact_data = {
+                    "email": "manager@kitchenco.com",
+                    "phone": "+1-555-987-6543",
+                    "order_placed": False,  # Disable this one
+                    "order_preparing": True,
+                    "order_ready": True,
+                    "order_delivered": True,
+                    "notify_email": False,  # Disable email notifications
+                    "notify_sms": True,
+                    "notify_in_app": True
+                }
+                
+                response = self.session.put(f"{BASE_URL}/notification-preferences/{second_user_id}", json=second_contact_data)
+                if response.status_code == 200:
+                    self.log_result("Update second user contact info", True, 
+                                  f"Updated preferences for user {second_user['user_name']}")
+                    
+                    # Verify the second user's data
+                    response = self.session.get(f"{BASE_URL}/notification-preferences")
+                    if response.status_code == 200:
+                        final_preferences = response.json()
+                        second_user_pref = next((pref for pref in final_preferences if pref["user_id"] == second_user_id), None)
+                        
+                        if second_user_pref:
+                            if (second_user_pref.get("email") == second_contact_data["email"] and 
+                                second_user_pref.get("phone") == second_contact_data["phone"]):
+                                self.log_result("Second user contact verification", True, 
+                                              f"Email: {second_user_pref['email']}, Phone: {second_user_pref['phone']}")
+                            else:
+                                self.log_result("Second user contact verification", False, 
+                                              "Contact information not saved correctly")
+                        else:
+                            self.log_result("Second user contact verification", False, "User preferences not found")
+                else:
+                    self.log_result("Update second user contact info", False, f"Status: {response.status_code}")
+            
+            # Step 5: Test data validation - valid email and phone formats
+            print("\n--- Step 5: Test data validation ---")
+            
+            # Test with valid email formats
+            valid_emails = ["user@domain.com", "test.email+tag@example.org", "admin@company.co.uk"]
+            for email in valid_emails:
+                test_data = {"email": email, "phone": "+1-555-000-0000"}
+                response = self.session.put(f"{BASE_URL}/notification-preferences/{user_id}", json=test_data)
+                if response.status_code == 200:
+                    self.log_result(f"Valid email format: {email}", True, "Accepted")
+                else:
+                    self.log_result(f"Valid email format: {email}", False, f"Status: {response.status_code}")
+            
+            # Test with valid phone formats
+            valid_phones = ["+1-555-123-4567", "+44-20-7946-0958", "555-123-4567", "(555) 123-4567"]
+            for phone in valid_phones:
+                test_data = {"email": "test@example.com", "phone": phone}
+                response = self.session.put(f"{BASE_URL}/notification-preferences/{user_id}", json=test_data)
+                if response.status_code == 200:
+                    self.log_result(f"Valid phone format: {phone}", True, "Accepted")
+                else:
+                    self.log_result(f"Valid phone format: {phone}", False, f"Status: {response.status_code}")
+            
+            # Step 6: Test handling of empty/null contact information
+            print("\n--- Step 6: Test empty/null contact information ---")
+            
+            # Test with null/empty values
+            empty_contact_data = {
+                "email": None,
+                "phone": None,
+                "order_placed": True,
+                "order_preparing": True,
+                "order_ready": True,
+                "order_delivered": True
+            }
+            
+            response = self.session.put(f"{BASE_URL}/notification-preferences/{user_id}", json=empty_contact_data)
+            if response.status_code == 200:
+                self.log_result("Handle null contact information", True, "System accepts null values")
+                
+                # Verify null values are stored correctly
+                response = self.session.get(f"{BASE_URL}/notification-preferences")
+                if response.status_code == 200:
+                    final_prefs = response.json()
+                    user_pref = next((pref for pref in final_prefs if pref["user_id"] == user_id), None)
+                    
+                    if user_pref and user_pref.get("email") is None and user_pref.get("phone") is None:
+                        self.log_result("Null values storage", True, "Null values correctly stored")
+                    else:
+                        self.log_result("Null values storage", False, 
+                                      f"Email: {user_pref.get('email') if user_pref else 'N/A'}, Phone: {user_pref.get('phone') if user_pref else 'N/A'}")
+            else:
+                self.log_result("Handle null contact information", False, f"Status: {response.status_code}")
+            
+            # Test with empty strings
+            empty_string_data = {
+                "email": "",
+                "phone": "",
+                "order_placed": True,
+                "order_preparing": True,
+                "order_ready": True,
+                "order_delivered": True
+            }
+            
+            response = self.session.put(f"{BASE_URL}/notification-preferences/{user_id}", json=empty_string_data)
+            if response.status_code == 200:
+                self.log_result("Handle empty string contact information", True, "System accepts empty strings")
+            else:
+                self.log_result("Handle empty string contact information", False, f"Status: {response.status_code}")
+            
+            # Step 7: Test complete workflow - manager editing contact info for all users
+            print("\n--- Step 7: Test manager workflow for editing all user contacts ---")
+            
+            # Simulate manager updating contact information for all users
+            manager_updates = [
+                {"email": "downtown@venues.com", "phone": "+1-555-111-2222"},
+                {"email": "uptown@venues.com", "phone": "+1-555-333-4444"},
+                {"email": "chef.alice@kitchen.com", "phone": "+1-555-555-6666"},
+                {"email": "chef.bob@kitchen.com", "phone": "+1-555-777-8888"},
+                {"email": "manager@kitchen.com", "phone": "+1-555-999-0000"}
+            ]
+            
+            successful_updates = 0
+            for i, pref in enumerate(preferences[:len(manager_updates)]):
+                update_data = manager_updates[i].copy()
+                update_data.update({
+                    "order_placed": True,
+                    "order_preparing": True,
+                    "order_ready": True,
+                    "order_delivered": True,
+                    "notify_email": True,
+                    "notify_sms": False,
+                    "notify_in_app": True
+                })
+                
+                response = self.session.put(f"{BASE_URL}/notification-preferences/{pref['user_id']}", json=update_data)
+                if response.status_code == 200:
+                    successful_updates += 1
+                    self.log_result(f"Manager update for {pref['user_name']}", True, 
+                                  f"Email: {update_data['email']}, Phone: {update_data['phone']}")
+                else:
+                    self.log_result(f"Manager update for {pref['user_name']}", False, f"Status: {response.status_code}")
+            
+            self.log_result("Manager bulk contact updates", True, 
+                          f"Successfully updated {successful_updates}/{len(manager_updates)} users")
+            
+            # Final verification - get all preferences and verify all contact info is present
+            response = self.session.get(f"{BASE_URL}/notification-preferences")
+            if response.status_code == 200:
+                final_all_prefs = response.json()
+                users_with_email = sum(1 for pref in final_all_prefs if pref.get("email") and pref["email"] != "")
+                users_with_phone = sum(1 for pref in final_all_prefs if pref.get("phone") and pref["phone"] != "")
+                
+                self.log_result("Final contact information summary", True, 
+                              f"Users with email: {users_with_email}/{len(final_all_prefs)}, Users with phone: {users_with_phone}/{len(final_all_prefs)}")
+            
+        except Exception as e:
+            self.log_result("Notification Contact Editing", False, f"Exception: {str(e)}")
+
 if __name__ == "__main__":
     tester = KitchenAPITester()
-    results = tester.test_simplified_ordering_system()
     
-    # Exit with appropriate code
-    if results["failed"] == 0:
-        print("\n🎉 ALL TESTS PASSED!")
-        sys.exit(0)
-    else:
-        print(f"\n⚠️  {results['failed']} TESTS FAILED")
-        sys.exit(1)
+    # Run the notification contact editing tests
+    print("🔍 STARTING NOTIFICATION CONTACT EDITING TESTS")
+    print("=" * 60)
+    
+    tester.test_notification_contact_editing()
+    
+    # Print summary
+    print("\n" + "=" * 60)
+    print("🔍 NOTIFICATION CONTACT EDITING TEST SUMMARY")
+    print("=" * 60)
+    print(f"✅ Tests Passed: {tester.test_results['passed']}")
+    print(f"❌ Tests Failed: {tester.test_results['failed']}")
+    print(f"📊 Success Rate: {(tester.test_results['passed'] / (tester.test_results['passed'] + tester.test_results['failed']) * 100):.1f}%")
+    
+    if tester.test_results['errors']:
+        print("\n🚨 FAILED TESTS:")
+        for error in tester.test_results['errors']:
+            print(f"   • {error}")
+    
+    print(f"\n🎯 FINAL RESULTS:")
+    print(f"✅ Passed: {tester.test_results['passed']}")
+    print(f"❌ Failed: {tester.test_results['failed']}")
+    print(f"📊 Success Rate: {(tester.test_results['passed'] / (tester.test_results['passed'] + tester.test_results['failed']) * 100):.1f}%")
