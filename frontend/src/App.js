@@ -377,10 +377,19 @@ const ManagerDashboard = ({ user, appSettings }) => {
                 prev.map(item => item.id === itemId ? { ...item, id: response.data.id } : item)
               );
             } else {
-              // Existing item - update or delete
+              // Existing item - update
               const originalItem = productionItems.find(item => item.id === itemId);
               if (originalItem) {
-                await axios.put(`${API}/production-items/${itemId}`, localItem);
+                // Filter to only send fields expected by backend ProductionItemCreate model
+                const updateData = {
+                  name: localItem.name,
+                  category: localItem.category,
+                  unit_of_measure: localItem.unit_of_measure || 'kg',
+                  assigned_staff: localItem.assigned_staff,
+                  image: localItem.image,
+                  base_cost: localItem.base_cost
+                };
+                await axios.put(`${API}/production-items/${itemId}`, updateData);
               }
             }
             successCount++;
