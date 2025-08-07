@@ -1082,15 +1082,16 @@ const ManagerDashboard = ({ user, appSettings }) => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <input
                             type="number"
-                            defaultValue={item.available_for_order || 0}
+                            value={item.available_for_order || 0}
                             max={1000}
                             min={0}
-                            className="w-20 p-1 border border-gray-300 rounded text-sm"
-                            onBlur={(e) => {
-                              if (e.target.value !== (item.available_for_order || 0).toString()) {
-                                updateItemAvailability(item.id, e.target.value, item.base_cost || 10.0);
-                              }
+                            onChange={(e) => {
+                              const newAvailable = parseInt(e.target.value) || 0;
+                              updateLocalProductionItem(item.id, { 
+                                available_for_order: newAvailable
+                              });
                             }}
+                            className="w-20 p-1 border border-gray-300 rounded text-sm"
                           />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
