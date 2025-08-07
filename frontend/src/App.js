@@ -1870,59 +1870,6 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
           </div>
         )}
 
-        {/* Today's Production Items */}
-        <div className="bg-white rounded-lg shadow">
-          <h3 className="text-lg font-semibold text-gray-800 p-4 border-b">Today's Production Items</h3>
-          <div className="space-y-4 p-4">
-            {productionItems.map(item => (
-              <div key={item.id} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex space-x-4">
-                    {item.image && (
-                      <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded" />
-                    )}
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-800">{item.name}</h4>
-                      <p className="text-gray-600">Category: {item.category}</p>
-                      <p className="text-gray-600">Quantity: {item.quantity} {item.unit_of_measure}</p>
-                      <p className="text-gray-600">Target Time: {item.target_time}</p>
-                    </div>
-                  </div>
-                  <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                    item.status === 'completed' ? 'bg-green-100 text-green-800' :
-                    item.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {item.status.replace('_', ' ')}
-                  </span>
-                </div>
-                <div className="flex space-x-3">
-                  {item.status === 'pending' && (
-                    <button
-                      onClick={() => updateItemStatus(item.id, 'in_progress')}
-                      className="text-white px-4 py-2 rounded-md hover:opacity-90 transition-colors"
-                      style={{ backgroundColor: appSettings?.primary_color || '#fbbf24' }}
-                    >
-                      Start Production
-                    </button>
-                  )}
-                  {item.status === 'in_progress' && (
-                    <button
-                      onClick={() => updateItemStatus(item.id, 'completed')}
-                      className="text-white px-4 py-2 rounded-md hover:opacity-90 transition-colors"
-                      style={{ backgroundColor: appSettings?.accent_color || '#10b981' }}
-                    >
-                      Mark Complete
-                    </button>
-                  )}
-                  {item.status === 'completed' && (
-                    <span className="font-medium" style={{ color: appSettings?.accent_color || '#10b981' }}>✓ Completed</span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );
