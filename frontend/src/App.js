@@ -876,20 +876,11 @@ const ManagerDashboard = ({ user, appSettings }) => {
                       ))}
                     </select>
                     <input
-                      name="quantity"
-                      type="number"
-                      placeholder="Quantity"
-                      defaultValue={editingItem.quantity}
-                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                    <input
                       name="unit_of_measure"
-                      type="text"
-                      placeholder="Unit of Measure"
-                      defaultValue={editingItem.unit_of_measure}
-                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
+                      type="text" 
+                      value="kg"
+                      disabled
+                      className="p-3 border border-gray-300 rounded-md bg-gray-100 text-gray-600"
                     />
                     <input
                       name="base_cost"
