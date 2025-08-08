@@ -65,26 +65,30 @@ const ImageUpload = ({ onImageSelect, currentImage }) => {
 
 // Login Component
 const Login = ({ onLogin, appSettings }) => {
-  const [users, setUsers] = useState([]);
-  const [selectedUser, setSelectedUser] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
-  const fetchUsers = async () => {
     try {
-      const response = await axios.get(`${API}/users`);
-      setUsers(response.data);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    }
-  };
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api/login`, {
+        username,
+        password
+      });
 
-  const handleLogin = () => {
-    const user = users.find(u => u.username === selectedUser);
-    if (user) {
-      onLogin(user);
+      if (response.data.user) {
+        onLogin(response.data.user);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError(error.response?.data?.detail || 'Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
