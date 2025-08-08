@@ -76,6 +76,7 @@ class User(BaseModel):
     name: str
     role: UserRole
     username: str
+    password: str = "defaultpassword"
     address: Optional[str] = None  # For venue staff
 
 class UserCreate(BaseModel):
