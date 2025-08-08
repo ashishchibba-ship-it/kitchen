@@ -274,6 +274,34 @@ async def init_predefined_data():
             await db.categories.insert_one(category.dict())
 
 # Authentication endpoints
+@api_router.post("/login")
+async def login(credentials: dict):
+    """Authenticate user with username and password"""
+    try:
+        username = credentials.get("username")
+        password = credentials.get("password")
+        
+        if not username or not password:
+            raise HTTPException(status_code=400, detail="Username and password are required")
+        
+        # Find user by username
+        user = await db.users.find_one({"username": username})
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid username or password")
+        
+        # Check password
+        if user.get("password") != password:
+            raise HTTPException(status_code=401, detail="Invalid username or password")
+        
+        # Return user without password
+        user_response = {k: v for k, v in user.items() if k != "password"}
+        return {"user": user_response, "message": "Login successful"}
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Login error: {str(e)}")
+
 @api_router.get("/users", response_model=List[User])
 async def get_users():
     users = await db.users.find().to_list(1000)
