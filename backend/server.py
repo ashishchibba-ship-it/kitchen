@@ -245,13 +245,13 @@ class AppSettingsUpdate(BaseModel):
 async def init_predefined_data():
     # Initialize users
     predefined_users = [
-        User(name="Kitchen Manager", role=UserRole.MANAGER, username="manager"),
-        User(name="Chef Alice", role=UserRole.KITCHEN_STAFF, username="chef_alice"),
-        User(name="Chef Bob", role=UserRole.KITCHEN_STAFF, username="chef_bob"),
+        User(name="Kitchen Manager", role=UserRole.MANAGER, username="manager", password="admin123"),
+        User(name="Chef Alice", role=UserRole.KITCHEN_STAFF, username="chef_alice", password="chef123"),
+        User(name="Chef Bob", role=UserRole.KITCHEN_STAFF, username="chef_bob", password="chef456"),
         User(name="Downtown Cafe", role=UserRole.VENUE_STAFF, username="downtown_cafe", 
-             address="123 Main St, Downtown, City 12345"),
+             address="123 Main St, Downtown, City 12345", password="venue123"),
         User(name="Uptown Restaurant", role=UserRole.VENUE_STAFF, username="uptown_restaurant",
-             address="456 Oak Ave, Uptown, City 67890"),
+             address="456 Oak Ave, Uptown, City 67890", password="venue456"),
     ]
     
     existing_users = await db.users.count_documents({})
