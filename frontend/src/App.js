@@ -692,17 +692,20 @@ const ManagerDashboard = ({ user, appSettings }) => {
   const handleCreateUser = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/users`, newUser);
+      // Add to local state instead of immediately saving
+      addLocalUser(newUser);
+      
+      // Reset form
       setNewUser({
         name: '',
         username: '',
+        password: '',
         role: 'kitchen_staff',
         address: ''
       });
-      fetchUsers();
     } catch (error) {
-      console.error('Error creating user:', error);
-      alert('Error creating user. Username might already exist.');
+      console.error('Error adding user to local state:', error);
+      alert('Error adding user locally.');
     }
   };
 
