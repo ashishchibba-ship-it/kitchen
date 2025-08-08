@@ -233,12 +233,12 @@ const Login = ({ onLogin, appSettings }) => {
           <div className="space-y-1 text-xs">
             {OFFLINE_USERS.map(user => (
               <p key={user.id}>
-                <strong>{user.name}:</strong> {user.role.replace('_', ' ')} - username: {user.username}
+                <strong>{user.name}:</strong> {user.role.replace('_', ' ')} - username: {user.username} / password: {user.password}
               </p>
             ))}
           </div>
-          <p className="mt-2 text-xs text-gray-500">
-            Use the dropdown above to select a user, then enter their password
+          <p className="mt-2 text-xs text-blue-600">
+            🔒 All authentication is handled offline - no network required!
           </p>
         </div>
       </div>
