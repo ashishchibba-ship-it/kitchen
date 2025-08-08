@@ -295,8 +295,15 @@ async def login(credentials: dict):
         if user.get("password") != password:
             raise HTTPException(status_code=401, detail="Invalid username or password")
         
-        # Return user without password
-        user_response = {k: v for k, v in user.items() if k != "password"}
+        # Return user without password, handling datetime serialization
+        user_response = {}
+        for k, v in user.items():
+            if k != "password" and k != "_id":  # Remove password and MongoDB ObjectId
+                if isinstance(v, datetime):
+                    user_response[k] = v.isoformat()
+                else:
+                    user_response[k] = v
+                    
         return {"user": user_response, "message": "Login successful"}
         
     except HTTPException as he:
