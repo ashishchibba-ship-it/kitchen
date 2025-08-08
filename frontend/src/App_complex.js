@@ -118,32 +118,35 @@ const Login = ({ onLogin, appSettings }) => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [users, setUsers] = useState([
-    // Hardcoded users as fallback
-    {id: "1", name: "Partial Update Kitchen Manager", role: "manager", username: "updated_manager"},
-    {id: "2", name: "Chef Alice", role: "kitchen_staff", username: "chef_alice"},
-    {id: "3", name: "Chef Bob", role: "kitchen_staff", username: "chef_bob"},
-    {id: "4", name: "Downtown Cafe", role: "venue_staff", username: "downtown_cafe"},
-    {id: "5", name: "Uptown Restaurant", role: "venue_staff", username: "uptown_restaurant"}
-  ]);
 
-  const handleLogin = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
     try {
-      console.log('Attempting login with:', username);
-      const response = await axios.post(`${API}/login`, {
-        username,
-        password
-      });
-
-      console.log('Login response received');
-      if (response.data && response.data.user) {
-        console.log('Login successful');
-        onLogin(response.data.user);
+      console.log('Attempting offline login for:', username);
+      
+      // Find user by username from offline users
+      const foundUser = OFFLINE_USERS.find(u => u.username === username);
+      
+      if (!foundUser) {
+        setError('User not found');
+        setIsLoading(false);
+        return;
       }
+      
+      // Check password
+      if (foundUser.password !== password) {
+        setError('Invalid password');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Login successful
+      console.log('Login successful for:', foundUser.name);
+      onLogin(foundUser);
+      
     } catch (error) {
       console.error('Login error:', error);
       setError('Login failed. Please try again.');
