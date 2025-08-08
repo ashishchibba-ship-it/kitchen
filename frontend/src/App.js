@@ -112,28 +112,43 @@ const Login = ({ onLogin, appSettings }) => {
             {appSettings?.app_name || 'Production Kitchen'} Login
           </h2>
         </div>
-        <div className="space-y-4">
-          <select 
-            value={selectedUser} 
-            onChange={(e) => setSelectedUser(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select User</option>
-            {users.map(user => (
-              <option key={user.id} value={user.username}>
-                {user.name} ({user.role})
-              </option>
-            ))}
-          </select>
+        <form onSubmit={handleLogin} className="space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+              {error}
+            </div>
+          )}
+          <div>
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+              disabled={isLoading}
+            />
+          </div>
+          <div>
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+              disabled={isLoading}
+            />
+          </div>
           <button 
-            onClick={handleLogin}
-            disabled={!selectedUser}
+            type="submit"
+            disabled={isLoading || !username || !password}
             className="w-full text-white py-3 px-4 rounded-md hover:opacity-90 disabled:bg-gray-400 transition-colors"
             style={primaryButtonStyle}
           >
-            Login
+            {isLoading ? 'Logging in...' : 'Login'}
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );
