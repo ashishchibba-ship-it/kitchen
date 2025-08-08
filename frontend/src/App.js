@@ -1847,8 +1847,77 @@ const ManagerDashboard = ({ user, appSettings }) => {
 
         {activeTab === 'settings' && (
           <div className="space-y-6">
+            {/* Password Management Section */}
             <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">App Customization</h3>
+              <div className="border-b pb-4 mb-6">
+                <h3 className="text-lg font-semibold text-gray-800">Password Management</h3>
+                <p className="text-sm text-gray-600 mt-1">Manage passwords for all users. No password requirements - you can set any password.</p>
+              </div>
+              
+              <div className="space-y-4">
+                {localUsers.map(user => (
+                  <div key={user.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h4 className="font-medium text-gray-800">{user.name}</h4>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className="text-sm text-gray-600">@{user.username}</span>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            user.role === 'manager' ? 'bg-purple-100 text-purple-800' :
+                            user.role === 'kitchen_staff' ? 'bg-green-100 text-green-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {user.role.replace('_', ' ')}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="password"
+                            placeholder="New password"
+                            className="w-40 text-sm p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            id={`password-${user.id}`}
+                          />
+                          <button
+                            onClick={() => {
+                              const passwordInput = document.getElementById(`password-${user.id}`);
+                              const newPassword = passwordInput.value.trim();
+                              if (!newPassword) {
+                                alert('Please enter a password.');
+                                return;
+                              }
+                              if (window.confirm(`Update password for ${user.name}?`)) {
+                                updateUserPassword(user.id, newPassword);
+                                passwordInput.value = '';
+                              }
+                            }}
+                            className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                          >
+                            Update Password
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {localUsers.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <div className="text-lg mb-2">👥</div>
+                    <p>No users found.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* App Customization Settings */}
+            <div className="bg-white p-6 rounded-lg shadow">
+              <div className="border-b pb-4 mb-6">
+                <h3 className="text-lg font-semibold text-gray-800">App Customization</h3>
+                <p className="text-sm text-gray-600 mt-1">Customize the appearance and branding of your application.</p>
+              </div>
               <form onSubmit={(e) => {
                 e.preventDefault();
                 updateAppSettings({
