@@ -102,8 +102,8 @@ const Login = ({ onLogin, appSettings }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center" style={containerStyle}>
-      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
+    <div className="min-h-screen flex items-center justify-center" style={containerStyle}>
+      <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full m-4" style={{ fontFamily: appSettings?.font_family }}>
         <div className="text-center mb-6">
           {appSettings?.logo_url && (
             <img src={appSettings.logo_url} alt="Logo" className="mx-auto h-16 w-16 mb-4" />
@@ -112,34 +112,44 @@ const Login = ({ onLogin, appSettings }) => {
             {appSettings?.app_name || 'Production Kitchen'} Login
           </h2>
         </div>
+        
         <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Username
+            </label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
+              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+              disabled={isLoading}
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+              disabled={isLoading}
+            />
+          </div>
+
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+            <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">
               {error}
             </div>
           )}
-          <div>
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-              disabled={isLoading}
-            />
-          </div>
-          <div>
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-              disabled={isLoading}
-            />
-          </div>
+
           <button 
             type="submit"
             disabled={isLoading || !username || !password}
@@ -149,6 +159,17 @@ const Login = ({ onLogin, appSettings }) => {
             {isLoading ? 'Logging in...' : 'Login'}
           </button>
         </form>
+
+        <div className="mt-6 text-center text-sm text-gray-600">
+          <p className="mb-2"><strong>Default Login Credentials:</strong></p>
+          <div className="space-y-1 text-xs">
+            <p><strong>Manager:</strong> username: manager, password: admin123</p>
+            <p><strong>Chef Alice:</strong> username: chef_alice, password: chef123</p>
+            <p><strong>Chef Bob:</strong> username: chef_bob, password: chef456</p>
+            <p><strong>Downtown Cafe:</strong> username: downtown_cafe, password: venue123</p>
+            <p><strong>Uptown Restaurant:</strong> username: uptown_restaurant, password: venue456</p>
+          </div>
+        </div>
       </div>
     </div>
   );
