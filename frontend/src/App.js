@@ -153,6 +153,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
   const [localProductionItems, setLocalProductionItems] = useState([]);
   const [localUsers, setLocalUsers] = useState([]);
   const [localSettings, setLocalSettings] = useState({});
+  const [passwordVisibility, setPasswordVisibility] = useState({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [pendingChanges, setPendingChanges] = useState({
