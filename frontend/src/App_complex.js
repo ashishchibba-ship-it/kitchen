@@ -332,12 +332,35 @@ const ManagerDashboard = ({ user, appSettings }) => {
   const fetchProductionItems = async () => {
     try {
       console.log('Fetching production items from:', `${API}/production-items`);
-      const response = await axios.get(`${API}/production-items`);
+      const response = await axios.get(`${API}/production-items`, {
+        timeout: 10000,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
       console.log('Production items loaded:', response.data.length, 'items');
+      console.log('First item:', response.data[0]);
       setProductionItems(response.data);
       setLocalProductionItems(response.data); // Initialize local state
     } catch (error) {
-      console.error('Error fetching production items:', error);
+      console.error('Error fetching production items:', error.message);
+      console.error('Error details:', error.response?.status, error.response?.data);
+      
+      // Fallback: show mock data so user can see the interface
+      const mockData = [
+        {
+          id: 'mock1',
+          name: 'Demo Item (Backend Connection Failed)',
+          category: 'Main Course',
+          unit_of_measure: 'portions',
+          base_cost: 15.0,
+          unit_price: 17.25,
+          availability: true
+        }
+      ];
+      setProductionItems(mockData);
+      setLocalProductionItems(mockData);
     }
   };
 
