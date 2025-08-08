@@ -45,7 +45,7 @@ async def test_login():
     user_response = {k: v for k, v in user.items() if k != "password"}
     print(f"✅ Login successful for user: {user_response}")
     
-    await client.close()
+    client.close()
 
 if __name__ == "__main__":
     asyncio.run(test_login())
