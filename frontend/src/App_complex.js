@@ -330,7 +330,9 @@ const ManagerDashboard = ({ user, appSettings }) => {
 
   const fetchProductionItems = async () => {
     try {
+      console.log('Fetching production items from:', `${API}/production-items`);
       const response = await axios.get(`${API}/production-items`);
+      console.log('Production items loaded:', response.data.length, 'items');
       setProductionItems(response.data);
       setLocalProductionItems(response.data); // Initialize local state
     } catch (error) {
