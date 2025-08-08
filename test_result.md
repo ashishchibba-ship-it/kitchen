@@ -551,6 +551,18 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+  - task: "Password-based authentication system with dropdown user selection"
+    implemented: true
+    working: true
+    file: "server.py, App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Implemented complete password-based authentication system. BACKEND: Updated login endpoint to properly handle password validation and fixed datetime serialization issues. Added reset-default-passwords endpoint for development. LOGIN UI: Changed username input to dropdown selection of existing users while keeping password as text input. Updated user display to show available users with their roles. AUTHENTICATION: Fixed login authentication by resetting user passwords to intended defaults (admin123, chef123, etc.) and ensuring proper password validation. ADD USER FORM: Password field already present in manager dashboard for new user creation."
+
 agent_communication:
     - agent: "main"
       message: "Implemented force delete and enhanced add item form to resolve user issues. FORCE DELETE: 1) Added force parameter to DELETE /api/production-items/{id} endpoint 2) When force=true, removes item from all orders/invoices and recalculates totals 3) Frontend shows two-step confirmation with clear warnings 4) Maintains data integrity while allowing manager override. ENHANCED ADD FORM: 1) Added required field indicators and validation messages 2) Blue info banner explaining requirements 3) Individual field labels with helper text 4) Disabled submit button with clear messaging when fields missing 5) Better responsive 3-column layout 6) Enhanced user experience with examples and guidance. Ready for testing both new features."
