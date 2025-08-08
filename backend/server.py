@@ -83,6 +83,7 @@ class UserCreate(BaseModel):
     name: str
     role: UserRole
     username: str
+    password: str
     address: Optional[str] = None
 
 class UserUpdate(BaseModel):
