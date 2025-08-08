@@ -342,7 +342,9 @@ const ManagerDashboard = ({ user, appSettings }) => {
 
   const fetchOrders = async () => {
     try {
+      console.log('Fetching orders from:', `${API}/orders`);
       const response = await axios.get(`${API}/orders`);
+      console.log('Orders loaded:', response.data.length, 'orders');
       setOrders(response.data);
     } catch (error) {
       console.error('Error fetching orders:', error);
