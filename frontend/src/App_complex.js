@@ -3,8 +3,8 @@ import "./App.css";
 import axios from "axios";
 
 // HYBRID MODE - Offline authentication, but connected to backend for data
-// Use direct backend URL since proxy isn't working in deployed environment
-const API = 'http://localhost:8001/api';
+// Use internal IP since localhost doesn't work in deployed environment
+const API = 'http://10.64.166.29:8001/api';
 
 console.log('Production Kitchen App - HYBRID MODE (Offline Auth + Backend Data)');
 console.log('API URL:', API);
