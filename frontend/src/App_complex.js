@@ -231,7 +231,7 @@ const Login = ({ onLogin, appSettings }) => {
         <div className="mt-6 text-center text-sm text-gray-600">
           <p className="mb-2"><strong>Available Users:</strong></p>
           <div className="space-y-1 text-xs">
-            {users.map(user => (
+            {OFFLINE_USERS.map(user => (
               <p key={user.id}>
                 <strong>{user.name}:</strong> {user.role.replace('_', ' ')} - username: {user.username}
               </p>
