@@ -2,8 +2,12 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import axios from "axios";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 const API = `${BACKEND_URL}/api`;
+
+// Debug logging
+console.log('Environment check - BACKEND_URL:', BACKEND_URL);
+console.log('Environment check - API:', API);
 
 // Utility function to convert file to base64
 const fileToBase64 = (file) => {
