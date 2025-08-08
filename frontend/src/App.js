@@ -355,6 +355,13 @@ const ManagerDashboard = ({ user, appSettings }) => {
     }
   };
 
+  const togglePasswordVisibility = (userId) => {
+    setPasswordVisibility(prev => ({
+      ...prev,
+      [userId]: !prev[userId]
+    }));
+  };
+
   const updateLocalNotificationPreferences = (userId, preferences) => {
     setLocalNotificationPreferences(prevLocal => 
       prevLocal.map(pref => 
