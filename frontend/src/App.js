@@ -216,6 +216,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
   const [newUser, setNewUser] = useState({
     name: '',
     username: '',
+    password: '',
     role: 'kitchen_staff',
     address: ''
   });
