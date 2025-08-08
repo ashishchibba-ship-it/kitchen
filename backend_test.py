@@ -5175,27 +5175,32 @@ class KitchenAPITester:
 if __name__ == "__main__":
     tester = KitchenAPITester()
     
-    # Run the password management testing
-    print("🔐 STARTING PASSWORD MANAGEMENT SYSTEM TESTS")
-    print("=" * 60)
+    print("🔐 PRODUCTION KITCHEN MANAGEMENT - PASSWORD AUTHENTICATION TESTING")
+    print("=" * 80)
+    print(f"🌐 Testing Backend API: {BASE_URL}")
+    print("=" * 80)
     
-    results = tester.test_password_management_system()
+    # Run the complete password authentication system tests
+    results = tester.test_password_authentication_system()
     
-    # Print final summary
-    print("\n" + "=" * 60)
-    print("🔐 FINAL PASSWORD MANAGEMENT TEST RESULTS")
-    print("=" * 60)
-    print(f"✅ Tests Passed: {results['passed']}")
-    print(f"❌ Tests Failed: {results['failed']}")
-    print(f"📊 Success Rate: {(results['passed'] / (results['passed'] + results['failed']) * 100):.1f}%")
+    print("\n" + "=" * 80)
+    print("🏁 FINAL TEST SUMMARY")
+    print("=" * 80)
     
-    if results['errors']:
-        print("\n🚨 FAILED TESTS:")
-        for error in results['errors']:
-            print(f"   • {error}")
+    total_tests = results["passed"] + results["failed"]
+    success_rate = (results["passed"] / total_tests * 100) if total_tests > 0 else 0
+    
+    print(f"📊 Total Tests: {total_tests}")
+    print(f"✅ Passed: {results['passed']}")
+    print(f"❌ Failed: {results['failed']}")
+    print(f"🎯 Success Rate: {success_rate:.1f}%")
+    
+    if results["errors"]:
+        print(f"\n🚨 FAILED TESTS ({len(results['errors'])}):")
+        for i, error in enumerate(results["errors"], 1):
+            print(f"   {i}. {error}")
     
     # Exit with appropriate code
-    if results["failed"] > 0:
-        sys.exit(1)
-    else:
-        sys.exit(0)
+    exit_code = 0 if results["failed"] == 0 else 1
+    print(f"\n🔚 Testing completed with exit code: {exit_code}")
+    sys.exit(exit_code)
