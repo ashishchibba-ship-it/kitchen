@@ -1295,7 +1295,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Add New User</h3>
-              <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <form onSubmit={handleAddUser} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <input
                   type="text"
                   placeholder="Full Name"
@@ -1309,6 +1309,14 @@ const ManagerDashboard = ({ user, appSettings }) => {
                   placeholder="Username"
                   value={newUser.username}
                   onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+                  className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({...newUser, password: e.target.value})}
                   className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -1327,11 +1335,11 @@ const ManagerDashboard = ({ user, appSettings }) => {
                   placeholder="Address (for venues)"
                   value={newUser.address}
                   onChange={(e) => setNewUser({...newUser, address: e.target.value})}
-                  className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="md:col-span-2 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button
                   type="submit"
-                  className="text-white py-3 px-4 rounded-md hover:opacity-90 transition-colors"
+                  className="md:col-span-3 text-white py-3 px-4 rounded-md hover:opacity-90 transition-colors"
                   style={primaryButtonStyle}
                 >
                   Add User
