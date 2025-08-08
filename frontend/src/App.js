@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import "./App.css";
 import axios from "axios";
 
-const BACKEND_URL = 'http://10.64.166.29:8001';
-const API = `${BACKEND_URL}/api`;
+const API = '/api';
 
 // Simple Login Component
 const Login = ({ onLogin }) => {
