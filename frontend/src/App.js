@@ -180,14 +180,17 @@ const Login = ({ onLogin, appSettings }) => {
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-600">
-          <p className="mb-2"><strong>Default Login Credentials:</strong></p>
+          <p className="mb-2"><strong>Available Users:</strong></p>
           <div className="space-y-1 text-xs">
-            <p><strong>Manager:</strong> username: manager, password: admin123</p>
-            <p><strong>Chef Alice:</strong> username: chef_alice, password: chef123</p>
-            <p><strong>Chef Bob:</strong> username: chef_bob, password: chef456</p>
-            <p><strong>Downtown Cafe:</strong> username: downtown_cafe, password: venue123</p>
-            <p><strong>Uptown Restaurant:</strong> username: uptown_restaurant, password: venue456</p>
+            {users.map(user => (
+              <p key={user.id}>
+                <strong>{user.name}:</strong> {user.role.replace('_', ' ')} - username: {user.username}
+              </p>
+            ))}
           </div>
+          <p className="mt-2 text-xs text-gray-500">
+            Use the dropdown above to select a user, then enter their password
+          </p>
         </div>
       </div>
     </div>
