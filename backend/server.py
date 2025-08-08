@@ -327,6 +327,57 @@ async def delete_user(user_id: str):
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "User deleted successfully"}
 
+@api_router.put("/users/{user_id}/password")
+async def update_user_password(user_id: str, password_data: dict):
+    """Update user password (manager only)"""
+    try:
+        new_password = password_data.get("password")
+        if not new_password:
+            raise HTTPException(status_code=400, detail="Password is required")
+        
+        # Update user password
+        result = await db.users.update_one(
+            {"id": user_id},
+            {"$set": {"password": new_password, "updated_at": datetime.utcnow()}}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return {"message": "Password updated successfully"}
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating password: {str(e)}")
+
+@api_router.put("/users/{user_id}/profile") 
+async def update_user_profile(user_id: str, user_data: dict):
+    """Update user profile information (manager only)"""
+    try:
+        # Remove password from profile updates - use dedicated password endpoint
+        if "password" in user_data:
+            del user_data["password"]
+        
+        user_data["updated_at"] = datetime.utcnow()
+        
+        result = await db.users.update_one(
+            {"id": user_id},
+            {"$set": user_data}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Return updated user
+        updated_user = await db.users.find_one({"id": user_id})
+        return User(**updated_user)
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating user profile: {str(e)}")
+
 @api_router.get("/settings", response_model=AppSettings)
 async def get_app_settings():
     settings = await db.app_settings.find_one()
