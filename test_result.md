@@ -530,6 +530,21 @@ backend:
           agent: "testing"
           comment: "✅ PASSED - Production item save functionality working perfectly (100% success rate - 9/9 tests passed). COMPREHENSIVE VERIFICATION: 1) PRODUCTION ITEM UPDATE WORKFLOW: Created test item with base_cost $15.00 → unit_price $17.25, updated to base_cost $25.00 → unit_price $28.75, automatic 15% markup calculation working correctly 2) DATA FORMAT COMPATIBILITY: PUT /api/production-items/{id} accepts ProductionItemCreate format (name, category, unit_of_measure, assigned_staff, base_cost), processes all fields correctly, no extra fields required 3) SAVE FUNCTION DATA FLOW: Updated item data persists correctly in database, appears correctly in GET /api/production-items with all changes preserved 4) END-TO-END PERSISTENCE: Updated items appear correctly in GET /api/orderable-items with new pricing ($28.75), updated items appear correctly in GET /api/orderable-items/by-category organized properly, venue ordering profile shows updated prices correctly 5) MULTIPLE SAVE OPERATIONS: Tested multiple price updates ($12.00→$13.80, $20.00→$23.00, $8.50→$9.77), all automatic markup calculations accurate, all changes persist correctly. The production item save functionality is fully functional and production-ready - price changes now properly save to backend and are visible when accessing the ordering profile."
 
+  - task: "Password management system for user accounts"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Implemented password management functionality with PUT /api/users/{user_id}/password endpoint for updating user passwords and PUT /api/users/{user_id}/profile endpoint for updating user profile information (excluding password field)"
+        - working: true
+          agent: "testing"
+          comment: "✅ PASSED - Password management system working perfectly (100% success rate - 50/50 tests passed). COMPREHENSIVE VERIFICATION: 1) PASSWORD UPDATE ENDPOINT: PUT /api/users/{user_id}/password successfully updates passwords for all user roles (manager, kitchen_staff, venue_staff), correctly validates missing/empty/null passwords with 400 status, returns 404 for non-existent users, processes password updates and saves to database 2) USER PROFILE UPDATE ENDPOINT: PUT /api/users/{user_id}/profile updates user information correctly (name, username, address), properly excludes password field from profile updates as designed, handles partial updates correctly, validates user existence 3) COMPLETE PASSWORD MANAGEMENT WORKFLOW: Manager can successfully update passwords for all users, password updates persist correctly, users remain retrievable after password changes, supports multiple password updates, works across all user roles 4) PASSWORD MANAGEMENT FOR DIFFERENT ROLES: All user roles (manager, kitchen_staff, venue_staff) can have passwords updated, accepts various password formats (simple, numeric, complex, unicode, emoji), handles edge cases properly (malformed JSON, wrong content types), manager has permission to update all user role passwords. The password management system provides complete functionality for managers to update user passwords while maintaining proper separation between password and profile updates."
+
 test_plan:
   current_focus: []
   stuck_tasks: []
