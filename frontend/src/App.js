@@ -344,6 +344,16 @@ const ManagerDashboard = ({ user, appSettings }) => {
     markChangesUnsaved('settings');
   };
 
+  const updateUserPassword = async (userId, newPassword) => {
+    try {
+      await axios.put(`${API}/users/${userId}/password`, { password: newPassword });
+      alert('Password updated successfully!');
+    } catch (error) {
+      console.error('Error updating password:', error);
+      alert('Error updating password. Please try again.');
+    }
+  };
+
   const updateLocalNotificationPreferences = (userId, preferences) => {
     setLocalNotificationPreferences(prevLocal => 
       prevLocal.map(pref => 
