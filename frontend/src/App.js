@@ -22,6 +22,7 @@ const Login = ({ onLogin }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
+      console.log('Attempting login to:', `${API}/login`);
       const response = await axios.post(`${API}/login`, {
         username,
         password
@@ -30,6 +31,7 @@ const Login = ({ onLogin }) => {
         onLogin(response.data.user);
       }
     } catch (error) {
+      console.error('Login error:', error);
       setError('Login failed. Please try again.');
     }
   };
