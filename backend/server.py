@@ -357,6 +357,34 @@ async def delete_user(user_id: str):
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "User deleted successfully"}
 
+@api_router.post("/reset-default-passwords")
+async def reset_default_passwords():
+    """Reset all user passwords to default values (for development)"""
+    try:
+        # Define the default passwords
+        default_passwords = {
+            "manager": "admin123",
+            "updated_manager": "admin123",  # In case username was changed
+            "chef_alice": "chef123",
+            "chef_bob": "chef456",
+            "downtown_cafe": "venue123",
+            "uptown_restaurant": "venue456"
+        }
+        
+        updated_count = 0
+        for username, password in default_passwords.items():
+            result = await db.users.update_one(
+                {"username": username},
+                {"$set": {"password": password, "updated_at": datetime.utcnow()}}
+            )
+            if result.matched_count > 0:
+                updated_count += 1
+        
+        return {"message": f"Reset passwords for {updated_count} users", "updated_count": updated_count}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error resetting passwords: {str(e)}")
+
 @api_router.put("/users/{user_id}/password")
 async def update_user_password(user_id: str, password_data: dict):
     """Update user password (manager only)"""
