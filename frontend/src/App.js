@@ -82,48 +82,26 @@ const Login = ({ onLogin, appSettings }) => {
     {id: "5", name: "Uptown Restaurant", role: "venue_staff", username: "uptown_restaurant"}
   ]);
 
-  // Load users for dropdown on component mount
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        console.log('Fetching users from:', `${API}/users`);
-        const response = await axios.get(`${API}/users`);
-        console.log('Users fetched successfully:', response.data);
-        setUsers(response.data); // This will override the hardcoded users if API works
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        console.error('Error details:', error.response);
-        console.log('Using hardcoded users as fallback');
-        // Keep the hardcoded users if API fails
-      }
-    };
-    console.log('Login component mounted, fetching users...');
-    fetchUsers();
-  }, []);
-
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
     try {
-      console.log('Attempting login with:', username, 'to URL:', `${API}/login`);
+      console.log('Attempting login with:', username);
       const response = await axios.post(`${API}/login`, {
         username,
         password
       });
 
-      console.log('Login response:', response);
-      if (response.data.user) {
-        console.log('Login successful, user:', response.data.user);
+      console.log('Login response received');
+      if (response.data && response.data.user) {
+        console.log('Login successful');
         onLogin(response.data.user);
       }
     } catch (error) {
       console.error('Login error:', error);
-      console.error('Error details:', error.response);
-      console.error('Error status:', error.response?.status);
-      console.error('Error data:', error.response?.data);
-      setError(error.response?.data?.detail || 'Login failed. Please try again.');
+      setError('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
