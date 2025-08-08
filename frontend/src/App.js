@@ -107,16 +107,22 @@ const Login = ({ onLogin, appSettings }) => {
     setError('');
 
     try {
+      console.log('Attempting login with:', username, 'to URL:', `${API}/login`);
       const response = await axios.post(`${API}/login`, {
         username,
         password
       });
 
+      console.log('Login response:', response);
       if (response.data.user) {
+        console.log('Login successful, user:', response.data.user);
         onLogin(response.data.user);
       }
     } catch (error) {
       console.error('Login error:', error);
+      console.error('Error details:', error.response);
+      console.error('Error status:', error.response?.status);
+      console.error('Error data:', error.response?.data);
       setError(error.response?.data?.detail || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
