@@ -3,11 +3,10 @@ import "./App.css";
 import axios from "axios";
 
 // HYBRID MODE - Offline authentication, but connected to backend for data
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://10.64.166.29:8001';
-const API = `${BACKEND_URL}/api`;
+const API = '/api'; // Use relative URL through proxy
 
 console.log('Production Kitchen App - HYBRID MODE (Offline Auth + Backend Data)');
-console.log('Backend URL:', BACKEND_URL);
+console.log('API URL:', API);
 
 // Hardcoded users with passwords for offline authentication
 const OFFLINE_USERS = [
