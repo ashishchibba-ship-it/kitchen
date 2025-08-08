@@ -2,10 +2,14 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import axios from "axios";
 
-// OFFLINE MODE - No backend connections needed
-console.log('Production Kitchen App - OFFLINE MODE');
+// HYBRID MODE - Offline authentication, but connected to backend for data
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://10.64.166.29:8001';
+const API = `${BACKEND_URL}/api`;
 
-// Hardcoded users with passwords - NO BACKEND NEEDED
+console.log('Production Kitchen App - HYBRID MODE (Offline Auth + Backend Data)');
+console.log('Backend URL:', BACKEND_URL);
+
+// Hardcoded users with passwords for offline authentication
 const OFFLINE_USERS = [
   {
     id: "1", 
