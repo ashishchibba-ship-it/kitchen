@@ -130,17 +130,22 @@ const Login = ({ onLogin, appSettings }) => {
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Username
+              Select User
             </label>
-            <input
-              type="text"
+            <select
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
               className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
               disabled={isLoading}
-            />
+            >
+              <option value="">Choose a user...</option>
+              {users.map(user => (
+                <option key={user.id} value={user.username}>
+                  {user.name} ({user.role.replace('_', ' ')})
+                </option>
+              ))}
+            </select>
           </div>
           
           <div>
