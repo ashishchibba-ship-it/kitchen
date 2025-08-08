@@ -73,7 +73,14 @@ const Login = ({ onLogin, appSettings }) => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState([
+    // Hardcoded users as fallback
+    {id: "1", name: "Partial Update Kitchen Manager", role: "manager", username: "updated_manager"},
+    {id: "2", name: "Chef Alice", role: "kitchen_staff", username: "chef_alice"},
+    {id: "3", name: "Chef Bob", role: "kitchen_staff", username: "chef_bob"},
+    {id: "4", name: "Downtown Cafe", role: "venue_staff", username: "downtown_cafe"},
+    {id: "5", name: "Uptown Restaurant", role: "venue_staff", username: "uptown_restaurant"}
+  ]);
 
   // Load users for dropdown on component mount
   useEffect(() => {
@@ -82,10 +89,12 @@ const Login = ({ onLogin, appSettings }) => {
         console.log('Fetching users from:', `${API}/users`);
         const response = await axios.get(`${API}/users`);
         console.log('Users fetched successfully:', response.data);
-        setUsers(response.data);
+        setUsers(response.data); // This will override the hardcoded users if API works
       } catch (error) {
         console.error('Error fetching users:', error);
         console.error('Error details:', error.response);
+        console.log('Using hardcoded users as fallback');
+        // Keep the hardcoded users if API fails
       }
     };
     console.log('Login component mounted, fetching users...');
