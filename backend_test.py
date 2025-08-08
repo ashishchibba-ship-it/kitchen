@@ -4597,26 +4597,27 @@ class KitchenAPITester:
 if __name__ == "__main__":
     tester = KitchenAPITester()
     
-    # Run the production item save functionality tests
-    print("🔍 STARTING PRODUCTION ITEM SAVE FUNCTIONALITY TESTS")
+    # Run the password management testing
+    print("🔐 STARTING PASSWORD MANAGEMENT SYSTEM TESTS")
     print("=" * 60)
     
-    tester.test_production_item_save_functionality()
+    results = tester.test_password_management_system()
     
-    # Print summary
+    # Print final summary
     print("\n" + "=" * 60)
-    print("🔍 PRODUCTION ITEM SAVE FUNCTIONALITY TEST SUMMARY")
+    print("🔐 FINAL PASSWORD MANAGEMENT TEST RESULTS")
     print("=" * 60)
-    print(f"✅ Tests Passed: {tester.test_results['passed']}")
-    print(f"❌ Tests Failed: {tester.test_results['failed']}")
-    print(f"📊 Success Rate: {(tester.test_results['passed'] / (tester.test_results['passed'] + tester.test_results['failed']) * 100):.1f}%")
+    print(f"✅ Tests Passed: {results['passed']}")
+    print(f"❌ Tests Failed: {results['failed']}")
+    print(f"📊 Success Rate: {(results['passed'] / (results['passed'] + results['failed']) * 100):.1f}%")
     
-    if tester.test_results['errors']:
+    if results['errors']:
         print("\n🚨 FAILED TESTS:")
-        for error in tester.test_results['errors']:
+        for error in results['errors']:
             print(f"   • {error}")
     
-    print(f"\n🎯 FINAL RESULTS:")
-    print(f"✅ Passed: {tester.test_results['passed']}")
-    print(f"❌ Failed: {tester.test_results['failed']}")
-    print(f"📊 Success Rate: {(tester.test_results['passed'] / (tester.test_results['passed'] + tester.test_results['failed']) * 100):.1f}%")
+    # Exit with appropriate code
+    if results["failed"] > 0:
+        sys.exit(1)
+    else:
+        sys.exit(0)
