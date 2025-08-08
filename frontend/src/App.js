@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import axios from "axios";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
-const API = BACKEND_URL ? `${BACKEND_URL}/api` : '/api';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://10.64.166.29:8001';
+const API = `${BACKEND_URL}/api`;
 
 // Debug logging
 console.log('Environment check - BACKEND_URL:', BACKEND_URL);
