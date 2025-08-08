@@ -16,7 +16,6 @@
     "test": "craco test",
     "eject": "react-scripts eject"
   },
-  "proxy": "http://10.64.166.29:8001",
   "browserslist": {
     "production": [
       ">0.2%",
