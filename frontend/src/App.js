@@ -75,12 +75,16 @@ const Login = ({ onLogin, appSettings }) => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
+        console.log('Fetching users from:', process.env.REACT_APP_BACKEND_URL);
         const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api/users`);
+        console.log('Users fetched successfully:', response.data);
         setUsers(response.data);
       } catch (error) {
         console.error('Error fetching users:', error);
+        console.error('Error details:', error.response);
       }
     };
+    console.log('Login component mounted, fetching users...');
     fetchUsers();
   }, []);
 
