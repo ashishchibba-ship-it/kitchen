@@ -11,11 +11,10 @@ const Login = ({ onLogin }) => {
   const [error, setError] = useState('');
 
   const users = [
-    {id: "1", name: "Manager", username: "updated_manager"},
-    {id: "2", name: "Chef Alice", username: "chef_alice"},
-    {id: "3", name: "Chef Bob", username: "chef_bob"},
-    {id: "4", name: "Downtown Cafe", username: "downtown_cafe"},
-    {id: "5", name: "Uptown Restaurant", username: "uptown_restaurant"}
+    {id: "1", name: "Manager", username: "system_manager"},
+    {id: "2", name: "Production Kitchen", username: "production_kitchen"},
+    {id: "3", name: "Street Eats City", username: "yagansquare_streeteats"},
+    {id: "4", name: "Street Eats Rockingham", username: "rockingham_streeteats"}
   ];
 
   const handleLogin = async (e) => {
