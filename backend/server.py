@@ -55,6 +55,7 @@ class OrderStatus(str, Enum):
     PREPARING = "preparing"
     READY = "ready"
     DELIVERED = "delivered"
+    ARCHIVED = "archived"
 
 # Models
 class Category(BaseModel):
