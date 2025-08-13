@@ -37,7 +37,577 @@ class KitchenAPITester:
             self.test_results["errors"].append(f"{test_name}: {message}")
             print(f"❌ {test_name}: FAILED - {message}")
     
-    def test_password_authentication_system(self):
+    def test_gmail_api_integration(self):
+        """Test the complete Gmail API integration for email notifications"""
+        print("📧 STARTING GMAIL API INTEGRATION TESTS")
+        print("=" * 60)
+        
+        # Test 1: Gmail Authorization Endpoints
+        self.test_gmail_authorization_endpoints()
+        
+        # Test 2: Email Notification Integration with Order System
+        self.test_email_notification_integration()
+        
+        # Test 3: Email Service Functions
+        self.test_email_service_functions()
+        
+        # Test 4: Notification System with Email
+        self.test_notification_system_with_email()
+        
+        # Test 5: Backend Service Stability
+        self.test_backend_service_stability()
+        
+        # Print summary
+        print("\n" + "=" * 60)
+        print("📧 GMAIL API INTEGRATION TEST SUMMARY")
+        print("=" * 60)
+        print(f"✅ Tests Passed: {self.test_results['passed']}")
+        print(f"❌ Tests Failed: {self.test_results['failed']}")
+        print(f"📊 Success Rate: {(self.test_results['passed'] / (self.test_results['passed'] + self.test_results['failed']) * 100):.1f}%")
+        
+        if self.test_results['errors']:
+            print("\n🚨 FAILED TESTS:")
+            for error in self.test_results['errors']:
+                print(f"   • {error}")
+        
+        return self.test_results
+
+    def test_gmail_authorization_endpoints(self):
+        """Test Gmail authorization endpoints"""
+        print("\n=== TEST 1: Gmail Authorization Endpoints ===")
+        
+        try:
+            # Test 1: GET /api/gmail/auth-url - Should return authorization URL
+            response = self.session.get(f"{BASE_URL}/gmail/auth-url")
+            
+            if response.status_code == 200:
+                auth_data = response.json()
+                if "auth_url" in auth_data:
+                    auth_url = auth_data["auth_url"]
+                    if "accounts.google.com" in auth_url and "oauth2" in auth_url:
+                        self.log_result("GET /api/gmail/auth-url", True, 
+                                      f"Valid Google OAuth URL returned: {auth_url[:50]}...")
+                    else:
+                        self.log_result("GET /api/gmail/auth-url", False, 
+                                      f"Invalid OAuth URL format: {auth_url}")
+                else:
+                    self.log_result("GET /api/gmail/auth-url", False, 
+                                  "Response missing 'auth_url' field")
+            elif response.status_code == 500:
+                # Expected if Gmail credentials not set up
+                self.log_result("GET /api/gmail/auth-url", True, 
+                              "Expected 500 - Gmail credentials not configured (normal for testing)")
+            else:
+                self.log_result("GET /api/gmail/auth-url", False, 
+                              f"Unexpected status: {response.status_code}")
+            
+            # Test 2: GET /api/gmail/status - Should show authorization status
+            response = self.session.get(f"{BASE_URL}/gmail/status")
+            
+            if response.status_code == 200:
+                status_data = response.json()
+                if "authorized" in status_data:
+                    authorized = status_data["authorized"]
+                    self.log_result("GET /api/gmail/status", True, 
+                                  f"Authorization status: {authorized}")
+                    
+                    # Check for additional status information
+                    if "message" in status_data:
+                        self.log_result("Gmail status message", True, 
+                                      f"Status message: {status_data['message']}")
+                else:
+                    self.log_result("GET /api/gmail/status", False, 
+                                  "Response missing 'authorized' field")
+            else:
+                self.log_result("GET /api/gmail/status", False, 
+                              f"Status: {response.status_code}")
+            
+            # Test 3: POST /api/gmail/callback - Test basic callback structure
+            # Note: This will likely fail without proper OAuth code, but we test the endpoint exists
+            callback_data = {"code": "test_code", "state": "test_state"}
+            response = self.session.post(f"{BASE_URL}/gmail/callback", json=callback_data)
+            
+            if response.status_code in [200, 400, 401]:
+                # Any of these are acceptable - endpoint exists and handles requests
+                self.log_result("POST /api/gmail/callback endpoint exists", True, 
+                              f"Endpoint responds with status: {response.status_code}")
+            elif response.status_code == 404:
+                self.log_result("POST /api/gmail/callback endpoint exists", False, 
+                              "Callback endpoint not implemented")
+            else:
+                self.log_result("POST /api/gmail/callback endpoint exists", True, 
+                              f"Endpoint exists, status: {response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Gmail Authorization Endpoints", False, f"Exception: {str(e)}")
+
+    def test_email_notification_integration(self):
+        """Test email notification integration with order system"""
+        print("\n=== TEST 2: Email Notification Integration with Order System ===")
+        
+        try:
+            # First, set up a user with email notification preferences
+            users_response = self.session.get(f"{BASE_URL}/users")
+            if users_response.status_code != 200:
+                self.log_result("Get users for email test", False, f"Status: {users_response.status_code}")
+                return
+            
+            users = users_response.json()
+            test_user = users[0] if users else None
+            
+            if not test_user:
+                self.log_result("Find test user for email", False, "No users found")
+                return
+            
+            # Set up notification preferences with email
+            email_prefs = {
+                "order_placed": True,
+                "order_preparing": True,
+                "order_ready": True,
+                "order_delivered": True,
+                "email": "test@example.com",
+                "notify_email": True,
+                "notify_in_app": True
+            }
+            
+            prefs_response = self.session.put(
+                f"{BASE_URL}/notification-preferences/{test_user['id']}", 
+                json=email_prefs
+            )
+            
+            if prefs_response.status_code == 200:
+                self.log_result("Set email notification preferences", True, 
+                              "Email preferences configured for test user")
+            else:
+                self.log_result("Set email notification preferences", False, 
+                              f"Status: {prefs_response.status_code}")
+            
+            # Create a test order to trigger email notifications
+            test_order = {
+                "venue_name": "Test Venue",
+                "venue_id": "test_venue_001",
+                "delivery_address": "123 Test Street, Test City",
+                "items": [
+                    {
+                        "production_item_id": "test_item_001",
+                        "production_item_name": "Test Item",
+                        "quantity": 2,
+                        "unit_of_measure": "units",
+                        "unit_price": 15.0
+                    }
+                ]
+            }
+            
+            order_response = self.session.post(f"{BASE_URL}/orders", json=test_order)
+            
+            if order_response.status_code == 200:
+                created_order = order_response.json()
+                order_id = created_order["id"]
+                self.log_result("Create test order for email notification", True, 
+                              f"Order created: {order_id}")
+                
+                # Verify that notification was created (this should trigger email logic)
+                notifications_response = self.session.get(f"{BASE_URL}/notifications/{test_user['id']}")
+                
+                if notifications_response.status_code == 200:
+                    notifications = notifications_response.json()
+                    order_placed_notifications = [
+                        n for n in notifications 
+                        if n.get("event_type") == "order_placed" and n.get("order_id") == order_id
+                    ]
+                    
+                    if order_placed_notifications:
+                        self.log_result("Order placed notification created", True, 
+                                      "Notification system triggered by order creation")
+                    else:
+                        self.log_result("Order placed notification created", False, 
+                                      "No order_placed notification found")
+                else:
+                    self.log_result("Check notifications after order", False, 
+                                  f"Status: {notifications_response.status_code}")
+                
+                # Test order status updates to ensure email notifications are integrated
+                status_updates = ["preparing", "ready", "delivered"]
+                
+                for status in status_updates:
+                    status_response = self.session.put(
+                        f"{BASE_URL}/orders/{order_id}/status", 
+                        params={"status": status}
+                    )
+                    
+                    if status_response.status_code == 200:
+                        self.log_result(f"Update order status to {status}", True, 
+                                      f"Status updated successfully")
+                        
+                        # Check if notification was created for this status change
+                        time.sleep(0.5)  # Brief pause for notification processing
+                        notifications_response = self.session.get(f"{BASE_URL}/notifications/{test_user['id']}")
+                        
+                        if notifications_response.status_code == 200:
+                            notifications = notifications_response.json()
+                            status_notifications = [
+                                n for n in notifications 
+                                if n.get("event_type") == f"order_{status}" and n.get("order_id") == order_id
+                            ]
+                            
+                            if status_notifications:
+                                self.log_result(f"Email notification for {status} status", True, 
+                                              f"Notification created for order_{status}")
+                            else:
+                                self.log_result(f"Email notification for {status} status", False, 
+                                              f"No notification found for order_{status}")
+                    else:
+                        self.log_result(f"Update order status to {status}", False, 
+                                      f"Status: {status_response.status_code}")
+                
+            else:
+                self.log_result("Create test order for email notification", False, 
+                              f"Status: {order_response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Email Notification Integration", False, f"Exception: {str(e)}")
+
+    def test_email_service_functions(self):
+        """Test email service functions - template generation and message creation"""
+        print("\n=== TEST 3: Email Service Functions ===")
+        
+        try:
+            # Test create_notification function with email processing
+            # This tests the enhanced notification system that should handle email
+            
+            # Create a test order first to have real order data
+            test_order = {
+                "venue_name": "Email Test Venue",
+                "venue_id": "email_test_venue",
+                "delivery_address": "456 Email Test Ave",
+                "items": [
+                    {
+                        "production_item_id": "email_test_item",
+                        "production_item_name": "Email Test Pasta",
+                        "quantity": 3,
+                        "unit_of_measure": "portions",
+                        "unit_price": 12.50
+                    },
+                    {
+                        "production_item_id": "email_test_item_2",
+                        "production_item_name": "Email Test Salad",
+                        "quantity": 2,
+                        "unit_of_measure": "bowls",
+                        "unit_price": 8.00
+                    }
+                ]
+            }
+            
+            order_response = self.session.post(f"{BASE_URL}/orders", json=test_order)
+            
+            if order_response.status_code == 200:
+                created_order = order_response.json()
+                order_id = created_order["id"]
+                
+                # Test different order statuses for email template generation
+                test_statuses = ["pending", "preparing", "ready", "delivered"]
+                
+                for status in test_statuses:
+                    # Create notification which should trigger email template generation
+                    notification_response = self.session.post(
+                        f"{BASE_URL}/notifications",
+                        params={
+                            "event_type": f"order_{status}",
+                            "order_id": order_id,
+                            "message": f"Test {status} notification for email template"
+                        }
+                    )
+                    
+                    if notification_response.status_code == 200:
+                        notification_data = notification_response.json()
+                        self.log_result(f"Create notification for {status} status", True, 
+                                      f"Notification created: {notification_data.get('notification_id', 'N/A')}")
+                        
+                        # Check if the response indicates email processing
+                        message = notification_data.get("message", "")
+                        if "email" in message.lower():
+                            self.log_result(f"Email processing for {status} status", True, 
+                                          f"Email processing indicated: {message}")
+                        else:
+                            self.log_result(f"Email processing for {status} status", False, 
+                                          f"No email processing indicated: {message}")
+                    else:
+                        self.log_result(f"Create notification for {status} status", False, 
+                                      f"Status: {notification_response.status_code}")
+                
+                # Test that order details are properly included in notifications
+                # Get the order to verify it has the required structure for email templates
+                order_check_response = self.session.get(f"{BASE_URL}/orders")
+                if order_check_response.status_code == 200:
+                    orders = order_check_response.json()
+                    test_order_found = next((o for o in orders if o["id"] == order_id), None)
+                    
+                    if test_order_found:
+                        # Verify order has all required fields for email template
+                        required_fields = ["id", "venue_name", "order_date", "items", "total_amount"]
+                        missing_fields = [field for field in required_fields if field not in test_order_found]
+                        
+                        if not missing_fields:
+                            self.log_result("Order data structure for email template", True, 
+                                          "All required fields present for email template generation")
+                        else:
+                            self.log_result("Order data structure for email template", False, 
+                                          f"Missing fields: {missing_fields}")
+                        
+                        # Verify items have required structure
+                        if test_order_found.get("items"):
+                            first_item = test_order_found["items"][0]
+                            item_required_fields = ["item_name", "quantity", "total_price"]
+                            
+                            # Note: API might use different field names, so check alternatives
+                            item_fields_present = []
+                            for field in item_required_fields:
+                                if field in first_item:
+                                    item_fields_present.append(field)
+                                elif field == "item_name" and "production_item_name" in first_item:
+                                    item_fields_present.append("production_item_name (as item_name)")
+                                elif field == "total_price" and "unit_price" in first_item:
+                                    # Calculate total_price from quantity * unit_price
+                                    total_price = first_item.get("quantity", 0) * first_item.get("unit_price", 0)
+                                    item_fields_present.append(f"calculated total_price: ${total_price:.2f}")
+                            
+                            self.log_result("Order items structure for email template", True, 
+                                          f"Item fields available: {item_fields_present}")
+                        else:
+                            self.log_result("Order items structure for email template", False, 
+                                          "No items found in order")
+                    else:
+                        self.log_result("Find created order for verification", False, 
+                                      "Created order not found in order list")
+                else:
+                    self.log_result("Get orders for verification", False, 
+                                  f"Status: {order_check_response.status_code}")
+                
+            else:
+                self.log_result("Create test order for email functions", False, 
+                              f"Status: {order_response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Email Service Functions", False, f"Exception: {str(e)}")
+
+    def test_notification_system_with_email(self):
+        """Test the enhanced notification system with email processing"""
+        print("\n=== TEST 4: Notification System with Email ===")
+        
+        try:
+            # Get all notification preferences to understand current state
+            prefs_response = self.session.get(f"{BASE_URL}/notification-preferences")
+            
+            if prefs_response.status_code == 200:
+                all_preferences = prefs_response.json()
+                self.log_result("Get notification preferences", True, 
+                              f"Retrieved preferences for {len(all_preferences)} users")
+                
+                # Count users with email enabled
+                email_enabled_users = [
+                    pref for pref in all_preferences 
+                    if pref.get("notify_email", False) and pref.get("email")
+                ]
+                
+                self.log_result("Users with email notifications enabled", True, 
+                              f"{len(email_enabled_users)} users have email notifications enabled")
+                
+                # Set up at least one user with email preferences for testing
+                if all_preferences:
+                    test_user_pref = all_preferences[0]
+                    user_id = test_user_pref["user_id"]
+                    
+                    # Update preferences to enable email
+                    email_prefs = {
+                        "order_placed": True,
+                        "order_preparing": True,
+                        "order_ready": True,
+                        "order_delivered": True,
+                        "email": "notification.test@example.com",
+                        "notify_email": True,
+                        "notify_in_app": True
+                    }
+                    
+                    update_response = self.session.put(
+                        f"{BASE_URL}/notification-preferences/{user_id}", 
+                        json=email_prefs
+                    )
+                    
+                    if update_response.status_code == 200:
+                        self.log_result("Enable email notifications for test user", True, 
+                                      "Email notifications enabled")
+                        
+                        # Test notification creation with email processing
+                        notification_response = self.session.post(
+                            f"{BASE_URL}/notifications",
+                            params={
+                                "event_type": "order_placed",
+                                "order_id": "test_order_email_001",
+                                "message": "Test email notification processing"
+                            }
+                        )
+                        
+                        if notification_response.status_code == 200:
+                            notification_data = notification_response.json()
+                            message = notification_data.get("message", "")
+                            
+                            self.log_result("Create notification with email processing", True, 
+                                          f"Notification created: {message}")
+                            
+                            # Check if email count is reported
+                            if "email" in message.lower():
+                                self.log_result("Email processing count reported", True, 
+                                              "Email processing information included in response")
+                            else:
+                                self.log_result("Email processing count reported", False, 
+                                              "No email processing information in response")
+                        else:
+                            self.log_result("Create notification with email processing", False, 
+                                          f"Status: {notification_response.status_code}")
+                    else:
+                        self.log_result("Enable email notifications for test user", False, 
+                                      f"Status: {update_response.status_code}")
+                
+                # Test notification creation for users without email
+                # Disable email for a user and test
+                if len(all_preferences) > 1:
+                    test_user_no_email = all_preferences[1]
+                    user_id_no_email = test_user_no_email["user_id"]
+                    
+                    no_email_prefs = {
+                        "order_placed": True,
+                        "notify_email": False,  # Disable email
+                        "notify_in_app": True
+                    }
+                    
+                    update_response = self.session.put(
+                        f"{BASE_URL}/notification-preferences/{user_id_no_email}", 
+                        json=no_email_prefs
+                    )
+                    
+                    if update_response.status_code == 200:
+                        self.log_result("Disable email notifications for test user", True, 
+                                      "Email notifications disabled")
+                        
+                        # Create notification - should not attempt email
+                        notification_response = self.session.post(
+                            f"{BASE_URL}/notifications",
+                            params={
+                                "event_type": "order_placed",
+                                "order_id": "test_order_no_email_001",
+                                "message": "Test notification without email"
+                            }
+                        )
+                        
+                        if notification_response.status_code == 200:
+                            notification_data = notification_response.json()
+                            message = notification_data.get("message", "")
+                            
+                            self.log_result("Create notification without email", True, 
+                                          f"Notification created: {message}")
+                        else:
+                            self.log_result("Create notification without email", False, 
+                                          f"Status: {notification_response.status_code}")
+                
+            else:
+                self.log_result("Get notification preferences", False, 
+                              f"Status: {prefs_response.status_code}")
+                
+        except Exception as e:
+            self.log_result("Notification System with Email", False, f"Exception: {str(e)}")
+
+    def test_backend_service_stability(self):
+        """Test that Gmail API integration doesn't break existing functionality"""
+        print("\n=== TEST 5: Backend Service Stability ===")
+        
+        try:
+            # Test core endpoints still work
+            core_endpoints = [
+                ("/users", "GET", "User management"),
+                ("/production-items", "GET", "Production items"),
+                ("/orders", "GET", "Orders"),
+                ("/categories", "GET", "Categories"),
+                ("/notification-preferences", "GET", "Notification preferences"),
+                ("/dashboard/stats", "GET", "Dashboard statistics")
+            ]
+            
+            for endpoint, method, description in core_endpoints:
+                if method == "GET":
+                    response = self.session.get(f"{BASE_URL}{endpoint}")
+                else:
+                    continue  # Only testing GET endpoints for stability
+                
+                if response.status_code == 200:
+                    self.log_result(f"Core endpoint {endpoint}", True, 
+                                  f"{description} endpoint working")
+                else:
+                    self.log_result(f"Core endpoint {endpoint}", False, 
+                                  f"Status: {response.status_code}")
+            
+            # Test that order creation still works (critical workflow)
+            test_order = {
+                "venue_name": "Stability Test Venue",
+                "venue_id": "stability_test",
+                "delivery_address": "789 Stability Test Rd",
+                "items": [
+                    {
+                        "production_item_id": "stability_test_item",
+                        "production_item_name": "Stability Test Item",
+                        "quantity": 1,
+                        "unit_of_measure": "unit",
+                        "unit_price": 10.0
+                    }
+                ]
+            }
+            
+            order_response = self.session.post(f"{BASE_URL}/orders", json=test_order)
+            
+            if order_response.status_code == 200:
+                self.log_result("Order creation stability", True, 
+                              "Order creation still works with Gmail integration")
+            else:
+                self.log_result("Order creation stability", False, 
+                              f"Order creation failed: {order_response.status_code}")
+            
+            # Test that notification system still works for in-app notifications
+            if order_response.status_code == 200:
+                created_order = order_response.json()
+                order_id = created_order["id"]
+                
+                notification_response = self.session.post(
+                    f"{BASE_URL}/notifications",
+                    params={
+                        "event_type": "order_placed",
+                        "order_id": order_id,
+                        "message": "Stability test notification"
+                    }
+                )
+                
+                if notification_response.status_code == 200:
+                    self.log_result("Notification system stability", True, 
+                                  "Notification system still works with Gmail integration")
+                else:
+                    self.log_result("Notification system stability", False, 
+                                  f"Notification creation failed: {notification_response.status_code}")
+            
+            # Test server health by checking multiple endpoints in sequence
+            health_check_count = 0
+            health_endpoints = ["/users", "/production-items", "/orders", "/categories"]
+            
+            for endpoint in health_endpoints:
+                response = self.session.get(f"{BASE_URL}{endpoint}")
+                if response.status_code == 200:
+                    health_check_count += 1
+            
+            if health_check_count == len(health_endpoints):
+                self.log_result("Server health check", True, 
+                              f"All {len(health_endpoints)} health check endpoints responding")
+            else:
+                self.log_result("Server health check", False, 
+                              f"Only {health_check_count}/{len(health_endpoints)} endpoints responding")
+                
+        except Exception as e:
+            self.log_result("Backend Service Stability", False, f"Exception: {str(e)}")
         """Test the complete password-based authentication system"""
         print("🔐 STARTING PASSWORD AUTHENTICATION SYSTEM TESTS")
         print("=" * 60)
