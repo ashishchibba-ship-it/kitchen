@@ -123,16 +123,20 @@ const Login = ({ onLogin, appSettings }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
     try {
-      console.log('Attempting offline login for:', username);
+      console.log('Attempting login for:', username);
       
-      // Find user by username from offline users
-      const foundUser = OFFLINE_USERS.find(u => u.username === username);
+      // First get the user from the database to check real password
+      const userResponse = await axios.get(`${API}/users`);
+      const users = userResponse.data;
+      
+      // Find user by username
+      const foundUser = users.find(u => u.username === username);
       
       if (!foundUser) {
         setError('User not found');
@@ -140,20 +144,20 @@ const Login = ({ onLogin, appSettings }) => {
         return;
       }
       
-      // Check password
+      // Check the actual password from database
       if (foundUser.password !== password) {
         setError('Invalid password');
         setIsLoading(false);
         return;
       }
       
-      // Login successful
+      // Login successful with real database password
       console.log('Login successful for:', foundUser.name);
       onLogin(foundUser);
       
     } catch (error) {
       console.error('Login error:', error);
-      setError('Login failed. Please try again.');
+      setError('Login failed. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
