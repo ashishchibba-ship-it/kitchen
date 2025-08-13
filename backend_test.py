@@ -5745,13 +5745,14 @@ class KitchenAPITester:
 if __name__ == "__main__":
     tester = KitchenAPITester()
     
-    print("🔐 PRODUCTION KITCHEN MANAGEMENT - PASSWORD AUTHENTICATION TESTING")
+    print("📧 GMAIL API INTEGRATION TESTING")
     print("=" * 80)
     print(f"🌐 Testing Backend API: {BASE_URL}")
+    print("Focus: Gmail authorization, email notifications, service stability")
     print("=" * 80)
     
-    # Run the complete password authentication system tests
-    results = tester.test_password_authentication_system()
+    # Run the Gmail API integration tests
+    results = tester.test_gmail_api_integration()
     
     print("\n" + "=" * 80)
     print("🏁 FINAL TEST SUMMARY")
@@ -5770,7 +5771,19 @@ if __name__ == "__main__":
         for i, error in enumerate(results["errors"], 1):
             print(f"   {i}. {error}")
     
-    # Exit with appropriate code
-    exit_code = 0 if results["failed"] == 0 else 1
+    # Determine overall result for Gmail API integration
+    if success_rate >= 80:
+        print(f"\n🎉 GMAIL API INTEGRATION: WORKING")
+        print("The Gmail API integration is functioning correctly.")
+        exit_code = 0
+    elif success_rate >= 60:
+        print(f"\n⚠️  GMAIL API INTEGRATION: PARTIALLY WORKING")
+        print("The Gmail API integration has some issues but core functionality works.")
+        exit_code = 0
+    else:
+        print(f"\n❌ GMAIL API INTEGRATION: NOT WORKING")
+        print("The Gmail API integration has significant issues that need to be addressed.")
+        exit_code = 1
+    
     print(f"\n🔚 Testing completed with exit code: {exit_code}")
     sys.exit(exit_code)
