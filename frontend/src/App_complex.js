@@ -1928,14 +1928,23 @@ const ManagerDashboard = ({ user, appSettings }) => {
                       <option value="delivered">Delivered</option>
                     </select>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm text-gray-600">Delivery Date:</label>
-                    <input
-                      type="date"
-                      value={order.delivery_date || ''}
-                      onChange={(e) => updateDeliveryDate(order.id, e.target.value)}
-                      className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <label className="text-sm text-gray-600">Delivery Date:</label>
+                      <input
+                        type="date"
+                        value={order.delivery_date || ''}
+                        onChange={(e) => updateDeliveryDate(order.id, e.target.value)}
+                        className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <button
+                      onClick={() => handleArchiveOrder(order.id)}
+                      className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                      title="Archive this order"
+                    >
+                      Archive
+                    </button>
                   </div>
                 </div>
               ))}
