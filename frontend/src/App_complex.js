@@ -523,6 +523,28 @@ const ManagerDashboard = ({ user, appSettings }) => {
     markChangesUnsaved('notifications', userId);
   };
 
+  const updateUserNotificationPreferences = async (userId, preferences) => {
+    try {
+      // Update local state first
+      updateLocalNotificationPreferences(userId, preferences);
+      
+      // Save to backend
+      await axios.put(`${API}/notification-preferences/${userId}`, preferences);
+      
+      // Update the main state
+      setNotificationPreferences(prev => 
+        prev.map(pref => 
+          pref.user_id === userId ? { ...pref, ...preferences } : pref
+        )
+      );
+      
+      alert('Email notification preferences saved successfully!');
+    } catch (error) {
+      console.error('Error saving notification preferences:', error);
+      alert('Error saving notification preferences. Please try again.');
+    }
+  };
+
   const saveAllChanges = async () => {
     setIsSaving(true);
     let successCount = 0;
