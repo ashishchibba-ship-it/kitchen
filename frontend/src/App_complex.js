@@ -122,6 +122,24 @@ const Login = ({ onLogin, appSettings }) => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [users, setUsers] = useState([]);
+
+  // Load users from database on component mount
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        console.log('Fetching users for login dropdown from:', `${API}/users`);
+        const response = await axios.get(`${API}/users`);
+        console.log('Users loaded for login:', response.data.length, 'users');
+        setUsers(response.data);
+      } catch (error) {
+        console.error('Error fetching users for login:', error);
+        // Fallback to OFFLINE_USERS if API fails
+        setUsers(OFFLINE_USERS);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
