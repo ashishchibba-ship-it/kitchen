@@ -280,6 +280,30 @@ const ManagerDashboard = ({ user, appSettings }) => {
     return () => clearInterval(interval);
   }, []);
 
+  const handleArchiveOrder = async (orderId) => {
+    try {
+      await axios.put(`${API}/orders/${orderId}/archive`);
+      alert('Order archived successfully!');
+      fetchOrders(); // Refresh active orders
+      fetchArchivedOrders(); // Refresh archived orders
+    } catch (error) {
+      console.error('Error archiving order:', error);
+      alert('Error archiving order.');
+    }
+  };
+
+  const handleUnarchiveOrder = async (orderId) => {
+    try {
+      await axios.put(`${API}/orders/${orderId}/unarchive`);
+      alert('Order unarchived successfully!');
+      fetchOrders(); // Refresh active orders
+      fetchArchivedOrders(); // Refresh archived orders
+    } catch (error) {
+      console.error('Error unarchiving order:', error);
+      alert('Error unarchiving order.');
+    }
+  };
+
   const fetchStats = async () => {
     try {
       const response = await axios.get(`${API}/dashboard/stats`);
