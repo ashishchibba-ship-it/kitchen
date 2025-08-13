@@ -294,6 +294,18 @@ backend:
           agent: "testing"
           comment: "✅ PASSED - Cost management system with automatic 15% markup calculation working perfectly (100% success rate - 39/39 tests passed): 1) PRODUCTION ITEM CREATION WITH BASE COST: Items created with base_cost field, unit_price automatically calculated as base_cost * 1.15, both fields properly stored 2) COST UPDATES WITH AUTOMATIC MARKUP: PUT /api/production-items/{id}/availability updates base_cost and automatically recalculates unit_price with 15% markup, markup calculation accuracy verified 3) MANAGER-ONLY PRICING: base_cost visible in manager endpoints (/api/production-items), hidden from venue staff in orderable items APIs, venue staff only see selling prices 4) COMPLETE WORKFLOW: Manager creates item ($10.00 base → $11.50 selling), system calculates markup, venue staff see only selling price, orders processed with marked-up prices 5) BACKWARD COMPATIBILITY: Items without base_cost use default values (base_cost=10.0, unit_price=11.5), legacy items can be updated with new costs. All test scenarios passed: $8.00→$9.20, $12.00→$13.80, order totals calculated correctly with markup."
 
+  - task: "Gmail API integration for email notifications"
+    implemented: true
+    working: false
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Implemented Gmail API integration with credentials setup, email service initialization, HTML email templates, and integration with existing notification system. Added endpoints for Gmail authorization (GET /api/gmail/auth-url, POST /api/gmail/callback, GET /api/gmail/status). Email notifications will be sent automatically when order status changes if user has email enabled in notification preferences."
+
 frontend:
   - task: "Role-based user interface"
     implemented: true
