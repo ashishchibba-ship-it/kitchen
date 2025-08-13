@@ -2167,8 +2167,8 @@ const ManagerDashboard = ({ user, appSettings }) => {
             {/* Password Management Section */}
             <div className="bg-white p-6 rounded-lg shadow">
               <div className="border-b pb-4 mb-6">
-                <h3 className="text-lg font-semibold text-gray-800">Password Management</h3>
-                <p className="text-sm text-gray-600 mt-1">Manage passwords for all users. No password requirements - you can set any password.</p>
+                <h3 className="text-lg font-semibold text-gray-800">Change User Passwords</h3>
+                <p className="text-sm text-gray-600 mt-1">Update passwords for users. No password requirements - you can set any password.</p>
               </div>
               
               <div className="space-y-4">
