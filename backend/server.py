@@ -1089,6 +1089,58 @@ async def get_orders(venue_name: Optional[str] = None, venue_id: Optional[str] =
     
     return valid_orders
 
+@api_router.put("/orders/{order_id}/archive")
+async def archive_order(order_id: str):
+    """Archive an order"""
+    try:
+        result = await db.orders.update_one(
+            {"id": order_id}, 
+            {"$set": {"status": "archived", "archived_at": datetime.utcnow()}}
+        )
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Order not found")
+        return {"message": "Order archived successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error archiving order: {str(e)}")
+
+@api_router.put("/orders/{order_id}/unarchive")
+async def unarchive_order(order_id: str):
+    """Unarchive an order - restore to previous status"""
+    try:
+        # Get the order to see what status to restore to
+        order = await db.orders.find_one({"id": order_id})
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        
+        # Default to 'delivered' status when unarchiving
+        restore_status = "delivered"
+        
+        result = await db.orders.update_one(
+            {"id": order_id}, 
+            {"$set": {"status": restore_status}, "$unset": {"archived_at": ""}}
+        )
+        return {"message": "Order unarchived successfully", "restored_status": restore_status}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error unarchiving order: {str(e)}")
+
+@api_router.get("/orders/archived")
+async def get_archived_orders():
+    """Get all archived orders"""
+    try:
+        orders = await db.orders.find({"status": "archived"}).sort("archived_at", -1).to_list(1000)
+        return [Order(**order) for order in orders]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching archived orders: {str(e)}")
+
+@api_router.get("/orders/active")
+async def get_active_orders():
+    """Get all non-archived orders"""
+    try:
+        orders = await db.orders.find({"status": {"$ne": "archived"}}).sort("order_date", -1).to_list(1000)
+        return [Order(**order) for order in orders]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching active orders: {str(e)}")
+
 @api_router.put("/orders/{order_id}/status")
 async def update_order_status(order_id: str, status: OrderStatus):
     """Update order status and trigger notifications"""
