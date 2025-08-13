@@ -1707,6 +1707,60 @@ async def get_dashboard_stats():
         }
     }
 
+@api_router.get("/gmail/auth-url")
+async def get_gmail_auth_url():
+    """Get Gmail authorization URL for setup"""
+    try:
+        flow = InstalledAppFlow.from_client_secrets_file(str(GMAIL_CREDENTIALS_FILE), SCOPES)
+        auth_url, _ = flow.authorization_url(prompt='consent')
+        return {"auth_url": auth_url, "message": "Visit this URL to authorize Gmail API access"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating auth URL: {str(e)}")
+
+@api_router.post("/gmail/callback")
+async def gmail_callback(auth_code: str):
+    """Handle Gmail authorization callback with auth code"""
+    try:
+        flow = InstalledAppFlow.from_client_secrets_file(str(GMAIL_CREDENTIALS_FILE), SCOPES)
+        flow.fetch_token(code=auth_code)
+        creds = flow.credentials
+        
+        # Save the credentials
+        with open(GMAIL_TOKEN_FILE, 'w') as token:
+            token.write(creds.to_json())
+        
+        # Clear the global service to force reinitialization
+        global gmail_service
+        gmail_service = None
+        
+        # Test the service
+        test_service = get_gmail_service()
+        if test_service:
+            return {"message": "Gmail API authorized successfully!"}
+        else:
+            return {"message": "Gmail API authorization completed but service initialization failed"}
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing Gmail callback: {str(e)}")
+
+@api_router.get("/gmail/status")
+async def gmail_status():
+    """Check Gmail API authorization status"""
+    try:
+        service = get_gmail_service()
+        if service:
+            # Try to make a test call to verify the service works
+            profile = service.users().getProfile(userId='me').execute()
+            return {
+                "authorized": True,
+                "email": profile.get('emailAddress', 'Unknown'),
+                "message": "Gmail API is authorized and working"
+            }
+        else:
+            return {"authorized": False, "message": "Gmail API not authorized"}
+    except Exception as e:
+        return {"authorized": False, "message": f"Gmail API error: {str(e)}"}
+
 @api_router.get("/")
 async def root():
     return {"message": "Production Kitchen Management API"}
