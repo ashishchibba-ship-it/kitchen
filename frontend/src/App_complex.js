@@ -2281,6 +2281,8 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
   const [preparingOrders, setPreparingOrders] = useState([]);
   const [readyOrders, setReadyOrders] = useState([]);
   const [deliveredOrders, setDeliveredOrders] = useState([]);
+  const [archivedOrders, setArchivedOrders] = useState([]);
+  const [activeTab, setActiveTab] = useState('active');
 
   useEffect(() => {
     fetchAllOrders();
