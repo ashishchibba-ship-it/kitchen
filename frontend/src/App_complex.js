@@ -2099,6 +2099,71 @@ const ManagerDashboard = ({ user, appSettings }) => {
 
         {activeTab === 'settings' && (
           <div className="space-y-6">
+            {/* Current Passwords Display Section */}
+            <div className="bg-white p-6 rounded-lg shadow">
+              <div className="border-b pb-4 mb-6">
+                <h3 className="text-lg font-semibold text-gray-800">Current User Passwords</h3>
+                <p className="text-sm text-gray-600 mt-1">View current passwords for all users. Click the eye icon to show/hide passwords.</p>
+              </div>
+              
+              <div className="space-y-3">
+                {localUsers.map(user => (
+                  <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
+                        user.role === 'manager' ? 'bg-purple-500' :
+                        user.role === 'kitchen_staff' ? 'bg-green-500' :
+                        'bg-blue-500'
+                      }`}>
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-800">{user.name}</div>
+                        <div className="text-sm text-gray-600">@{user.username} • {user.role.replace('_', ' ')}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-600">Password:</span>
+                        <div className="relative">
+                          <span className={`font-mono text-sm px-2 py-1 rounded ${
+                            passwordVisibility[user.id] ? 'bg-white border' : 'bg-gray-200 border'
+                          }`}>
+                            {passwordVisibility[user.id] ? user.password || 'No password set' : '••••••••'}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => togglePasswordVisibility(user.id)}
+                        className="text-gray-400 hover:text-gray-600 p-1"
+                        title={passwordVisibility[user.id] ? "Hide password" : "Show password"}
+                      >
+                        {passwordVisibility[user.id] ? (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L8.465 8.465M14.12 14.12l1.415 1.415M14.12 14.12L9.878 9.878m4.242 4.242L8.465 8.465" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                
+                {localUsers.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <div className="text-lg mb-2">👥</div>
+                    <p>No users found.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Password Management Section */}
             <div className="bg-white p-6 rounded-lg shadow">
               <div className="border-b pb-4 mb-6">
