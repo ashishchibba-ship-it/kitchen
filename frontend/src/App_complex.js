@@ -4,7 +4,7 @@ import axios from "axios";
 
 // HYBRID MODE - Database authentication with frontend data loading
 // Use the correct deployed backend URL
-const API = 'https://523e0c6c-09ea-4970-8dcd-e42fec7deab4.preview.emergentagent.com/api';
+const API = 'https://order-flow-6.preview.emergentagent.com/api';
 
 console.log('Production Kitchen App - DATABASE AUTHENTICATION MODE');
 console.log('API URL:', API);
