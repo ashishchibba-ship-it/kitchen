@@ -2599,6 +2599,62 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
             </div>
           </div>
         )}
+          </>
+        )}
+
+        {activeTab === 'archived' && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-4 border-b bg-gray-50">
+              <h3 className="text-lg font-semibold text-gray-800">
+                📦 Archived Orders ({archivedOrders.length})
+              </h3>
+            </div>
+            <div className="p-4">
+              {archivedOrders.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No archived orders found.</p>
+              ) : (
+                <div className="space-y-4">
+                  {archivedOrders.map(order => (
+                    <div key={order.id} className="p-4 bg-gray-50 rounded-lg border-l-4 border-gray-400">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="font-medium text-gray-800">Order #{order.invoice_number}</div>
+                            <div className="text-sm text-gray-600">
+                              Archived: {order.archived_at ? new Date(order.archived_at).toLocaleString() : 'Unknown'}
+                            </div>
+                          </div>
+                          <div className="font-medium text-blue-600 mb-2">From: {order.venue_name}</div>
+                          <div className="text-sm mb-3">
+                            <strong>Items:</strong>
+                            <div className="grid grid-cols-2 gap-2 mt-1">
+                              {order.items.map((item, index) => (
+                                <div key={index} className="text-gray-600">
+                                  • {item.production_item_name} ({item.quantity} {item.unit_of_measure})
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <div className="text-sm text-gray-600">
+                              Total: <span className="font-medium">${order.total_amount?.toFixed(2) || '0.00'}</span>
+                            </div>
+                            <button
+                              onClick={() => handleUnarchiveOrder(order.id)}
+                              className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                            >
+                              Unarchive
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
