@@ -2,61 +2,12 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import axios from "axios";
 
-// HYBRID MODE - Offline authentication, but connected to backend for data
+// HYBRID MODE - Database authentication with frontend data loading
 // Use the correct deployed backend URL
 const API = 'https://523e0c6c-09ea-4970-8dcd-e42fec7deab4.preview.emergentagent.com/api';
 
-console.log('Production Kitchen App - HYBRID MODE (Offline Auth + Backend Data)');
+console.log('Production Kitchen App - DATABASE AUTHENTICATION MODE');
 console.log('API URL:', API);
-
-// Hardcoded users with passwords for offline authentication
-const OFFLINE_USERS = [
-  {
-    id: "1", 
-    name: "Kitchen Manager", 
-    username: "manager", 
-    password: "admin123",
-    role: "manager",
-    email: "manager@kitchen.com",
-    phone: "555-0001"
-  },
-  {
-    id: "2", 
-    name: "Chef Alice", 
-    username: "chef_alice", 
-    password: "chef123",
-    role: "kitchen_staff",
-    email: "alice@kitchen.com", 
-    phone: "555-0002"
-  },
-  {
-    id: "3", 
-    name: "Chef Bob", 
-    username: "chef_bob", 
-    password: "chef456",
-    role: "kitchen_staff",
-    email: "bob@kitchen.com",
-    phone: "555-0003"
-  },
-  {
-    id: "4", 
-    name: "Downtown Cafe", 
-    username: "downtown_cafe", 
-    password: "venue123",
-    role: "venue_staff",
-    email: "downtown@cafe.com",
-    phone: "555-0004"
-  },
-  {
-    id: "5", 
-    name: "Uptown Restaurant", 
-    username: "uptown_restaurant", 
-    password: "venue456",
-    role: "venue_staff", 
-    email: "uptown@restaurant.com",
-    phone: "555-0005"
-  }
-];
 
 // Utility function to convert file to base64
 const fileToBase64 = (file) => {
