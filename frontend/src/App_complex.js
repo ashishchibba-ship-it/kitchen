@@ -257,14 +257,17 @@ const Login = ({ onLogin, appSettings }) => {
         <div className="mt-6 text-center text-sm text-gray-600">
           <p className="mb-2"><strong>Available Users:</strong></p>
           <div className="space-y-1 text-xs">
-            {OFFLINE_USERS.map(user => (
+            {users.map(user => (
               <p key={user.id}>
-                <strong>{user.name}:</strong> {user.role.replace('_', ' ')} - username: {user.username} / password: {user.password}
+                <strong>{user.name}:</strong> {user.role.replace('_', ' ')} - username: {user.username}
               </p>
             ))}
           </div>
           <p className="mt-2 text-xs text-blue-600">
-            🔒 All authentication is handled offline - no network required!
+            🔐 Passwords are managed in the Manager Dashboard → Users tab
+          </p>
+          <p className="text-xs text-gray-500">
+            Select a user above and enter their current password
           </p>
         </div>
       </div>
