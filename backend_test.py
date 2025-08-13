@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
 Backend API Testing for Production Kitchen Management System
-Focus: Testing the complete password-based authentication system
+Focus: Testing Gmail API integration for email notifications
 Key Tests:
-1. LOGIN ENDPOINT TESTING - POST /api/login with all user credentials
-2. AUTHENTICATION VALIDATION - password validation and error handling
-3. USER MANAGEMENT ENDPOINTS - GET /api/users for dropdown population
-4. PASSWORD MANAGEMENT - PUT /api/users/{user_id}/password endpoint
-5. SECURITY - ensure passwords not exposed in responses
+1. GMAIL AUTHORIZATION ENDPOINTS - auth-url, status, callback
+2. EMAIL NOTIFICATION INTEGRATION - order system integration
+3. EMAIL SERVICE FUNCTIONS - template generation and message creation
+4. NOTIFICATION SYSTEM WITH EMAIL - enhanced notification processing
+5. BACKEND SERVICE STABILITY - ensure existing functionality works
 """
 
 import requests
