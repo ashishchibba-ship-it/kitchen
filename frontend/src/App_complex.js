@@ -85,8 +85,8 @@ const Login = ({ onLogin, appSettings }) => {
         setUsers(response.data);
       } catch (error) {
         console.error('Error fetching users for login:', error);
-        // Fallback to OFFLINE_USERS if API fails
-        setUsers(OFFLINE_USERS);
+        // No fallback needed - if API fails, user will see empty dropdown
+        setUsers([]);
       }
     };
     fetchUsers();
