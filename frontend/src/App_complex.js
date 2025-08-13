@@ -2588,9 +2588,18 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
                           Delivered: {order.delivered_at ? new Date(order.delivered_at).toLocaleString() : 'Recently'}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-sm font-medium text-green-600">${order.total_amount.toFixed(2)}</div>
-                        <span className="text-xs text-gray-500">{order.items.length} items</span>
+                      <div className="text-right flex items-center space-x-2">
+                        <div>
+                          <div className="text-sm font-medium text-green-600">${order.total_amount.toFixed(2)}</div>
+                          <span className="text-xs text-gray-500">{order.items.length} items</span>
+                        </div>
+                        <button
+                          onClick={() => handleArchiveOrder(order.id)}
+                          className="bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-xs transition-colors"
+                          title="Archive this order"
+                        >
+                          Archive
+                        </button>
                       </div>
                     </div>
                   </div>
