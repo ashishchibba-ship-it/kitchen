@@ -59,32 +59,44 @@ def get_gmail_service():
     creds = None
     # Load existing token if available
     if GMAIL_TOKEN_FILE.exists():
-        creds = Credentials.from_authorized_user_file(str(GMAIL_TOKEN_FILE), SCOPES)
+        try:
+            creds = Credentials.from_authorized_user_file(str(GMAIL_TOKEN_FILE), SCOPES)
+        except Exception as e:
+            logging.error(f"Error loading saved credentials: {e}")
+            creds = None
     
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             try:
                 creds.refresh(Request())
+                logging.info("Gmail credentials refreshed successfully")
             except Exception as e:
                 logging.error(f"Error refreshing Gmail credentials: {e}")
                 # If refresh fails, we'll need to re-authorize
                 creds = None
         
         if not creds:
-            flow = InstalledAppFlow.from_client_secrets_file(str(GMAIL_CREDENTIALS_FILE), SCOPES)
-            # For server applications, we need to handle this differently
-            # This will work for the first setup, then tokens will be cached
             try:
-                creds = flow.run_local_server(port=0)
+                flow = InstalledAppFlow.from_client_secrets_file(str(GMAIL_CREDENTIALS_FILE), SCOPES)
+                # For server applications, we'll generate the auth URL for manual authorization
+                # This is a one-time setup process
+                auth_url, _ = flow.authorization_url(prompt='consent')
+                logging.error(f"Gmail API not authorized. Please visit this URL to authorize: {auth_url}")
+                logging.error("After authorization, restart the server to complete the setup.")
+                return None
             except Exception as e:
-                logging.error(f"Gmail authorization error: {e}")
+                logging.error(f"Gmail authorization setup error: {e}")
                 return None
         
         # Save the credentials for the next run
         if creds:
-            with open(GMAIL_TOKEN_FILE, 'w') as token:
-                token.write(creds.to_json())
+            try:
+                with open(GMAIL_TOKEN_FILE, 'w') as token:
+                    token.write(creds.to_json())
+                logging.info("Gmail credentials saved successfully")
+            except Exception as e:
+                logging.error(f"Error saving credentials: {e}")
 
     try:
         gmail_service = build('gmail', 'v1', credentials=creds)
