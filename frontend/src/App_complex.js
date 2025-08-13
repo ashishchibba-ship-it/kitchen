@@ -2373,8 +2373,36 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* New Orders Section */}
-        {pendingOrders.length > 0 && (
+        {/* Tab Navigation */}
+        <div className="mb-6">
+          <nav className="flex space-x-8">
+            <button
+              onClick={() => setActiveTab('active')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'active'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Active Orders
+            </button>
+            <button
+              onClick={() => setActiveTab('archived')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'archived'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Archived Orders ({archivedOrders.length})
+            </button>
+          </nav>
+        </div>
+
+        {activeTab === 'active' && (
+          <>
+            {/* New Orders Section */}
+            {pendingOrders.length > 0 && (
           <div className="bg-white rounded-lg shadow mb-6">
             <div className="p-4 border-b bg-red-50">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center">
