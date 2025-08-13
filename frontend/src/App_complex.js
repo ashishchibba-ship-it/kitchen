@@ -2286,13 +2286,17 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
 
   useEffect(() => {
     fetchAllOrders();
+    fetchArchivedOrders();
     
     // Poll for orders every 30 seconds
     const interval = setInterval(() => {
       fetchAllOrders();
+      if (activeTab === 'archived') {
+        fetchArchivedOrders();
+      }
     }, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [activeTab]);
 
   const fetchAllOrders = async () => {
     try {
