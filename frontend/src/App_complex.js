@@ -3,8 +3,8 @@ import "./App.css";
 import axios from "axios";
 
 // HYBRID MODE - Offline authentication, but connected to backend for data
-// Use internal IP since localhost doesn't work in deployed environment
-const API = 'http://10.64.166.29:8001/api';
+// Use the correct deployed backend URL
+const API = 'https://523e0c6c-09ea-4970-8dcd-e42fec7deab4.preview.emergentagent.com/api';
 
 console.log('Production Kitchen App - HYBRID MODE (Offline Auth + Backend Data)');
 console.log('API URL:', API);
