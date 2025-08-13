@@ -1757,6 +1757,189 @@ const ManagerDashboard = ({ user, appSettings }) => {
                 )}
               </div>
             </div>
+
+            {/* Email Notification Preferences */}
+            <div className="bg-white p-6 rounded-lg shadow">
+              <div className="border-b pb-4 mb-6">
+                <h3 className="text-lg font-semibold text-gray-800">Email Notification Preferences</h3>
+                <p className="text-sm text-gray-600 mt-1">Configure email notifications for order status changes. Set email addresses for users and enable/disable email alerts.</p>
+              </div>
+              
+              <div className="space-y-4">
+                {localUsers.map(user => (
+                  <div key={user.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="font-medium text-gray-800">{user.name}</h4>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className="text-sm text-gray-600">@{user.username}</span>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            user.role === 'manager' ? 'bg-purple-100 text-purple-800' :
+                            user.role === 'kitchen_staff' ? 'bg-green-100 text-green-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {user.role.replace('_', ' ')}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-col space-y-3 w-80">
+                        <div>
+                          <label className="block text-sm text-gray-700 mb-1">Email Address</label>
+                          <input
+                            type="email"
+                            placeholder="Enter email address"
+                            className="w-full text-sm p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            id={`email-${user.id}`}
+                            defaultValue=""
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="block text-sm text-gray-700">Notification Types</label>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <label className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                className="rounded border-gray-300 text-blue-600"
+                                id={`order-placed-${user.id}`}
+                                defaultChecked={true}
+                              />
+                              <span>Order Placed</span>
+                            </label>
+                            <label className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                className="rounded border-gray-300 text-blue-600"
+                                id={`order-preparing-${user.id}`}
+                                defaultChecked={true}
+                              />
+                              <span>Preparing</span>
+                            </label>
+                            <label className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                className="rounded border-gray-300 text-blue-600"
+                                id={`order-ready-${user.id}`}
+                                defaultChecked={true}
+                              />
+                              <span>Ready</span>
+                            </label>
+                            <label className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                className="rounded border-gray-300 text-blue-600"
+                                id={`order-delivered-${user.id}`}
+                                defaultChecked={true}
+                              />
+                              <span>Delivered</span>
+                            </label>
+                          </div>
+                          
+                          <label className="flex items-center space-x-2 pt-1">
+                            <input
+                              type="checkbox"
+                              className="rounded border-gray-300 text-blue-600"
+                              id={`notify-email-${user.id}`}
+                              defaultChecked={false}
+                            />
+                            <span className="text-sm font-medium text-gray-700">Enable Email Notifications</span>
+                          </label>
+                        </div>
+                        
+                        <button
+                          onClick={() => {
+                            const emailInput = document.getElementById(`email-${user.id}`);
+                            const emailValue = emailInput.value.trim();
+                            const orderPlaced = document.getElementById(`order-placed-${user.id}`).checked;
+                            const orderPreparing = document.getElementById(`order-preparing-${user.id}`).checked;
+                            const orderReady = document.getElementById(`order-ready-${user.id}`).checked;
+                            const orderDelivered = document.getElementById(`order-delivered-${user.id}`).checked;
+                            const notifyEmail = document.getElementById(`notify-email-${user.id}`).checked;
+                            
+                            if (notifyEmail && !emailValue) {
+                              alert('Please enter an email address to enable email notifications.');
+                              return;
+                            }
+                            
+                            if (!emailValue && !notifyEmail) {
+                              alert('Please enter an email address or disable email notifications.');
+                              return;
+                            }
+                            
+                            // Update notification preferences
+                            const preferences = {
+                              order_placed: orderPlaced,
+                              order_preparing: orderPreparing,
+                              order_ready: orderReady,
+                              order_delivered: orderDelivered,
+                              email: emailValue || null,
+                              notify_email: notifyEmail,
+                              notify_in_app: true,
+                              notify_sms: false
+                            };
+                            
+                            updateUserNotificationPreferences(user.id, preferences);
+                          }}
+                          className="w-full px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                        >
+                          Save Email Preferences
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {localUsers.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <div className="text-lg mb-2">📧</div>
+                    <p>No users found.</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Gmail API Status */}
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-gray-800">Gmail API Status</h4>
+                    <p className="text-sm text-gray-600">Check Gmail API connection for sending email notifications</p>
+                  </div>
+                  <div className="space-x-2">
+                    <button
+                      onClick={async () => {
+                        try {
+                          const response = await axios.get(`${API}/gmail/status`);
+                          const status = response.data;
+                          alert(`Gmail API Status: ${status.authorized ? 'Connected' : 'Not Connected'}\n${status.message}`);
+                        } catch (error) {
+                          alert('Error checking Gmail status: ' + error.message);
+                        }
+                      }}
+                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                    >
+                      Check Status
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const response = await axios.get(`${API}/gmail/auth-url`);
+                          if (response.data.auth_url) {
+                            window.open(response.data.auth_url, '_blank');
+                            alert('Please authorize Gmail access in the new window, then come back and click "Check Status"');
+                          }
+                        } catch (error) {
+                          alert('Error getting Gmail authorization URL: ' + error.message);
+                        }
+                      }}
+                      className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                    >
+                      Setup Gmail
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
