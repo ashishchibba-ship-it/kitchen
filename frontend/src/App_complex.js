@@ -2316,6 +2316,35 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
     }
   };
 
+  const fetchArchivedOrders = async () => {
+    try {
+      const response = await axios.get(`${API}/orders/archived`);
+      setArchivedOrders(response.data);
+    } catch (error) {
+      console.error('Error fetching archived orders:', error);
+    }
+  };
+
+  const handleArchiveOrder = async (orderId) => {
+    try {
+      await axios.put(`${API}/orders/${orderId}/archive`);
+      fetchAllOrders(); // Refresh active orders
+      fetchArchivedOrders(); // Refresh archived orders
+    } catch (error) {
+      console.error('Error archiving order:', error);
+    }
+  };
+
+  const handleUnarchiveOrder = async (orderId) => {
+    try {
+      await axios.put(`${API}/orders/${orderId}/unarchive`);
+      fetchAllOrders(); // Refresh active orders
+      fetchArchivedOrders(); // Refresh archived orders
+    } catch (error) {
+      console.error('Error unarchiving order:', error);
+    }
+  };
+
   const updateOrderStatus = async (orderId, status) => {
     try {
       await axios.put(`${API}/orders/${orderId}/status?status=${status}`);
