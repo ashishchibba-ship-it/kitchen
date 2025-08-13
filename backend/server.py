@@ -41,6 +41,192 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# Gmail API Configuration
+SCOPES = ['https://www.googleapis.com/auth/gmail.send']
+GMAIL_CREDENTIALS_FILE = ROOT_DIR / 'gmail_credentials.json'
+GMAIL_TOKEN_FILE = ROOT_DIR / 'gmail_token.json'
+SENDER_EMAIL = "ashishchibba@streeteatseatery.com"
+
+# Gmail service instance (will be initialized on first use)
+gmail_service = None
+
+def get_gmail_service():
+    """Initialize and return Gmail API service"""
+    global gmail_service
+    if gmail_service is not None:
+        return gmail_service
+    
+    creds = None
+    # Load existing token if available
+    if GMAIL_TOKEN_FILE.exists():
+        creds = Credentials.from_authorized_user_file(str(GMAIL_TOKEN_FILE), SCOPES)
+    
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            try:
+                creds.refresh(Request())
+            except Exception as e:
+                logging.error(f"Error refreshing Gmail credentials: {e}")
+                # If refresh fails, we'll need to re-authorize
+                creds = None
+        
+        if not creds:
+            flow = InstalledAppFlow.from_client_secrets_file(str(GMAIL_CREDENTIALS_FILE), SCOPES)
+            # For server applications, we need to handle this differently
+            # This will work for the first setup, then tokens will be cached
+            try:
+                creds = flow.run_local_server(port=0)
+            except Exception as e:
+                logging.error(f"Gmail authorization error: {e}")
+                return None
+        
+        # Save the credentials for the next run
+        if creds:
+            with open(GMAIL_TOKEN_FILE, 'w') as token:
+                token.write(creds.to_json())
+
+    try:
+        gmail_service = build('gmail', 'v1', credentials=creds)
+        logging.info("Gmail service initialized successfully")
+        return gmail_service
+    except Exception as e:
+        logging.error(f"Error building Gmail service: {e}")
+        return None
+
+def create_email_message(to_email, subject, body_html):
+    """Create email message"""
+    try:
+        message = MIMEMultipart('alternative')
+        message['to'] = to_email
+        message['from'] = SENDER_EMAIL
+        message['subject'] = subject
+        
+        # Create HTML part
+        html_part = MIMEText(body_html, 'html')
+        message.attach(html_part)
+        
+        # Encode the message
+        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+        return {'raw': raw_message}
+    except Exception as e:
+        logging.error(f"Error creating email message: {e}")
+        return None
+
+async def send_email_notification(to_email, subject, body_html):
+    """Send email notification using Gmail API"""
+    try:
+        service = get_gmail_service()
+        if not service:
+            logging.error("Gmail service not available")
+            return False
+            
+        message = create_email_message(to_email, subject, body_html)
+        if not message:
+            return False
+            
+        result = service.users().messages().send(userId='me', body=message).execute()
+        logging.info(f"Email sent successfully to {to_email}. Message ID: {result['id']}")
+        return True
+    except Exception as e:
+        logging.error(f"Error sending email to {to_email}: {e}")
+        return False
+
+def create_order_email_template(order_data, status):
+    """Create HTML email template for order notifications"""
+    status_messages = {
+        'pending': {
+            'title': 'Order Placed Successfully',
+            'message': 'Your order has been placed and is being prepared by our kitchen team.',
+            'color': '#3B82F6'
+        },
+        'preparing': {
+            'title': 'Order Being Prepared',
+            'message': 'Great news! Our kitchen team has started preparing your order.',
+            'color': '#F59E0B'
+        },
+        'ready': {
+            'title': 'Order Ready for Pickup/Delivery',
+            'message': 'Your order is ready! Please proceed with pickup or expect delivery soon.',
+            'color': '#10B981'
+        },
+        'delivered': {
+            'title': 'Order Delivered',
+            'message': 'Your order has been successfully delivered. Thank you for choosing us!',
+            'color': '#059669'
+        }
+    }
+    
+    status_info = status_messages.get(status, status_messages['pending'])
+    
+    # Calculate order total
+    total = sum(float(item.get('total_price', 0)) for item in order_data.get('items', []))
+    
+    # Create items list HTML
+    items_html = ""
+    for item in order_data.get('items', []):
+        items_html += f"""
+        <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">{item.get('item_name', 'N/A')}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center;">{item.get('quantity', 0)}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: right;">${item.get('total_price', 0):.2f}</td>
+        </tr>
+        """
+    
+    html_template = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{status_info['title']}</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: {status_info['color']}; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+            <h1 style="margin: 0; font-size: 24px;">{status_info['title']}</h1>
+        </div>
+        
+        <div style="background: #f9fafb; padding: 20px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb;">
+            <p style="font-size: 16px; margin-bottom: 20px;">{status_info['message']}</p>
+            
+            <div style="background: white; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                <h3 style="margin-top: 0; color: {status_info['color']};">Order Details</h3>
+                <p><strong>Order ID:</strong> {order_data.get('id', 'N/A')}</p>
+                <p><strong>Venue:</strong> {order_data.get('venue_name', 'N/A')}</p>
+                <p><strong>Order Date:</strong> {order_data.get('order_date', 'N/A')}</p>
+                <p><strong>Status:</strong> {status.title()}</p>
+            </div>
+            
+            <div style="background: white; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                <h3 style="margin-top: 0; color: {status_info['color']};">Items Ordered</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f3f4f6;">
+                            <th style="padding: 10px; text-align: left; border-bottom: 2px solid #e5e7eb;">Item</th>
+                            <th style="padding: 10px; text-align: center; border-bottom: 2px solid #e5e7eb;">Qty</th>
+                            <th style="padding: 10px; text-align: right; border-bottom: 2px solid #e5e7eb;">Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {items_html}
+                    </tbody>
+                </table>
+                <div style="text-align: right; margin-top: 15px; padding-top: 15px; border-top: 2px solid {status_info['color']};">
+                    <strong style="font-size: 18px;">Total: ${total:.2f}</strong>
+                </div>
+            </div>
+            
+            <div style="text-align: center; color: #6b7280; font-size: 14px;">
+                <p>Street Eats Eatery - Production Kitchen Management</p>
+                <p>Thank you for your business!</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return html_template
+
 # Create the main app without a prefix
 app = FastAPI()
 
