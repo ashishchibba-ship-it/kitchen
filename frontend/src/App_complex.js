@@ -761,17 +761,34 @@ const ManagerDashboard = ({ user, appSettings }) => {
 
   const handleCreateCategory = async (e) => {
     e.preventDefault();
+    
+    if (!newCategory.name.trim()) {
+      alert('Please enter a category name.');
+      return;
+    }
+
     try {
-      await axios.post(`${API}/categories`, newCategory);
+      console.log('Adding category:', newCategory.name);
+      const response = await axios.post(`${API}/categories`, {
+        name: newCategory.name.trim(),
+        description: newCategory.description.trim() || null
+      });
+      console.log('Category added successfully:', response.data);
+      
+      // Refresh categories list
+      await fetchCategories();
       setNewCategory({
         name: '',
         description: ''
       });
-      fetchCategories();
-      fetchDetailedCategories();
+      alert('Category added successfully!');
     } catch (error) {
-      console.error('Error creating category:', error);
-      alert('Error creating category. Category name might already exist.');
+      console.error('Error adding category:', error);
+      if (error.response?.status === 400 && error.response?.data?.detail?.includes('already exists')) {
+        alert(`Category "${newCategory.name}" already exists. Please choose a different name.`);
+      } else {
+        alert('Error adding category. Please try again.');
+      }
     }
   };
 
