@@ -1952,6 +1952,61 @@ const ManagerDashboard = ({ user, appSettings }) => {
           </div>
         )}
 
+        {activeTab === 'archived-orders' && (
+          <div className="bg-white rounded-lg shadow">
+            <h3 className="text-lg font-semibold text-gray-800 p-4 border-b">Archived Orders</h3>
+            <div className="space-y-4 p-4">
+              {archivedOrders.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No archived orders found.</p>
+              ) : (
+                archivedOrders.map(order => (
+                  <div key={order.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h4 className="font-semibold text-gray-800">{order.venue_name}</h4>
+                        <p className="text-sm text-gray-600">Invoice: {order.invoice_number}</p>
+                        <p className="text-sm text-gray-600">PO: {order.po_number}</p>
+                        <p className="text-sm text-gray-600">Delivery Address: {order.delivery_address}</p>
+                        <p className="text-sm text-gray-600">Order Date: {new Date(order.order_date).toLocaleDateString()}</p>
+                        {order.delivery_date && (
+                          <p className="text-sm text-gray-600">Delivery Date: {new Date(order.delivery_date).toLocaleDateString()}</p>
+                        )}
+                        {order.archived_at && (
+                          <p className="text-sm text-gray-500">Archived: {new Date(order.archived_at).toLocaleDateString()}</p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-semibold text-gray-800">${order.total_amount?.toFixed(2) || '0.00'}</p>
+                        <p className="text-sm text-gray-600">Total (incl. tax)</p>
+                      </div>
+                    </div>
+                    <div className="mb-3">
+                      <h5 className="font-medium text-gray-700 mb-2">Items:</h5>
+                      {order.items.map((item, index) => (
+                        <div key={index} className="text-sm text-gray-600">
+                          {item.production_item_name} - Qty: {item.quantity} {item.unit_of_measure} @ ${item.unit_price?.toFixed(2) || '15.00'}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                        Archived
+                      </span>
+                      <button
+                        onClick={() => handleUnarchiveOrder(order.id)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors"
+                        title="Restore this order"
+                      >
+                        Unarchive
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
         {activeTab === 'invoices' && (
           <div className="bg-white rounded-lg shadow">
             <h3 className="text-lg font-semibold text-gray-800 p-4 border-b">Invoices</h3>
