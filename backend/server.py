@@ -45,7 +45,7 @@ db = client[os.environ['DB_NAME']]
 SCOPES = ['https://www.googleapis.com/auth/gmail.send']
 GMAIL_CREDENTIALS_FILE = ROOT_DIR / 'gmail_credentials.json'
 GMAIL_TOKEN_FILE = ROOT_DIR / 'gmail_token.json'
-SENDER_EMAIL = "ashishchibba@streeteatseatery.com"
+SENDER_EMAIL = os.environ.get('GMAIL_SENDER_EMAIL', 'ashishchibba@streeteatseatery.com')
 
 # Gmail service instance (will be initialized on first use)
 gmail_service = None
