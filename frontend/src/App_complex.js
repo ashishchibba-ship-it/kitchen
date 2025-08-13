@@ -215,7 +215,7 @@ const Login = ({ onLogin, appSettings }) => {
               disabled={isLoading}
             >
               <option value="">Choose a user...</option>
-              {OFFLINE_USERS.map(user => (
+              {users.map(user => (
                 <option key={user.id} value={user.username}>
                   {user.name} ({user.role.replace('_', ' ')})
                 </option>
