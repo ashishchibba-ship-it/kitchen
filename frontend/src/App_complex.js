@@ -387,10 +387,23 @@ const ManagerDashboard = ({ user, appSettings }) => {
 
   const fetchCategories = async () => {
     try {
+      console.log('Fetching categories from:', `${API}/categories`);
       const response = await axios.get(`${API}/categories`);
-      setCategories(response.data.categories);
+      console.log('Categories response:', response.data);
+      if (response.data.categories) {
+        setCategories(response.data.categories);
+        console.log('Categories loaded:', response.data.categories.length, 'categories');
+      } else {
+        console.error('No categories property in response');
+      }
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error('Error fetching categories:', error.message);
+      console.error('Error details:', error.response?.status, error.response?.data);
+      
+      // Fallback to basic categories so user can work
+      const basicCategories = ['Main Course', 'Appetizer', 'Dessert', 'Beverage', 'Side Dish', 'Salad'];
+      setCategories(basicCategories);
+      console.log('Using fallback categories:', basicCategories);
     }
   };
 
