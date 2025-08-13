@@ -753,9 +753,52 @@ async def create_notification(event_type: str, order_id: str, message: str):
         
         await db.notification_events.insert_one(notification.dict())
         
-        # In the future, this is where we'll add email/SMS sending logic
+        # Send email notifications to users who have email enabled
+        email_sent_count = 0
+        for pref in preferences:
+            if (pref.get("notify_email", False) and 
+                pref.get("email") and 
+                pref["email"].strip()):
+                
+                # Get the order details for email template
+                order = await db.orders.find_one({"id": order_id})
+                if order:
+                    # Create email subject based on event type
+                    subject_map = {
+                        "order_placed": "Order Confirmation",
+                        "order_preparing": "Your Order is Being Prepared",
+                        "order_ready": "Your Order is Ready",
+                        "order_delivered": "Your Order has been Delivered"
+                    }
+                    
+                    subject = subject_map.get(event_type, "Order Update")
+                    
+                    # Map event types to order status for template
+                    status_map = {
+                        "order_placed": "pending",
+                        "order_preparing": "preparing", 
+                        "order_ready": "ready",
+                        "order_delivered": "delivered"
+                    }
+                    
+                    status = status_map.get(event_type, "pending")
+                    
+                    # Create and send email
+                    html_body = create_order_email_template(order, status)
+                    email_sent = await send_email_notification(
+                        pref["email"], 
+                        subject, 
+                        html_body
+                    )
+                    
+                    if email_sent:
+                        email_sent_count += 1
         
-        return {"message": f"Notification created for {len(preferences)} users", "notification_id": notification.id}
+        result_message = f"Notification created for {len(preferences)} users"
+        if email_sent_count > 0:
+            result_message += f", {email_sent_count} email(s) sent"
+        
+        return {"message": result_message, "notification_id": notification.id}
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating notification: {str(e)}")
