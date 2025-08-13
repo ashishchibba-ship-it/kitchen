@@ -326,12 +326,23 @@ const ManagerDashboard = ({ user, appSettings }) => {
 
   const fetchOrders = async () => {
     try {
-      console.log('Fetching orders from:', `${API}/orders`);
-      const response = await axios.get(`${API}/orders`);
-      console.log('Orders loaded:', response.data.length, 'orders');
+      console.log('Fetching active orders from:', `${API}/orders/active`);
+      const response = await axios.get(`${API}/orders/active`);
+      console.log('Active orders loaded:', response.data.length, 'orders');
       setOrders(response.data);
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error('Error fetching active orders:', error);
+    }
+  };
+
+  const fetchArchivedOrders = async () => {
+    try {
+      console.log('Fetching archived orders from:', `${API}/orders/archived`);
+      const response = await axios.get(`${API}/orders/archived`);
+      console.log('Archived orders loaded:', response.data.length, 'orders');
+      setArchivedOrders(response.data);
+    } catch (error) {
+      console.error('Error fetching archived orders:', error);
     }
   };
 
