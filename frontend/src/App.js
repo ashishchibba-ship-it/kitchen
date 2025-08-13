@@ -90,8 +90,8 @@ const Login = ({ onLogin }) => {
 
         <div className="mt-6 text-center text-sm text-gray-600">
           <p><strong>Test Credentials:</strong></p>
-          <p>Manager: updated_manager / admin123</p>
-          <p>Chef Alice: chef_alice / chef123</p>
+          <p>Manager: system_manager / admin123</p>
+          <p>Kitchen: production_kitchen / chef456</p>
         </div>
       </div>
     </div>
