@@ -1009,9 +1009,14 @@ const ManagerDashboard = ({ user, appSettings }) => {
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center py-4">
-            <h1 className="text-xl font-semibold text-gray-800" style={{ fontFamily: settings?.font_family }}>
-              {settings?.app_name || 'Street Eats Planner'} - Manager Dashboard
-            </h1>
+            <div className="flex items-center space-x-3">
+              {settings?.logo_url && (
+                <img src={settings.logo_url} alt="Logo" className="h-8 w-8 object-contain" />
+              )}
+              <h1 className="text-xl font-semibold text-gray-800" style={{ fontFamily: settings?.font_family }}>
+                {settings?.app_name || 'Street Eats Planner'} - Manager Dashboard
+              </h1>
+            </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-600">Welcome, {user.name}</span>
               
