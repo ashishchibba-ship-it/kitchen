@@ -3465,7 +3465,7 @@ const VenueStaffDashboardOriginal = ({ user, appSettings }) => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center py-4">
             <h1 className="text-xl font-semibold text-gray-800" style={{ fontFamily: appSettings?.font_family }}>
-              {appSettings?.app_name || 'Production Kitchen'} - Venue Dashboard
+              {appSettings?.app_name || 'Street Eats Planner'} - Venue Dashboard
             </h1>
             <span className="text-gray-600">Welcome, {user.name}</span>
           </div>
