@@ -564,9 +564,7 @@ backend:
           comment: "✅ PASSED - Password management system working perfectly (100% success rate - 50/50 tests passed). COMPREHENSIVE VERIFICATION: 1) PASSWORD UPDATE ENDPOINT: PUT /api/users/{user_id}/password successfully updates passwords for all user roles (manager, kitchen_staff, venue_staff), correctly validates missing/empty/null passwords with 400 status, returns 404 for non-existent users, processes password updates and saves to database 2) USER PROFILE UPDATE ENDPOINT: PUT /api/users/{user_id}/profile updates user information correctly (name, username, address), properly excludes password field from profile updates as designed, handles partial updates correctly, validates user existence 3) COMPLETE PASSWORD MANAGEMENT WORKFLOW: Manager can successfully update passwords for all users, password updates persist correctly, users remain retrievable after password changes, supports multiple password updates, works across all user roles 4) PASSWORD MANAGEMENT FOR DIFFERENT ROLES: All user roles (manager, kitchen_staff, venue_staff) can have passwords updated, accepts various password formats (simple, numeric, complex, unicode, emoji), handles edge cases properly (malformed JSON, wrong content types), manager has permission to update all user role passwords. The password management system provides complete functionality for managers to update user passwords while maintaining proper separation between password and profile updates."
 
 test_plan:
-  current_focus:
-    - "Enhanced unit of measure options for production items"
-    - "Post-creation image upload for production items"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
