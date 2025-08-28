@@ -433,8 +433,14 @@ class PurchaseOrder(BaseModel):
 
 class AppSettings(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    app_name: str = "Production Kitchen Management"
+    app_name: str = "Street Eats Planner"
     company_name: str = "Kitchen Co."
+    logo_url: Optional[str] = None
+    primary_color: str = "#3b82f6"
+    secondary_color: str = "#1f2937"
+    accent_color: str = "#10b981"
+    font_family: str = "Inter"
+    layout_style: str = "modern"
     tax_rate: float = 0.08
     default_markup: float = 0.15
     currency: str = "USD"
