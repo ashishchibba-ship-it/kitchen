@@ -451,6 +451,12 @@ class AppSettings(BaseModel):
 class AppSettingsUpdate(BaseModel):
     app_name: Optional[str] = None
     company_name: Optional[str] = None
+    logo_url: Optional[str] = None
+    primary_color: Optional[str] = None
+    secondary_color: Optional[str] = None
+    accent_color: Optional[str] = None
+    font_family: Optional[str] = None
+    layout_style: Optional[str] = None
     tax_rate: Optional[float] = None
     default_markup: Optional[float] = None
     currency: Optional[str] = None
