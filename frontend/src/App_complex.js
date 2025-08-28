@@ -1252,15 +1252,15 @@ const ManagerDashboard = ({ user, appSettings }) => {
                 
                 <button
                   type="submit"
-                  disabled={!newItem.name || !newItem.category || !newItem.base_cost}
+                  disabled={!newItem.name || !newItem.category || !newItem.unit_of_measure || !newItem.base_cost}
                   className={`w-full py-3 px-4 rounded-md transition-colors ${
-                    (!newItem.name || !newItem.category || !newItem.base_cost)
+                    (!newItem.name || !newItem.category || !newItem.unit_of_measure || !newItem.base_cost)
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : 'text-white hover:opacity-90'
                   }`}
-                  style={(!newItem.name || !newItem.category || !newItem.base_cost) ? {} : primaryButtonStyle}
+                  style={(!newItem.name || !newItem.category || !newItem.unit_of_measure || !newItem.base_cost) ? {} : primaryButtonStyle}
                 >
-                  {(!newItem.name || !newItem.category || !newItem.base_cost) 
+                  {(!newItem.name || !newItem.category || !newItem.unit_of_measure || !newItem.base_cost) 
                     ? 'Please fill in all required fields' 
                     : 'Add Production Item'
                   }
