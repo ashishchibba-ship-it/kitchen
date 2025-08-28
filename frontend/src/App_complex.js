@@ -2677,9 +2677,14 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
       <nav className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-xl font-semibold text-gray-800" style={{ fontFamily: appSettings?.font_family }}>
-              {appSettings?.app_name || 'Street Eats Planner'} - Kitchen Production
-            </h1>
+            <div className="flex items-center space-x-3">
+              {appSettings?.logo_url && (
+                <img src={appSettings.logo_url} alt="Logo" className="h-8 w-8 object-contain" />
+              )}
+              <h1 className="text-xl font-semibold text-gray-800" style={{ fontFamily: appSettings?.font_family }}>
+                {appSettings?.app_name || 'Street Eats Planner'} - Kitchen Production
+              </h1>
+            </div>
             <span className="text-gray-600">Welcome, {user.name}</span>
           </div>
         </div>
