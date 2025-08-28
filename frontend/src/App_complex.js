@@ -2691,7 +2691,7 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
                 <img src={appSettings.logo_url} alt="Logo" className="h-8 w-8 object-contain" />
               )}
               <h1 className="text-xl font-semibold text-gray-800" style={{ fontFamily: appSettings?.font_family }}>
-                {appSettings?.app_name || 'Street Eats Planner'} - Kitchen Production
+                Street Eats Planner - Kitchen Production
               </h1>
             </div>
             <span className="text-gray-600">Welcome, {user.name}</span>
