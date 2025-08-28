@@ -149,7 +149,7 @@ const Login = ({ onLogin, appSettings }) => {
             <img src={appSettings.logo_url} alt="Logo" className="mx-auto h-16 w-16 mb-4" />
           )}
           <h2 className="text-2xl font-bold text-gray-800" style={{ fontFamily: appSettings?.font_family }}>
-            {appSettings?.app_name || 'Production Kitchen'} Login
+            {appSettings?.app_name || 'Street Eats Planner'} Login
           </h2>
         </div>
         
