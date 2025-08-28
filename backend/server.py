@@ -900,9 +900,13 @@ async def create_production_item(item: ProductionItemCreate, created_by: str):
         item_dict["created_at"] = datetime.utcnow()
         item_dict["updated_at"] = datetime.utcnow()
         
-        # Ensure unit_of_measure defaults to kg
-        if not item_dict.get("unit_of_measure"):
-            item_dict["unit_of_measure"] = "kg"
+        # Ensure unit_of_measure defaults to kilo and validate valid units
+        valid_units = ["kilo", "litre", "carton", "each"]
+        unit = item_dict.get("unit_of_measure", "kilo")
+        if unit not in valid_units:
+            item_dict["unit_of_measure"] = "kilo"  # Default to kilo for invalid units
+        else:
+            item_dict["unit_of_measure"] = unit
         
         # Calculate unit price (15% markup on base_cost)
         base_cost = item_dict.get("base_cost", 10.0)
