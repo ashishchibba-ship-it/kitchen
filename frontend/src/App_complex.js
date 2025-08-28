@@ -1023,7 +1023,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                 <img src={settings.logo_url} alt="Logo" className="h-8 w-8 object-contain" />
               )}
               <h1 className="text-xl font-semibold text-gray-800" style={{ fontFamily: settings?.font_family }}>
-                {settings?.app_name || 'Street Eats Planner'} - Manager Dashboard
+                Street Eats Planner - Manager Dashboard
               </h1>
             </div>
             <div className="flex items-center space-x-4">
