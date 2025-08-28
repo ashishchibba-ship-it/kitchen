@@ -587,8 +587,33 @@ test_plan:
 agent_communication:
     - agent: "main"
       message: "Password-based authentication system successfully implemented with dropdown user selection. COMPLETED FEATURES: 1) BACKEND LOGIN: Fixed /api/login endpoint with proper password validation and datetime serialization 2) DROPDOWN USER SELECTION: Changed frontend from username text input to dropdown showing all available users with their names and roles 3) PASSWORD AUTHENTICATION: Reset all user passwords to intended defaults (admin123, chef123, chef456, venue123, venue456) and verified login works 4) USER MANAGEMENT: Password field already integrated in Add New User form in manager dashboard 5) UI IMPROVEMENTS: Updated login page to show available users with roles instead of hardcoded credentials. Authentication system is now secure and user-friendly. Ready for comprehensive testing."
+  - task: "Enhanced unit of measure options for production items"
+    implemented: true
+    working: false
+    file: "server.py, App_complex.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Implemented enhanced unit of measure options (kilo, litre, carton, each) to replace hardcoded 'kg'. Backend: Added UnitOfMeasure enum, updated ProductionItem and ProductionItemCreate models, added validation for valid units, updated backward compatibility handling to convert old 'kg' to new 'kilo'. Frontend: Updated create form with dropdown selector, updated production table with dropdown, updated edit modal with unit selection. Maintains backward compatibility by converting old 'kg' values to 'kilo'."
+
+  - task: "Post-creation image upload for production items"
+    implemented: true
+    working: false
+    file: "server.py, App_complex.js"
+    stuck_count: 0
+    priority: "high" 
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Implemented post-creation image upload functionality. Backend: Added PUT /api/production-items/{item_id}/image endpoint to update image for existing items, added DELETE /api/production-items/{item_id}/image endpoint to remove images. Frontend: Completely redesigned edit modal to include ImageUpload component, added remove image functionality, enhanced modal layout with better organization and validation. Managers can now add, update, or remove images from existing production items after creation."
+
+agent_communication:
     - agent: "main"
-      message: "Implemented force delete and enhanced add item form to resolve user issues. FORCE DELETE: 1) Added force parameter to DELETE /api/production-items/{id} endpoint 2) When force=true, removes item from all orders/invoices and recalculates totals 3) Frontend shows two-step confirmation with clear warnings 4) Maintains data integrity while allowing manager override. ENHANCED ADD FORM: 1) Added required field indicators and validation messages 2) Blue info banner explaining requirements 3) Individual field labels with helper text 4) Disabled submit button with clear messaging when fields missing 5) Better responsive 3-column layout 6) Enhanced user experience with examples and guidance. Ready for testing both new features."
+      message: "Implemented both requested features: 1) ENHANCED UNIT OF MEASURE OPTIONS: Added support for kilo, litre, carton, and each as unit options to replace hardcoded 'kg'. Updated both backend models with validation and frontend forms with dropdown selections. Maintains backward compatibility by converting old 'kg' values to 'kilo'. 2) POST-CREATION IMAGE UPLOAD: Added new backend endpoints for updating/removing images on existing items. Completely redesigned edit modal with integrated ImageUpload component and improved layout. Ready for backend testing to verify both new features work correctly."
     - agent: "testing"
       message: "✅ COMPREHENSIVE SAVE SYSTEM TESTING COMPLETED - Successfully tested all requested features of the manager profile save system with 95% success rate. VERIFIED FEATURES: 1) Global save system with manager login and dashboard access 2) Change tracking visual indicators (orange badge, counters, Save All/Discard buttons) 3) Production items local changes with immediate display and counter updates 4) Notification preferences local changes (email/phone editing, preference toggles) 5) Save All Changes functionality with batch save, success messages, and persistence 6) Discard Changes functionality with confirmation dialog and proper reversion 7) Multi-tab change tracking and UI responsiveness. The comprehensive save system is fully functional and provides excellent user experience with proper visual feedback, data integrity, and workflow management. All key testing points from the review request have been successfully verified and are working as expected."
     - agent: "testing"
