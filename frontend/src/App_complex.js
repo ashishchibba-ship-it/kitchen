@@ -221,7 +221,16 @@ const ManagerDashboard = ({ user, appSettings }) => {
   const [detailedCategories, setDetailedCategories] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [purchaseOrders, setPurchaseOrders] = useState([]);
-  const [settings, setSettings] = useState(appSettings || {});
+  const [settings, setSettings] = useState({
+    app_name: 'Street Eats Planner',
+    logo_url: '',
+    primary_color: '#3b82f6',
+    secondary_color: '#1f2937',
+    accent_color: '#10b981',
+    font_family: 'Inter',
+    layout_style: 'modern',
+    ...appSettings
+  });
   const [notificationPreferences, setNotificationPreferences] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [localNotificationPreferences, setLocalNotificationPreferences] = useState([]);
