@@ -1107,8 +1107,10 @@ async def get_production_items():
             # Ensure required fields exist with defaults
             if "category" not in item:
                 item["category"] = "Main Course"
-            if "unit_of_measure" not in item:
-                item["unit_of_measure"] = "kg"
+            if "unit_of_measure" not in item or item["unit_of_measure"] == "kg":
+                item["unit_of_measure"] = "kilo"  # Convert old "kg" to new "kilo"
+            elif item["unit_of_measure"] not in ["kilo", "litre", "carton", "each"]:
+                item["unit_of_measure"] = "kilo"  # Default invalid units to kilo
             if "base_cost" not in item:
                 item["base_cost"] = 10.0
             if "unit_price" not in item:
