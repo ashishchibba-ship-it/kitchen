@@ -1190,15 +1190,20 @@ const ManagerDashboard = ({ user, appSettings }) => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Unit of Measure
+                      Unit of Measure <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
-                      value="kg"
-                      disabled
-                      className="w-full p-3 border border-gray-300 rounded-md bg-gray-100 text-gray-600"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">All items use kilograms (kg)</p>
+                    <select
+                      value={newItem.unit_of_measure}
+                      onChange={(e) => setNewItem({...newItem, unit_of_measure: e.target.value})}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="kilo">Kilo (kg)</option>
+                      <option value="litre">Litre (L)</option>
+                      <option value="carton">Carton</option>
+                      <option value="each">Each</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">Select the unit of measure for this item</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
