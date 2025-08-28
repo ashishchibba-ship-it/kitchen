@@ -43,4 +43,10 @@ module.exports = {
       return webpackConfig;
     },
   },
+  devServer: {
+    allowedHosts: 'all',
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
+  },
 };
