@@ -1149,10 +1149,10 @@ const ManagerDashboard = ({ user, appSettings }) => {
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Add Production Item</h3>
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
                 <p className="text-sm text-blue-800">
-                  <strong>Required Fields:</strong> Item Name, Category, and Base Cost are required to create a production item.
+                  <strong>Required Fields:</strong> Item Name, Category, Unit of Measure, and Base Cost are required to create a production item.
                 </p>
                 <p className="text-xs text-blue-600 mt-1">
-                  💡 All items use <strong>kg</strong> as the unit of measure and are always available for ordering.
+                  💡 Choose from kilo, litre, carton, or each as unit of measure. All items are always available for ordering.
                 </p>
               </div>
               <form onSubmit={handleCreateItem} className="space-y-4">
