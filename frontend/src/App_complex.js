@@ -1381,72 +1381,124 @@ const ManagerDashboard = ({ user, appSettings }) => {
 
           {editingItem && (
             <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white p-6 rounded-lg shadow-lg max-w-2xl w-full m-4">
+              <div className="bg-white p-6 rounded-lg shadow-lg max-w-3xl w-full m-4 max-h-[90vh] overflow-y-auto">
                 <h3 className="text-lg font-semibold mb-4">Edit Production Item</h3>
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  const formData = new FormData(e.target);
-                  const updatedData = {
-                    name: formData.get('name'),
-                    category: formData.get('category'),
-                    unit_of_measure: 'kg',
-                    assigned_staff: formData.get('assigned_staff'),
-                    base_cost: parseFloat(formData.get('base_cost')),
-                    image: editingItem.image // Keep existing image for now
-                  };
-                  handleEditProductionItem(editingItem.id, updatedData);
-                }} className="space-y-4">
+                
+                <div className="space-y-6">
+                  {/* Basic Information */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input
-                      name="name"
-                      type="text"
-                      placeholder="Item Name"
-                      defaultValue={editingItem.name}
-                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Item Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={editingItem.name}
+                        onChange={(e) => setEditingItem({...editingItem, name: e.target.value})}
+                        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Category <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={editingItem.category}
+                        onChange={(e) => setEditingItem({...editingItem, category: e.target.value})}
+                        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="">Select Category</option>
+                        {categories.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Unit of Measure <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={editingItem.unit_of_measure || 'kilo'}
+                        onChange={(e) => setEditingItem({...editingItem, unit_of_measure: e.target.value})}
+                        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      >
+                        <option value="kilo">Kilo (kg)</option>
+                        <option value="litre">Litre (L)</option>
+                        <option value="carton">Carton</option>
+                        <option value="each">Each</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Base Cost <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={editingItem.base_cost}
+                        onChange={(e) => setEditingItem({...editingItem, base_cost: parseFloat(e.target.value) || 0})}
+                        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                    
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Assigned Staff (Optional)
+                      </label>
+                      <select
+                        value={editingItem.assigned_staff || ''}
+                        onChange={(e) => setEditingItem({...editingItem, assigned_staff: e.target.value})}
+                        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select Staff (Optional)</option>
+                        {users.filter(user => user.role === 'kitchen_staff').map(user => (
+                          <option key={user.id} value={user.username}>{user.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Image Upload Section */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Item Image
+                    </label>
+                    <ImageUpload 
+                      onImageSelect={(image) => setEditingItem({...editingItem, image})}
+                      currentImage={editingItem.image}
                     />
-                    <select
-                      name="category"
-                      defaultValue={editingItem.category}
-                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    >
-                      <option value="">Select Category</option>
-                      {categories.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
-                    <input
-                      name="unit_of_measure"
-                      type="text" 
-                      value="kg"
-                      disabled
-                      className="p-3 border border-gray-300 rounded-md bg-gray-100 text-gray-600"
-                    />
-                    <input
-                      name="base_cost"
-                      type="number"
-                      step="0.01"
-                      placeholder="Base Cost"
-                      defaultValue={editingItem.base_cost}
-                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
-                    <select
-                      name="assigned_staff"
-                      defaultValue={editingItem.assigned_staff}
-                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select Staff (Optional)</option>
-                      {users.filter(user => user.role === 'kitchen_staff').map(user => (
-                        <option key={user.id} value={user.username}>{user.name}</option>
-                      ))}
-                    </select>
+                    <div className="mt-2 flex space-x-2">
+                      {editingItem.image && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingItem({...editingItem, image: null})}
+                          className="px-3 py-1 text-sm text-red-600 border border-red-300 rounded hover:bg-red-50"
+                        >
+                          Remove Image
+                        </button>
+                      )}
+                    </div>
                   </div>
                   
-                  <div className="flex space-x-3">
+                  {/* Action Buttons */}
+                  <div className="flex space-x-3 pt-4 border-t">
                     <button
-                      type="submit"
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await handleEditProductionItem(editingItem.id, editingItem);
+                          setEditingItem(null);
+                        } catch (error) {
+                          console.error('Error updating item:', error);
+                        }
+                      }}
                       className="flex-1 text-white py-3 px-4 rounded-md hover:opacity-90 transition-colors"
                       style={primaryButtonStyle}
                     >
@@ -1460,7 +1512,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                       Cancel
                     </button>
                   </div>
-                </form>
+                </div>
               </div>
             </div>
           )}
