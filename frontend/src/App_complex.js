@@ -1299,17 +1299,20 @@ const ManagerDashboard = ({ user, appSettings }) => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.category}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <input
-                            type="text"
-                            value={item.unit_of_measure || 'kg'}
+                          <select
+                            value={item.unit_of_measure || 'kilo'}
                             onChange={(e) => {
                               updateLocalProductionItem(item.id, { 
-                                unit_of_measure: e.target.value || 'kg'
+                                unit_of_measure: e.target.value || 'kilo'
                               });
                             }}
-                            className="w-20 p-1 border border-gray-300 rounded text-sm"
-                            placeholder="kg"
-                          />
+                            className="w-24 p-1 border border-gray-300 rounded text-sm"
+                          >
+                            <option value="kilo">Kilo</option>
+                            <option value="litre">Litre</option>
+                            <option value="carton">Carton</option>
+                            <option value="each">Each</option>
+                          </select>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <input
