@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
 Backend API Testing for Production Kitchen Management System
-Focus: Testing Gmail API integration for email notifications
+Focus: Testing Enhanced Unit of Measure Options and Post-Creation Image Upload
 Key Tests:
-1. GMAIL AUTHORIZATION ENDPOINTS - auth-url, status, callback
-2. EMAIL NOTIFICATION INTEGRATION - order system integration
-3. EMAIL SERVICE FUNCTIONS - template generation and message creation
-4. NOTIFICATION SYSTEM WITH EMAIL - enhanced notification processing
-5. BACKEND SERVICE STABILITY - ensure existing functionality works
+1. ENHANCED UNIT OF MEASURE OPTIONS - kilo, litre, carton, each support
+2. POST-CREATION IMAGE UPLOAD - PUT/DELETE image endpoints
+3. BACKWARD COMPATIBILITY - old "kg" to "kilo" conversion
+4. ORDERABLE ITEMS UNIT COMPATIBILITY - unit information in APIs
+5. IMAGE WORKFLOW TESTING - create → add → update → remove image
 """
 
 import requests
