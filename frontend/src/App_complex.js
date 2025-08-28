@@ -2494,10 +2494,32 @@ const ManagerDashboard = ({ user, appSettings }) => {
                 <input
                   name="app_name"
                   type="text"
-                  placeholder="App Name"
-                  defaultValue={settings.app_name}
+                  placeholder="Street Eats Planner"
+                  defaultValue={settings.app_name || 'Street Eats Planner'}
                   className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                
+                {/* Logo Upload Section */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-gray-600 mb-2">Company Logo</label>
+                  <div className="flex items-center space-x-4">
+                    {settings.logo_url && (
+                      <div className="flex-shrink-0">
+                        <img src={settings.logo_url} alt="Current Logo" className="h-16 w-16 object-contain border rounded" />
+                        <p className="text-xs text-gray-500 mt-1">Current Logo</p>
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <input
+                        name="logo_file"
+                        type="file"
+                        accept="image/*"
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Upload PNG, JPG, or GIF (recommended: 64x64px)</p>
+                    </div>
+                  </div>
+                </div>
                 <div>
                   <label className="block text-sm text-gray-600 mb-1">Primary Color</label>
                   <input
