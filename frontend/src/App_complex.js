@@ -2635,7 +2635,7 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <h1 className="text-xl font-semibold text-gray-800" style={{ fontFamily: appSettings?.font_family }}>
-              {appSettings?.app_name || 'Production Kitchen'} - Kitchen Production
+              {appSettings?.app_name || 'Street Eats Planner'} - Kitchen Production
             </h1>
             <span className="text-gray-600">Welcome, {user.name}</span>
           </div>
