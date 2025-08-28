@@ -37,30 +37,30 @@ class KitchenAPITester:
             self.test_results["errors"].append(f"{test_name}: {message}")
             print(f"❌ {test_name}: FAILED - {message}")
     
-    def test_gmail_api_integration(self):
-        """Test the complete Gmail API integration for email notifications"""
-        print("📧 STARTING GMAIL API INTEGRATION TESTS")
-        print("=" * 60)
+    def test_enhanced_unit_measures_and_image_upload(self):
+        """Test the enhanced unit of measure options and post-creation image upload"""
+        print("🔧 STARTING ENHANCED UNIT MEASURES AND IMAGE UPLOAD TESTS")
+        print("=" * 70)
         
-        # Test 1: Gmail Authorization Endpoints
-        self.test_gmail_authorization_endpoints()
+        # Test 1: Enhanced Unit of Measure Options
+        self.test_enhanced_unit_of_measure_options()
         
-        # Test 2: Email Notification Integration with Order System
-        self.test_email_notification_integration()
+        # Test 2: Post-Creation Image Upload
+        self.test_post_creation_image_upload()
         
-        # Test 3: Email Service Functions
-        self.test_email_service_functions()
+        # Test 3: Backward Compatibility for Units
+        self.test_backward_compatibility_units()
         
-        # Test 4: Notification System with Email
-        self.test_notification_system_with_email()
+        # Test 4: Orderable Items Unit Information
+        self.test_orderable_items_unit_compatibility()
         
-        # Test 5: Backend Service Stability
-        self.test_backend_service_stability()
+        # Test 5: Complete Image Workflow
+        self.test_complete_image_workflow()
         
         # Print summary
-        print("\n" + "=" * 60)
-        print("📧 GMAIL API INTEGRATION TEST SUMMARY")
-        print("=" * 60)
+        print("\n" + "=" * 70)
+        print("🔧 ENHANCED FEATURES TEST SUMMARY")
+        print("=" * 70)
         print(f"✅ Tests Passed: {self.test_results['passed']}")
         print(f"❌ Tests Failed: {self.test_results['failed']}")
         print(f"📊 Success Rate: {(self.test_results['passed'] / (self.test_results['passed'] + self.test_results['failed']) * 100):.1f}%")
