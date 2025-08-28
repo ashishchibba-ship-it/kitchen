@@ -250,7 +250,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
   const [newItem, setNewItem] = useState({
     name: '',
     category: '',
-    unit_of_measure: 'kg',
+    unit_of_measure: 'kilo',
     assigned_staff: '',
     image: null,
     base_cost: 10.0
