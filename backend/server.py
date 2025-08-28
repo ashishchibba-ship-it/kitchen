@@ -939,6 +939,70 @@ async def update_production_item(item_id: str, item_update: ProductionItemCreate
     updated_item = await db.production_items.find_one({"id": item_id})
     return ProductionItem(**updated_item)
 
+@api_router.put("/production-items/{item_id}/image")
+async def update_production_item_image(item_id: str, image_data: dict):
+    """Update image for an existing production item"""
+    try:
+        # Validate that image data is provided
+        if not image_data.get("image"):
+            raise HTTPException(status_code=400, detail="Image data is required")
+        
+        # Check if item exists
+        item = await db.production_items.find_one({"id": item_id})
+        if not item:
+            raise HTTPException(status_code=404, detail="Production item not found")
+        
+        # Update the image
+        result = await db.production_items.update_one(
+            {"id": item_id},
+            {
+                "$set": {
+                    "image": image_data["image"],
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Production item not found")
+        
+        # Return updated item
+        updated_item = await db.production_items.find_one({"id": item_id})
+        return ProductionItem(**updated_item)
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating item image: {str(e)}")
+
+@api_router.delete("/production-items/{item_id}/image")
+async def remove_production_item_image(item_id: str):
+    """Remove image from an existing production item"""
+    try:
+        # Check if item exists
+        item = await db.production_items.find_one({"id": item_id})
+        if not item:
+            raise HTTPException(status_code=404, detail="Production item not found")
+        
+        # Remove the image
+        result = await db.production_items.update_one(
+            {"id": item_id},
+            {
+                "$unset": {"image": ""},
+                "$set": {"updated_at": datetime.utcnow()}
+            }
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Production item not found")
+        
+        return {"message": "Image removed successfully"}
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error removing item image: {str(e)}")
+
 @api_router.delete("/production-items/{item_id}")
 async def delete_production_item(item_id: str, force: bool = False):
     """Delete a production item"""
