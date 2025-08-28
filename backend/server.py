@@ -1627,7 +1627,7 @@ async def export_invoice_pdf(invoice_id: str):
             items_data.append([
                 item.get("production_item_name", "N/A"),
                 str(item.get("quantity", 0)),
-                item.get("unit_of_measure", "units"),
+                item.get("unit_of_measure", "kilo"),
                 f"${item.get('unit_price', 0):.2f}",
                 f"${item_total:.2f}"
             ])
