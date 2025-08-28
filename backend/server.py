@@ -1206,7 +1206,7 @@ async def get_orderable_items():
             name=item["name"],
             category=item.get("category", "Main Course"),
             available_quantity=1000,  # Always show as available
-            unit_of_measure=item.get("unit_of_measure", "kg"),
+            unit_of_measure=item.get("unit_of_measure", "kilo"),
             unit_price=unit_price,
             image=item.get("image"),
             availability_status="available"
