@@ -1407,8 +1407,10 @@ async def get_orders(venue_name: Optional[str] = None, venue_id: Optional[str] =
             # Fix items structure
             if "items" in order:
                 for item in order["items"]:
-                    if "unit_of_measure" not in item:
-                        item["unit_of_measure"] = "units"
+                    if "unit_of_measure" not in item or item["unit_of_measure"] == "kg":
+                        item["unit_of_measure"] = "kilo"  # Convert old kg to new kilo
+                    elif item["unit_of_measure"] not in ["kilo", "litre", "carton", "each"]:
+                        item["unit_of_measure"] = "kilo"  # Default invalid units
             
             # Fix date fields
             if "delivery_date" in order and order["delivery_date"]:
