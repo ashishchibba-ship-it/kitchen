@@ -6,7 +6,7 @@ import axios from "axios";
 // Use the correct deployed backend URL
 const API = '/api';
 
-console.log('Production Kitchen App - DATABASE AUTHENTICATION MODE');
+console.log('Street Eats Planner App - DATABASE AUTHENTICATION MODE');
 console.log('API URL:', API);
 
 // Utility function to convert file to base64
