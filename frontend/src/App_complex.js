@@ -2464,10 +2464,26 @@ const ManagerDashboard = ({ user, appSettings }) => {
                 <h3 className="text-lg font-semibold text-gray-800">App Customization</h3>
                 <p className="text-sm text-gray-600 mt-1">Customize the appearance and branding of your application.</p>
               </div>
-              <form onSubmit={(e) => {
+              <form onSubmit={async (e) => {
                 e.preventDefault();
+                
+                // Handle logo upload if present
+                let logoUrl = settings.logo_url || '';
+                const logoFile = e.target.logo_file.files[0];
+                if (logoFile) {
+                  try {
+                    const base64Logo = await fileToBase64(logoFile);
+                    logoUrl = base64Logo;
+                  } catch (error) {
+                    console.error('Error uploading logo:', error);
+                    alert('Error uploading logo. Please try again.');
+                    return;
+                  }
+                }
+                
                 updateAppSettings({
                   app_name: e.target.app_name.value,
+                  logo_url: logoUrl,
                   primary_color: e.target.primary_color.value,
                   secondary_color: e.target.secondary_color.value,
                   accent_color: e.target.accent_color.value,
