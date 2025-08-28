@@ -3707,7 +3707,15 @@ const VenueStaffDashboardOriginal = ({ user, appSettings }) => {
 // Main App Component
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [appSettings, setAppSettings] = useState({});
+  const [appSettings, setAppSettings] = useState({
+    app_name: 'Street Eats Planner',
+    logo_url: '',
+    primary_color: '#3b82f6',
+    secondary_color: '#1f2937',
+    accent_color: '#10b981',
+    font_family: 'Inter',
+    layout_style: 'modern'
+  });
 
   useEffect(() => {
     fetchAppSettings();
