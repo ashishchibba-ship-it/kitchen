@@ -17,7 +17,7 @@ import time
 import sys
 
 # Backend URL from frontend/.env
-BASE_URL = "https://order-flow-6.preview.emergentagent.com/api"
+BASE_URL = "https://kitchen-manager-2.preview.emergentagent.com/api"
 
 class KitchenAPITester:
     def __init__(self):
