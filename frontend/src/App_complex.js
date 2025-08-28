@@ -994,9 +994,10 @@ const ManagerDashboard = ({ user, appSettings }) => {
     try {
       const response = await axios.put(`${API}/settings`, newSettings);
       setSettings(response.data);
-      window.location.reload(); // Refresh to apply new styles
+      alert('Settings saved successfully! Your changes have been applied.');
     } catch (error) {
       console.error('Error updating settings:', error);
+      alert('Error saving settings. Please try again.');
     }
   };
 
