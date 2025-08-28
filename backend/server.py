@@ -327,11 +327,17 @@ class NotificationEvent(BaseModel):
     created_at: datetime
     read_by: List[str] = []  # user_ids who have read this notification
 
+class UnitOfMeasure(str, Enum):
+    KILO = "kilo"
+    LITRE = "litre" 
+    CARTON = "carton"
+    EACH = "each"
+
 class ProductionItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     category: str
-    unit_of_measure: str = "kg"  # Default to kg
+    unit_of_measure: str = "kilo"  # Default to kilo, accepts kilo, litre, carton, each
     assigned_staff: Optional[str] = None
     image: Optional[str] = None  # Base64 encoded image
     base_cost: float = 10.0
