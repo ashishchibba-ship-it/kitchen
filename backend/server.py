@@ -348,7 +348,7 @@ class ProductionItem(BaseModel):
 class ProductionItemCreate(BaseModel):
     name: str
     category: str
-    unit_of_measure: str = "kg"  # Default to kg
+    unit_of_measure: str = "kilo"  # Default to kilo, accepts kilo, litre, carton, each
     assigned_staff: Optional[str] = None
     image: Optional[str] = None
     base_cost: float = 10.0
