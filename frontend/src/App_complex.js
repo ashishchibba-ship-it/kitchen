@@ -2662,6 +2662,8 @@ const ManagerDashboard = ({ user, appSettings }) => {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
+                
+                // Handle checkboxes properly - if checkbox is checked, it will be in formData, if not it won't be
                 const invoiceSettings = {
                   tax_rate: parseFloat(formData.get('tax_rate')) / 100, // Convert percentage to decimal
                   invoice_company_name: formData.get('invoice_company_name') || null,
@@ -2669,17 +2671,18 @@ const ManagerDashboard = ({ user, appSettings }) => {
                   invoice_phone: formData.get('invoice_phone'),
                   invoice_email: formData.get('invoice_email'),
                   invoice_website: formData.get('invoice_website'),
-                  show_logo: formData.get('show_logo') === 'true',
-                  show_due_date: formData.get('show_due_date') === 'true',
-                  show_company_address: formData.get('show_company_address') === 'true',
-                  show_company_phone: formData.get('show_company_phone') === 'true',
-                  show_company_email: formData.get('show_company_email') === 'true',
-                  show_company_website: formData.get('show_company_website') === 'true',
-                  show_tax_breakdown: formData.get('show_tax_breakdown') === 'true',
-                  show_item_images: formData.get('show_item_images') === 'true',
+                  show_logo: formData.get('show_logo') === 'on',
+                  show_due_date: formData.get('show_due_date') === 'on',
+                  show_company_address: formData.get('show_company_address') === 'on',
+                  show_company_phone: formData.get('show_company_phone') === 'on',
+                  show_company_email: formData.get('show_company_email') === 'on',
+                  show_company_website: formData.get('show_company_website') === 'on',
+                  show_tax_breakdown: formData.get('show_tax_breakdown') === 'on',
+                  show_item_images: formData.get('show_item_images') === 'on',
                   invoice_notes: formData.get('invoice_notes'),
                   payment_terms: formData.get('payment_terms')
                 };
+                console.log('Saving invoice settings:', invoiceSettings);
                 updateAppSettings(invoiceSettings);
               }} className="space-y-6">
                 
