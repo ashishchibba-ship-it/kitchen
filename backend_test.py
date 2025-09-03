@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
 Backend API Testing for Production Kitchen Management System
-Focus: Testing Enhanced Unit of Measure Options and Post-Creation Image Upload
+Focus: Testing Customizable Invoice PDF with Logo and Settings
 Key Tests:
-1. ENHANCED UNIT OF MEASURE OPTIONS - kilo, litre, carton, each support
-2. POST-CREATION IMAGE UPLOAD - PUT/DELETE image endpoints
-3. BACKWARD COMPATIBILITY - old "kg" to "kilo" conversion
-4. ORDERABLE ITEMS UNIT COMPATIBILITY - unit information in APIs
-5. IMAGE WORKFLOW TESTING - create → add → update → remove image
+1. INVOICE SETTINGS IN APPSETTINGS MODEL - tax_rate, company info, display toggles
+2. ENHANCED PDF GENERATION - customizable settings, logo support
+3. TAX RATE INTEGRATION - settings tax rate used in orders and invoices
+4. PDF CONTENT VERIFICATION - company header, toggleable elements, proper layout
+5. COMPLETE INVOICE WORKFLOW - settings → orders → invoices → PDF generation
 """
 
 import requests
