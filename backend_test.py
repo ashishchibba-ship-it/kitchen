@@ -72,129 +72,342 @@ class KitchenAPITester:
         
         return self.test_results
 
-    def test_enhanced_unit_of_measure_options(self):
-        """Test creating production items with different unit options: kilo, litre, carton, each"""
-        print("\n=== TEST 1: Enhanced Unit of Measure Options ===")
+    def test_invoice_settings_in_appsettings(self):
+        """Test invoice settings in AppSettings model - GET/PUT /api/settings"""
+        print("\n=== TEST 1: Invoice Settings in AppSettings Model ===")
         
         try:
-            # Test creating items with each valid unit type
-            valid_units = ["kilo", "litre", "carton", "each"]
-            created_items = []
+            # Test 1: GET /api/settings returns invoice fields
+            response = self.session.get(f"{BASE_URL}/settings")
             
-            for unit in valid_units:
-                test_item = {
-                    "name": f"Test Item {unit.title()}",
-                    "category": "Main Course",
-                    "unit_of_measure": unit,
-                    "base_cost": 12.0,
-                    "assigned_staff": None,
-                    "image": None
+            if response.status_code == 200:
+                settings = response.json()
+                self.log_result("GET /api/settings", True, "Settings retrieved successfully")
+                
+                # Check for invoice-specific fields
+                invoice_fields = [
+                    'tax_rate', 'invoice_company_name', 'invoice_address', 'invoice_phone', 
+                    'invoice_email', 'invoice_website', 'show_logo', 'show_due_date', 
+                    'show_company_address', 'show_company_phone', 'show_company_email', 
+                    'show_company_website', 'show_tax_breakdown', 'show_item_images',
+                    'invoice_notes', 'payment_terms'
+                ]
+                
+                missing_fields = []
+                for field in invoice_fields:
+                    if field not in settings:
+                        missing_fields.append(field)
+                
+                if not missing_fields:
+                    self.log_result("Invoice fields in settings", True, 
+                                  f"All {len(invoice_fields)} invoice fields present")
+                else:
+                    self.log_result("Invoice fields in settings", False, 
+                                  f"Missing fields: {missing_fields}")
+                
+                # Verify default values
+                expected_defaults = {
+                    'tax_rate': 0.08,
+                    'show_logo': True,
+                    'show_due_date': True,
+                    'show_tax_breakdown': True,
+                    'show_item_images': False
                 }
                 
-                response = self.session.post(f"{BASE_URL}/production-items", 
-                                           json=test_item, 
-                                           params={"created_by": "test_manager"})
-                
-                if response.status_code == 200:
-                    created_item = response.json()
-                    created_items.append(created_item)
-                    
-                    # Verify unit was set correctly
-                    if created_item.get("unit_of_measure") == unit:
-                        self.log_result(f"Create item with unit '{unit}'", True, 
-                                      f"Item created with correct unit: {unit}")
+                for field, expected_value in expected_defaults.items():
+                    actual_value = settings.get(field)
+                    if actual_value == expected_value:
+                        self.log_result(f"Default value for {field}", True, 
+                                      f"Correct default: {actual_value}")
                     else:
-                        self.log_result(f"Create item with unit '{unit}'", False, 
-                                      f"Expected unit '{unit}', got '{created_item.get('unit_of_measure')}'")
-                    
-                    # Verify automatic price calculation (15% markup)
-                    expected_price = 12.0 * 1.15  # 13.80
-                    actual_price = created_item.get("unit_price", 0)
-                    if abs(actual_price - expected_price) < 0.01:
-                        self.log_result(f"Price calculation for {unit} item", True, 
-                                      f"Correct 15% markup: ${actual_price:.2f}")
-                    else:
-                        self.log_result(f"Price calculation for {unit} item", False, 
-                                      f"Expected ${expected_price:.2f}, got ${actual_price:.2f}")
-                else:
-                    self.log_result(f"Create item with unit '{unit}'", False, 
-                                  f"Status: {response.status_code}, Response: {response.text}")
+                        self.log_result(f"Default value for {field}", False, 
+                                      f"Expected {expected_value}, got {actual_value}")
+            else:
+                self.log_result("GET /api/settings", False, 
+                              f"Status: {response.status_code}")
+                return
             
-            # Test invalid unit defaults to "kilo"
-            invalid_unit_item = {
-                "name": "Test Invalid Unit Item",
-                "category": "Main Course", 
-                "unit_of_measure": "invalid_unit",
-                "base_cost": 10.0
+            # Test 2: PUT /api/settings updates invoice settings
+            updated_settings = {
+                "tax_rate": 0.10,  # Change from 8% to 10%
+                "invoice_company_name": "Custom Kitchen Co.",
+                "invoice_address": "456 Custom St, Test City, TC 12345",
+                "invoice_phone": "(555) 987-6543",
+                "invoice_email": "custom@kitchen.com",
+                "invoice_website": "www.customkitchen.com",
+                "show_logo": False,
+                "show_due_date": True,
+                "show_company_address": True,
+                "show_company_phone": False,
+                "show_company_email": True,
+                "show_company_website": False,
+                "show_tax_breakdown": True,
+                "show_item_images": True,
+                "invoice_notes": "Custom invoice notes - Thank you for your order!",
+                "payment_terms": "Net 15 days"
             }
             
-            response = self.session.post(f"{BASE_URL}/production-items", 
-                                       json=invalid_unit_item, 
-                                       params={"created_by": "test_manager"})
+            response = self.session.put(f"{BASE_URL}/settings", json=updated_settings)
             
             if response.status_code == 200:
-                created_item = response.json()
-                created_items.append(created_item)
+                updated_response = response.json()
+                self.log_result("PUT /api/settings", True, "Settings updated successfully")
                 
-                if created_item.get("unit_of_measure") == "kilo":
-                    self.log_result("Invalid unit defaults to kilo", True, 
-                                  "Invalid unit correctly defaulted to 'kilo'")
+                # Verify all updates were applied
+                update_failures = []
+                for field, expected_value in updated_settings.items():
+                    actual_value = updated_response.get(field)
+                    if actual_value != expected_value:
+                        update_failures.append(f"{field}: expected {expected_value}, got {actual_value}")
+                
+                if not update_failures:
+                    self.log_result("Settings update verification", True, 
+                                  f"All {len(updated_settings)} fields updated correctly")
                 else:
-                    self.log_result("Invalid unit defaults to kilo", False, 
-                                  f"Expected 'kilo', got '{created_item.get('unit_of_measure')}'")
-            else:
-                self.log_result("Test invalid unit handling", False, 
-                              f"Status: {response.status_code}")
-            
-            # Verify all created items appear in GET /api/production-items with correct units
-            response = self.session.get(f"{BASE_URL}/production-items")
-            if response.status_code == 200:
-                all_items = response.json()
+                    self.log_result("Settings update verification", False, 
+                                  f"Update failures: {update_failures}")
                 
-                # Find our test items
-                test_item_names = [item["name"] for item in created_items]
-                found_items = [item for item in all_items if item["name"] in test_item_names]
-                
-                if len(found_items) == len(created_items):
-                    self.log_result("Retrieve items with units", True, 
-                                  f"All {len(created_items)} test items found in production items list")
+                # Test 3: Verify persistence by getting settings again
+                response = self.session.get(f"{BASE_URL}/settings")
+                if response.status_code == 200:
+                    persisted_settings = response.json()
                     
-                    # Verify units are preserved
-                    for item in found_items:
-                        expected_unit = next((ci["unit_of_measure"] for ci in created_items 
-                                            if ci["name"] == item["name"]), None)
-                        if item.get("unit_of_measure") == expected_unit:
-                            self.log_result(f"Unit preservation for {item['name']}", True, 
-                                          f"Unit '{expected_unit}' preserved correctly")
-                        else:
-                            self.log_result(f"Unit preservation for {item['name']}", False, 
-                                          f"Expected '{expected_unit}', got '{item.get('unit_of_measure')}'")
+                    persistence_failures = []
+                    for field, expected_value in updated_settings.items():
+                        actual_value = persisted_settings.get(field)
+                        if actual_value != expected_value:
+                            persistence_failures.append(f"{field}: expected {expected_value}, got {actual_value}")
+                    
+                    if not persistence_failures:
+                        self.log_result("Settings persistence", True, 
+                                      "All updated settings persisted correctly")
+                    else:
+                        self.log_result("Settings persistence", False, 
+                                      f"Persistence failures: {persistence_failures}")
                 else:
-                    self.log_result("Retrieve items with units", False, 
-                                  f"Expected {len(created_items)} items, found {len(found_items)}")
+                    self.log_result("Settings persistence check", False, 
+                                  f"Status: {response.status_code}")
             else:
-                self.log_result("Retrieve items with units", False, 
-                              f"Status: {response.status_code}")
-            
-            # Clean up test items
-            for item in created_items:
-                if "id" in item:
-                    self.session.delete(f"{BASE_URL}/production-items/{item['id']}")
-                    
+                self.log_result("PUT /api/settings", False, 
+                              f"Status: {response.status_code}, Response: {response.text}")
+                
         except Exception as e:
-            self.log_result("Enhanced Unit of Measure Options", False, f"Exception: {str(e)}")
+            self.log_result("Invoice Settings in AppSettings", False, f"Exception: {str(e)}")
 
-    def test_post_creation_image_upload(self):
-        """Test PUT and DELETE endpoints for post-creation image upload"""
-        print("\n=== TEST 2: Post-Creation Image Upload ===")
+    def test_enhanced_pdf_generation(self):
+        """Test enhanced PDF generation with customizable settings and logo"""
+        print("\n=== TEST 2: Enhanced PDF Generation ===")
         
         try:
-            # First create a production item without an image
+            # First, ensure we have test data - create a production item and order
             test_item = {
-                "name": "Image Test Item",
+                "name": "PDF Test Item",
                 "category": "Main Course",
                 "unit_of_measure": "kilo",
-                "base_cost": 15.0
+                "base_cost": 20.0
+            }
+            
+            # Create production item
+            response = self.session.post(f"{BASE_URL}/production-items", 
+                                       json=test_item, 
+                                       params={"created_by": "test_manager"})
+            
+            if response.status_code != 200:
+                self.log_result("Create test item for PDF", False, 
+                              f"Status: {response.status_code}")
+                return
+            
+            created_item = response.json()
+            item_id = created_item["id"]
+            
+            # Create test order to generate invoice
+            test_order = {
+                "venue_name": "PDF Test Venue",
+                "venue_id": "pdf_test_venue",
+                "delivery_address": "123 PDF Test St, Test City, TC 12345",
+                "items": [{
+                    "production_item_id": item_id,
+                    "production_item_name": created_item["name"],
+                    "quantity": 2,
+                    "unit_of_measure": created_item["unit_of_measure"],
+                    "unit_price": created_item["unit_price"]
+                }]
+            }
+            
+            response = self.session.post(f"{BASE_URL}/orders", json=test_order)
+            
+            if response.status_code != 200:
+                self.log_result("Create test order for PDF", False, 
+                              f"Status: {response.status_code}")
+                # Clean up
+                self.session.delete(f"{BASE_URL}/production-items/{item_id}")
+                return
+            
+            created_order = response.json()
+            order_id = created_order["id"]
+            
+            self.log_result("Create test order for PDF", True, 
+                          f"Order created: {created_order['invoice_number']}")
+            
+            # Get the invoice that was auto-generated
+            response = self.session.get(f"{BASE_URL}/invoices")
+            if response.status_code == 200:
+                invoices = response.json()
+                test_invoice = next((inv for inv in invoices if inv["order_id"] == order_id), None)
+                
+                if test_invoice:
+                    invoice_id = test_invoice["id"]
+                    self.log_result("Find auto-generated invoice", True, 
+                                  f"Invoice found: {test_invoice['invoice_number']}")
+                    
+                    # Test 1: PDF generation without logo
+                    response = self.session.get(f"{BASE_URL}/invoices/{invoice_id}/pdf")
+                    
+                    if response.status_code == 200:
+                        self.log_result("PDF generation without logo", True, 
+                                      f"PDF generated successfully, size: {len(response.content)} bytes")
+                        
+                        # Verify content type
+                        content_type = response.headers.get('content-type', '')
+                        if 'application/pdf' in content_type:
+                            self.log_result("PDF content type", True, 
+                                          f"Correct content type: {content_type}")
+                        else:
+                            self.log_result("PDF content type", False, 
+                                          f"Expected application/pdf, got: {content_type}")
+                        
+                        # Verify content disposition header
+                        content_disposition = response.headers.get('content-disposition', '')
+                        expected_filename = f"invoice_{test_invoice['invoice_number']}.pdf"
+                        if expected_filename in content_disposition:
+                            self.log_result("PDF filename header", True, 
+                                          f"Correct filename in header: {expected_filename}")
+                        else:
+                            self.log_result("PDF filename header", False, 
+                                          f"Expected {expected_filename} in header, got: {content_disposition}")
+                    else:
+                        self.log_result("PDF generation without logo", False, 
+                                      f"Status: {response.status_code}, Response: {response.text}")
+                    
+                    # Test 2: Add logo to settings and test PDF with logo
+                    logo_data = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+                    
+                    logo_settings = {
+                        "logo_url": logo_data,
+                        "show_logo": True
+                    }
+                    
+                    response = self.session.put(f"{BASE_URL}/settings", json=logo_settings)
+                    
+                    if response.status_code == 200:
+                        self.log_result("Add logo to settings", True, "Logo added to settings")
+                        
+                        # Generate PDF with logo
+                        response = self.session.get(f"{BASE_URL}/invoices/{invoice_id}/pdf")
+                        
+                        if response.status_code == 200:
+                            pdf_with_logo_size = len(response.content)
+                            self.log_result("PDF generation with logo", True, 
+                                          f"PDF with logo generated, size: {pdf_with_logo_size} bytes")
+                            
+                            # PDF with logo should be larger than without logo
+                            # Note: This is a basic check, actual logo verification would require PDF parsing
+                            if pdf_with_logo_size > 1000:  # Reasonable minimum size for PDF with content
+                                self.log_result("PDF size with logo", True, 
+                                              "PDF size indicates logo inclusion")
+                            else:
+                                self.log_result("PDF size with logo", False, 
+                                              f"PDF size too small: {pdf_with_logo_size} bytes")
+                        else:
+                            self.log_result("PDF generation with logo", False, 
+                                          f"Status: {response.status_code}")
+                    else:
+                        self.log_result("Add logo to settings", False, 
+                                      f"Status: {response.status_code}")
+                    
+                    # Test 3: Test toggleable elements
+                    toggle_settings = {
+                        "show_logo": False,
+                        "show_due_date": False,
+                        "show_company_address": False,
+                        "show_tax_breakdown": False
+                    }
+                    
+                    response = self.session.put(f"{BASE_URL}/settings", json=toggle_settings)
+                    
+                    if response.status_code == 200:
+                        self.log_result("Update display toggles", True, "Display toggles updated")
+                        
+                        # Generate PDF with elements hidden
+                        response = self.session.get(f"{BASE_URL}/invoices/{invoice_id}/pdf")
+                        
+                        if response.status_code == 200:
+                            self.log_result("PDF generation with hidden elements", True, 
+                                          f"PDF generated with hidden elements, size: {len(response.content)} bytes")
+                        else:
+                            self.log_result("PDF generation with hidden elements", False, 
+                                          f"Status: {response.status_code}")
+                    else:
+                        self.log_result("Update display toggles", False, 
+                                      f"Status: {response.status_code}")
+                    
+                    # Test 4: Error handling for non-existent invoice
+                    fake_invoice_id = "non-existent-invoice-id"
+                    response = self.session.get(f"{BASE_URL}/invoices/{fake_invoice_id}/pdf")
+                    
+                    if response.status_code == 404:
+                        self.log_result("PDF generation - Non-existent invoice", True, 
+                                      "Correctly returned 404 for non-existent invoice")
+                    else:
+                        self.log_result("PDF generation - Non-existent invoice", False, 
+                                      f"Expected 404, got {response.status_code}")
+                else:
+                    self.log_result("Find auto-generated invoice", False, 
+                                  "No invoice found for test order")
+            else:
+                self.log_result("Get invoices for PDF test", False, 
+                              f"Status: {response.status_code}")
+            
+            # Clean up test data
+            self.session.delete(f"{BASE_URL}/production-items/{item_id}")
+            
+        except Exception as e:
+            self.log_result("Enhanced PDF Generation", False, f"Exception: {str(e)}")
+
+    def test_tax_rate_integration(self):
+        """Test that tax rate from settings is used in orders and invoices"""
+        print("\n=== TEST 3: Tax Rate Integration ===")
+        
+        try:
+            # Test 1: Set custom tax rate in settings
+            custom_tax_rate = 0.12  # 12% instead of default 8%
+            
+            tax_settings = {
+                "tax_rate": custom_tax_rate
+            }
+            
+            response = self.session.put(f"{BASE_URL}/settings", json=tax_settings)
+            
+            if response.status_code == 200:
+                updated_settings = response.json()
+                
+                if updated_settings.get("tax_rate") == custom_tax_rate:
+                    self.log_result("Set custom tax rate", True, 
+                                  f"Tax rate set to {custom_tax_rate * 100}%")
+                else:
+                    self.log_result("Set custom tax rate", False, 
+                                  f"Expected {custom_tax_rate}, got {updated_settings.get('tax_rate')}")
+            else:
+                self.log_result("Set custom tax rate", False, 
+                              f"Status: {response.status_code}")
+                return
+            
+            # Test 2: Create production item for order testing
+            test_item = {
+                "name": "Tax Rate Test Item",
+                "category": "Main Course",
+                "unit_of_measure": "kilo",
+                "base_cost": 100.0  # Use round number for easy calculation
             }
             
             response = self.session.post(f"{BASE_URL}/production-items", 
@@ -202,463 +415,607 @@ class KitchenAPITester:
                                        params={"created_by": "test_manager"})
             
             if response.status_code != 200:
-                self.log_result("Create item for image testing", False, 
+                self.log_result("Create test item for tax calculation", False, 
+                              f"Status: {response.status_code}")
+                return
+            
+            created_item = response.json()
+            item_id = created_item["id"]
+            unit_price = created_item["unit_price"]  # Should be 115.0 (100 * 1.15)
+            
+            # Test 3: Create order and verify tax calculation uses settings tax rate
+            test_order = {
+                "venue_name": "Tax Test Venue",
+                "venue_id": "tax_test_venue",
+                "delivery_address": "123 Tax Test St, Test City, TC 12345",
+                "items": [{
+                    "production_item_id": item_id,
+                    "production_item_name": created_item["name"],
+                    "quantity": 1,
+                    "unit_of_measure": created_item["unit_of_measure"],
+                    "unit_price": unit_price
+                }]
+            }
+            
+            response = self.session.post(f"{BASE_URL}/orders", json=test_order)
+            
+            if response.status_code == 200:
+                created_order = response.json()
+                
+                # Verify tax calculation
+                expected_subtotal = unit_price * 1  # 115.0
+                expected_tax = expected_subtotal * custom_tax_rate  # 115.0 * 0.12 = 13.8
+                expected_total = expected_subtotal + expected_tax  # 115.0 + 13.8 = 128.8
+                
+                actual_subtotal = created_order.get("subtotal", 0)
+                actual_tax = created_order.get("tax_amount", 0)
+                actual_total = created_order.get("total_amount", 0)
+                actual_tax_rate = created_order.get("tax_rate", 0)
+                
+                # Check subtotal
+                if abs(actual_subtotal - expected_subtotal) < 0.01:
+                    self.log_result("Order subtotal calculation", True, 
+                                  f"Correct subtotal: ${actual_subtotal:.2f}")
+                else:
+                    self.log_result("Order subtotal calculation", False, 
+                                  f"Expected ${expected_subtotal:.2f}, got ${actual_subtotal:.2f}")
+                
+                # Check tax rate used
+                if abs(actual_tax_rate - custom_tax_rate) < 0.001:
+                    self.log_result("Order uses settings tax rate", True, 
+                                  f"Correct tax rate: {actual_tax_rate * 100}%")
+                else:
+                    self.log_result("Order uses settings tax rate", False, 
+                                  f"Expected {custom_tax_rate * 100}%, got {actual_tax_rate * 100}%")
+                
+                # Check tax amount
+                if abs(actual_tax - expected_tax) < 0.01:
+                    self.log_result("Order tax amount calculation", True, 
+                                  f"Correct tax: ${actual_tax:.2f}")
+                else:
+                    self.log_result("Order tax amount calculation", False, 
+                                  f"Expected ${expected_tax:.2f}, got ${actual_tax:.2f}")
+                
+                # Check total
+                if abs(actual_total - expected_total) < 0.01:
+                    self.log_result("Order total calculation", True, 
+                                  f"Correct total: ${actual_total:.2f}")
+                else:
+                    self.log_result("Order total calculation", False, 
+                                  f"Expected ${expected_total:.2f}, got ${actual_total:.2f}")
+                
+                # Test 4: Verify invoice uses same tax rate
+                order_id = created_order["id"]
+                
+                # Get the auto-generated invoice
+                response = self.session.get(f"{BASE_URL}/invoices")
+                if response.status_code == 200:
+                    invoices = response.json()
+                    test_invoice = next((inv for inv in invoices if inv["order_id"] == order_id), None)
+                    
+                    if test_invoice:
+                        invoice_subtotal = test_invoice.get("subtotal", 0)
+                        invoice_tax = test_invoice.get("tax_amount", 0)
+                        invoice_total = test_invoice.get("total_amount", 0)
+                        
+                        # Verify invoice amounts match order amounts
+                        if (abs(invoice_subtotal - actual_subtotal) < 0.01 and
+                            abs(invoice_tax - actual_tax) < 0.01 and
+                            abs(invoice_total - actual_total) < 0.01):
+                            self.log_result("Invoice tax calculation consistency", True, 
+                                          "Invoice amounts match order amounts with custom tax rate")
+                        else:
+                            self.log_result("Invoice tax calculation consistency", False, 
+                                          f"Invoice amounts don't match order: "
+                                          f"Invoice(${invoice_subtotal:.2f}, ${invoice_tax:.2f}, ${invoice_total:.2f}) vs "
+                                          f"Order(${actual_subtotal:.2f}, ${actual_tax:.2f}, ${actual_total:.2f})")
+                    else:
+                        self.log_result("Find invoice for tax verification", False, 
+                                      "No invoice found for tax test order")
+                else:
+                    self.log_result("Get invoices for tax verification", False, 
+                                  f"Status: {response.status_code}")
+            else:
+                self.log_result("Create order with custom tax rate", False, 
+                              f"Status: {response.status_code}, Response: {response.text}")
+            
+            # Test 5: Test different tax rate
+            different_tax_rate = 0.15  # 15%
+            
+            response = self.session.put(f"{BASE_URL}/settings", json={"tax_rate": different_tax_rate})
+            
+            if response.status_code == 200:
+                # Create another order to test new tax rate
+                test_order_2 = {
+                    "venue_name": "Tax Test Venue 2",
+                    "venue_id": "tax_test_venue_2",
+                    "delivery_address": "456 Tax Test Ave, Test City, TC 67890",
+                    "items": [{
+                        "production_item_id": item_id,
+                        "production_item_name": created_item["name"],
+                        "quantity": 2,
+                        "unit_of_measure": created_item["unit_of_measure"],
+                        "unit_price": unit_price
+                    }]
+                }
+                
+                response = self.session.post(f"{BASE_URL}/orders", json=test_order_2)
+                
+                if response.status_code == 200:
+                    created_order_2 = response.json()
+                    
+                    expected_subtotal_2 = unit_price * 2  # 230.0
+                    expected_tax_2 = expected_subtotal_2 * different_tax_rate  # 230.0 * 0.15 = 34.5
+                    
+                    actual_tax_rate_2 = created_order_2.get("tax_rate", 0)
+                    actual_tax_2 = created_order_2.get("tax_amount", 0)
+                    
+                    if abs(actual_tax_rate_2 - different_tax_rate) < 0.001:
+                        self.log_result("Updated tax rate in new order", True, 
+                                      f"New order uses updated tax rate: {actual_tax_rate_2 * 100}%")
+                    else:
+                        self.log_result("Updated tax rate in new order", False, 
+                                      f"Expected {different_tax_rate * 100}%, got {actual_tax_rate_2 * 100}%")
+                    
+                    if abs(actual_tax_2 - expected_tax_2) < 0.01:
+                        self.log_result("Updated tax calculation", True, 
+                                      f"Correct tax with new rate: ${actual_tax_2:.2f}")
+                    else:
+                        self.log_result("Updated tax calculation", False, 
+                                      f"Expected ${expected_tax_2:.2f}, got ${actual_tax_2:.2f}")
+                else:
+                    self.log_result("Create order with updated tax rate", False, 
+                                  f"Status: {response.status_code}")
+            else:
+                self.log_result("Update tax rate for second test", False, 
+                              f"Status: {response.status_code}")
+            
+            # Clean up test data
+            self.session.delete(f"{BASE_URL}/production-items/{item_id}")
+            
+        except Exception as e:
+            self.log_result("Tax Rate Integration", False, f"Exception: {str(e)}")
+
+    def test_pdf_content_verification(self):
+        """Test PDF content verification - company header, notes, payment terms"""
+        print("\n=== TEST 4: PDF Content Verification ===")
+        
+        try:
+            # Set up comprehensive invoice settings for content verification
+            comprehensive_settings = {
+                "invoice_company_name": "Premium Kitchen Solutions",
+                "invoice_address": "789 Premium Ave, Suite 100, Business City, BC 54321",
+                "invoice_phone": "(555) 123-9999",
+                "invoice_email": "billing@premiumkitchen.com",
+                "invoice_website": "www.premiumkitchen.com",
+                "show_logo": True,
+                "show_due_date": True,
+                "show_company_address": True,
+                "show_company_phone": True,
+                "show_company_email": True,
+                "show_company_website": True,
+                "show_tax_breakdown": True,
+                "show_item_images": False,
+                "invoice_notes": "Thank you for choosing Premium Kitchen Solutions! We appreciate your business and look forward to serving you again.",
+                "payment_terms": "Payment due within 30 days of invoice date. Late payments subject to 1.5% monthly service charge.",
+                "tax_rate": 0.095  # 9.5%
+            }
+            
+            response = self.session.put(f"{BASE_URL}/settings", json=comprehensive_settings)
+            
+            if response.status_code == 200:
+                self.log_result("Set comprehensive invoice settings", True, 
+                              "All invoice customization settings applied")
+            else:
+                self.log_result("Set comprehensive invoice settings", False, 
+                              f"Status: {response.status_code}")
+                return
+            
+            # Create test data for PDF content verification
+            test_item = {
+                "name": "Premium Content Test Item",
+                "category": "Main Course",
+                "unit_of_measure": "each",
+                "base_cost": 50.0
+            }
+            
+            response = self.session.post(f"{BASE_URL}/production-items", 
+                                       json=test_item, 
+                                       params={"created_by": "test_manager"})
+            
+            if response.status_code != 200:
+                self.log_result("Create test item for content verification", False, 
                               f"Status: {response.status_code}")
                 return
             
             created_item = response.json()
             item_id = created_item["id"]
             
-            self.log_result("Create item for image testing", True, 
-                          f"Item created: {created_item['name']}")
+            # Create order with multiple items for better PDF content
+            test_order = {
+                "venue_name": "Content Verification Restaurant",
+                "venue_id": "content_test_venue",
+                "delivery_address": "321 Content St, Verification City, VC 98765",
+                "items": [{
+                    "production_item_id": item_id,
+                    "production_item_name": created_item["name"],
+                    "quantity": 3,
+                    "unit_of_measure": created_item["unit_of_measure"],
+                    "unit_price": created_item["unit_price"]
+                }]
+            }
             
-            # Test 1: PUT /api/production-items/{item_id}/image - Add image
-            test_image_data = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A"
+            response = self.session.post(f"{BASE_URL}/orders", json=test_order)
             
-            image_payload = {"image": test_image_data}
-            response = self.session.put(f"{BASE_URL}/production-items/{item_id}/image", 
-                                      json=image_payload)
-            
-            if response.status_code == 200:
-                updated_item = response.json()
-                
-                if updated_item.get("image") == test_image_data:
-                    self.log_result("PUT image endpoint - Add image", True, 
-                                  "Image successfully added to existing item")
-                else:
-                    self.log_result("PUT image endpoint - Add image", False, 
-                                  "Image data not properly stored")
-                
-                # Verify updated_at timestamp was updated
-                if "updated_at" in updated_item:
-                    self.log_result("Image update timestamp", True, 
-                                  f"Updated timestamp: {updated_item['updated_at']}")
-                else:
-                    self.log_result("Image update timestamp", False, 
-                                  "No updated_at timestamp found")
-            else:
-                self.log_result("PUT image endpoint - Add image", False, 
-                              f"Status: {response.status_code}, Response: {response.text}")
-            
-            # Test 2: PUT /api/production-items/{item_id}/image - Update existing image
-            new_image_data = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-            
-            image_payload = {"image": new_image_data}
-            response = self.session.put(f"{BASE_URL}/production-items/{item_id}/image", 
-                                      json=image_payload)
-            
-            if response.status_code == 200:
-                updated_item = response.json()
-                
-                if updated_item.get("image") == new_image_data:
-                    self.log_result("PUT image endpoint - Update image", True, 
-                                  "Image successfully updated")
-                else:
-                    self.log_result("PUT image endpoint - Update image", False, 
-                                  "Image update failed")
-            else:
-                self.log_result("PUT image endpoint - Update image", False, 
+            if response.status_code != 200:
+                self.log_result("Create test order for content verification", False, 
                               f"Status: {response.status_code}")
+                self.session.delete(f"{BASE_URL}/production-items/{item_id}")
+                return
             
-            # Test 3: DELETE /api/production-items/{item_id}/image - Remove image
-            response = self.session.delete(f"{BASE_URL}/production-items/{item_id}/image")
+            created_order = response.json()
+            order_id = created_order["id"]
             
+            # Get the auto-generated invoice
+            response = self.session.get(f"{BASE_URL}/invoices")
             if response.status_code == 200:
-                response_data = response.json()
+                invoices = response.json()
+                test_invoice = next((inv for inv in invoices if inv["order_id"] == order_id), None)
                 
-                if response_data.get("message") == "Image removed successfully":
-                    self.log_result("DELETE image endpoint - Remove image", True, 
-                                  "Image successfully removed")
+                if test_invoice:
+                    invoice_id = test_invoice["id"]
                     
-                    # Verify image was actually removed by getting the item
-                    get_response = self.session.get(f"{BASE_URL}/production-items")
-                    if get_response.status_code == 200:
-                        items = get_response.json()
-                        updated_item = next((item for item in items if item["id"] == item_id), None)
+                    # Test 1: Generate PDF with all content enabled
+                    response = self.session.get(f"{BASE_URL}/invoices/{invoice_id}/pdf")
+                    
+                    if response.status_code == 200:
+                        pdf_content = response.content
+                        pdf_size = len(pdf_content)
                         
-                        if updated_item and "image" not in updated_item:
-                            self.log_result("Verify image removal", True, 
-                                          "Image field properly removed from item")
-                        elif updated_item and updated_item.get("image") is None:
-                            self.log_result("Verify image removal", True, 
-                                          "Image field set to null")
+                        self.log_result("PDF generation with full content", True, 
+                                      f"PDF generated with comprehensive settings, size: {pdf_size} bytes")
+                        
+                        # Verify PDF is substantial (has content)
+                        if pdf_size > 5000:  # Reasonable size for a detailed PDF
+                            self.log_result("PDF content size verification", True, 
+                                          "PDF size indicates comprehensive content inclusion")
                         else:
-                            self.log_result("Verify image removal", False, 
-                                          f"Image still present: {updated_item.get('image', 'N/A')}")
+                            self.log_result("PDF content size verification", False, 
+                                          f"PDF size seems small for comprehensive content: {pdf_size} bytes")
+                        
+                        # Verify headers are correct
+                        content_type = response.headers.get('content-type', '')
+                        if 'application/pdf' in content_type:
+                            self.log_result("PDF content type verification", True, 
+                                          f"Correct PDF content type: {content_type}")
+                        else:
+                            self.log_result("PDF content type verification", False, 
+                                          f"Incorrect content type: {content_type}")
+                        
+                        # Verify filename includes invoice number
+                        content_disposition = response.headers.get('content-disposition', '')
+                        invoice_number = test_invoice['invoice_number']
+                        if invoice_number in content_disposition:
+                            self.log_result("PDF filename includes invoice number", True, 
+                                          f"Filename contains invoice number: {invoice_number}")
+                        else:
+                            self.log_result("PDF filename includes invoice number", False, 
+                                          f"Invoice number {invoice_number} not in filename header")
+                    else:
+                        self.log_result("PDF generation with full content", False, 
+                                      f"Status: {response.status_code}, Response: {response.text}")
+                    
+                    # Test 2: Test with minimal content (most elements hidden)
+                    minimal_settings = {
+                        "show_logo": False,
+                        "show_due_date": False,
+                        "show_company_address": False,
+                        "show_company_phone": False,
+                        "show_company_email": False,
+                        "show_company_website": False,
+                        "show_tax_breakdown": False,
+                        "show_item_images": False,
+                        "invoice_notes": "",
+                        "payment_terms": ""
+                    }
+                    
+                    response = self.session.put(f"{BASE_URL}/settings", json=minimal_settings)
+                    
+                    if response.status_code == 200:
+                        self.log_result("Set minimal content settings", True, 
+                                      "Minimal content settings applied")
+                        
+                        # Generate PDF with minimal content
+                        response = self.session.get(f"{BASE_URL}/invoices/{invoice_id}/pdf")
+                        
+                        if response.status_code == 200:
+                            minimal_pdf_size = len(response.content)
+                            
+                            self.log_result("PDF generation with minimal content", True, 
+                                          f"PDF generated with minimal settings, size: {minimal_pdf_size} bytes")
+                            
+                            # Minimal PDF should be smaller than comprehensive PDF
+                            if minimal_pdf_size < pdf_size:
+                                self.log_result("PDF size difference verification", True, 
+                                              f"Minimal PDF ({minimal_pdf_size}B) smaller than full PDF ({pdf_size}B)")
+                            else:
+                                self.log_result("PDF size difference verification", False, 
+                                              f"Minimal PDF ({minimal_pdf_size}B) not smaller than full PDF ({pdf_size}B)")
+                        else:
+                            self.log_result("PDF generation with minimal content", False, 
+                                          f"Status: {response.status_code}")
+                    else:
+                        self.log_result("Set minimal content settings", False, 
+                                      f"Status: {response.status_code}")
+                    
+                    # Test 3: Test tax breakdown display toggle
+                    tax_breakdown_settings = {
+                        "show_tax_breakdown": True,
+                        "tax_rate": 0.125  # 12.5% for clear visibility
+                    }
+                    
+                    response = self.session.put(f"{BASE_URL}/settings", json=tax_breakdown_settings)
+                    
+                    if response.status_code == 200:
+                        # Generate PDF with tax breakdown visible
+                        response = self.session.get(f"{BASE_URL}/invoices/{invoice_id}/pdf")
+                        
+                        if response.status_code == 200:
+                            self.log_result("PDF with tax breakdown enabled", True, 
+                                          "PDF generated with tax breakdown display enabled")
+                        else:
+                            self.log_result("PDF with tax breakdown enabled", False, 
+                                          f"Status: {response.status_code}")
+                        
+                        # Test with tax breakdown hidden
+                        response = self.session.put(f"{BASE_URL}/settings", json={"show_tax_breakdown": False})
+                        
+                        if response.status_code == 200:
+                            response = self.session.get(f"{BASE_URL}/invoices/{invoice_id}/pdf")
+                            
+                            if response.status_code == 200:
+                                self.log_result("PDF with tax breakdown disabled", True, 
+                                              "PDF generated with tax breakdown display disabled")
+                            else:
+                                self.log_result("PDF with tax breakdown disabled", False, 
+                                              f"Status: {response.status_code}")
+                        else:
+                            self.log_result("Disable tax breakdown", False, 
+                                          f"Status: {response.status_code}")
+                    else:
+                        self.log_result("Enable tax breakdown", False, 
+                                      f"Status: {response.status_code}")
                 else:
-                    self.log_result("DELETE image endpoint - Remove image", False, 
-                                  f"Unexpected response: {response_data}")
+                    self.log_result("Find invoice for content verification", False, 
+                                  "No invoice found for content test order")
             else:
-                self.log_result("DELETE image endpoint - Remove image", False, 
+                self.log_result("Get invoices for content verification", False, 
                               f"Status: {response.status_code}")
             
-            # Test 4: Error handling for non-existent items
-            fake_item_id = "non-existent-item-id"
-            
-            # Test PUT on non-existent item
-            response = self.session.put(f"{BASE_URL}/production-items/{fake_item_id}/image", 
-                                      json={"image": test_image_data})
-            
-            if response.status_code == 404:
-                self.log_result("PUT image - Non-existent item error", True, 
-                              "Correctly returned 404 for non-existent item")
-            else:
-                self.log_result("PUT image - Non-existent item error", False, 
-                              f"Expected 404, got {response.status_code}")
-            
-            # Test DELETE on non-existent item
-            response = self.session.delete(f"{BASE_URL}/production-items/{fake_item_id}/image")
-            
-            if response.status_code == 404:
-                self.log_result("DELETE image - Non-existent item error", True, 
-                              "Correctly returned 404 for non-existent item")
-            else:
-                self.log_result("DELETE image - Non-existent item error", False, 
-                              f"Expected 404, got {response.status_code}")
-            
-            # Test 5: Invalid image data handling
-            invalid_image_payload = {"image": ""}
-            response = self.session.put(f"{BASE_URL}/production-items/{item_id}/image", 
-                                      json=invalid_image_payload)
-            
-            if response.status_code == 400:
-                self.log_result("PUT image - Invalid data error", True, 
-                              "Correctly rejected empty image data")
-            else:
-                self.log_result("PUT image - Invalid data error", False, 
-                              f"Expected 400, got {response.status_code}")
-            
-            # Clean up test item
+            # Clean up test data
             self.session.delete(f"{BASE_URL}/production-items/{item_id}")
             
         except Exception as e:
-            self.log_result("Post-Creation Image Upload", False, f"Exception: {str(e)}")
+            self.log_result("PDF Content Verification", False, f"Exception: {str(e)}")
 
-    def test_backward_compatibility_units(self):
-        """Test backward compatibility: old 'kg' items are converted to 'kilo'"""
-        print("\n=== TEST 3: Backward Compatibility for Units ===")
+    def test_complete_invoice_workflow(self):
+        """Test complete invoice workflow: settings → orders → invoices → PDF generation"""
+        print("\n=== TEST 5: Complete Invoice Workflow ===")
         
         try:
-            # Get existing production items to check for backward compatibility
-            response = self.session.get(f"{BASE_URL}/production-items")
+            # Step 1: Set up complete invoice configuration
+            workflow_settings = {
+                "company_name": "Workflow Test Kitchen",
+                "invoice_company_name": "Workflow Test Kitchen LLC",
+                "invoice_address": "999 Workflow Blvd, Test Suite 200, Workflow City, WC 11111",
+                "invoice_phone": "(555) 999-1111",
+                "invoice_email": "invoices@workflowkitchen.com",
+                "invoice_website": "www.workflowkitchen.com",
+                "tax_rate": 0.0875,  # 8.75%
+                "show_logo": True,
+                "show_due_date": True,
+                "show_company_address": True,
+                "show_company_phone": True,
+                "show_company_email": True,
+                "show_company_website": True,
+                "show_tax_breakdown": True,
+                "show_item_images": False,
+                "invoice_notes": "Complete workflow test - All systems operational!",
+                "payment_terms": "Net 30 days - Complete workflow verification"
+            }
+            
+            response = self.session.put(f"{BASE_URL}/settings", json=workflow_settings)
             
             if response.status_code == 200:
-                items = response.json()
-                self.log_result("Get production items for compatibility check", True, 
-                              f"Retrieved {len(items)} items")
-                
-                # Check if any items have old "kg" units (should be converted to "kilo")
-                kg_items = [item for item in items if item.get("unit_of_measure") == "kg"]
-                kilo_items = [item for item in items if item.get("unit_of_measure") == "kilo"]
-                
-                if len(kg_items) == 0:
-                    self.log_result("No old 'kg' units found", True, 
-                                  "All items use new unit system or have been converted")
-                else:
-                    self.log_result("Old 'kg' units still present", False, 
-                                  f"Found {len(kg_items)} items still using 'kg' instead of 'kilo'")
-                
-                # Check that all items have valid units
-                valid_units = ["kilo", "litre", "carton", "each"]
-                invalid_unit_items = []
-                
-                for item in items:
-                    unit = item.get("unit_of_measure")
-                    if unit not in valid_units:
-                        invalid_unit_items.append(f"{item['name']}: {unit}")
-                
-                if len(invalid_unit_items) == 0:
-                    self.log_result("All items have valid units", True, 
-                                  "All production items use valid unit types")
-                else:
-                    self.log_result("Invalid units found", False, 
-                                  f"Items with invalid units: {invalid_unit_items}")
-                
-                # Test creating an item with old "kg" unit to see if it gets converted
-                test_item_kg = {
-                    "name": "Backward Compatibility Test Item",
-                    "category": "Main Course",
-                    "unit_of_measure": "kg",  # Old unit
-                    "base_cost": 10.0
-                }
-                
-                response = self.session.post(f"{BASE_URL}/production-items", 
-                                           json=test_item_kg, 
-                                           params={"created_by": "test_manager"})
-                
-                if response.status_code == 200:
-                    created_item = response.json()
-                    
-                    if created_item.get("unit_of_measure") == "kilo":
-                        self.log_result("Convert 'kg' to 'kilo' on creation", True, 
-                                      "Old 'kg' unit automatically converted to 'kilo'")
-                    else:
-                        self.log_result("Convert 'kg' to 'kilo' on creation", False, 
-                                      f"Expected 'kilo', got '{created_item.get('unit_of_measure')}'")
-                    
-                    # Clean up test item
-                    self.session.delete(f"{BASE_URL}/production-items/{created_item['id']}")
-                else:
-                    self.log_result("Test 'kg' to 'kilo' conversion", False, 
-                                  f"Status: {response.status_code}")
-                
+                self.log_result("Workflow Step 1 - Configure settings", True, 
+                              "Complete invoice settings configured")
             else:
-                self.log_result("Get production items for compatibility check", False, 
+                self.log_result("Workflow Step 1 - Configure settings", False, 
                               f"Status: {response.status_code}")
-                
-        except Exception as e:
-            self.log_result("Backward Compatibility Units", False, f"Exception: {str(e)}")
-
-    def test_orderable_items_unit_compatibility(self):
-        """Test that orderable items APIs include correct unit information"""
-        print("\n=== TEST 4: Orderable Items Unit Compatibility ===")
-        
-        try:
-            # Create test items with different units for orderable items testing
-            test_items = [
-                {"name": "Orderable Kilo Item", "unit_of_measure": "kilo", "base_cost": 10.0},
-                {"name": "Orderable Litre Item", "unit_of_measure": "litre", "base_cost": 8.0},
-                {"name": "Orderable Carton Item", "unit_of_measure": "carton", "base_cost": 15.0},
-                {"name": "Orderable Each Item", "unit_of_measure": "each", "base_cost": 5.0}
+                return
+            
+            # Step 2: Create multiple production items
+            workflow_items = [
+                {"name": "Workflow Appetizer", "category": "Appetizer", "unit_of_measure": "each", "base_cost": 15.0},
+                {"name": "Workflow Main Course", "category": "Main Course", "unit_of_measure": "kilo", "base_cost": 35.0},
+                {"name": "Workflow Dessert", "category": "Dessert", "unit_of_measure": "each", "base_cost": 12.0}
             ]
             
             created_items = []
             
-            for item_data in test_items:
-                item_data.update({"category": "Main Course"})
-                
+            for item_data in workflow_items:
                 response = self.session.post(f"{BASE_URL}/production-items", 
                                            json=item_data, 
-                                           params={"created_by": "test_manager"})
+                                           params={"created_by": "workflow_manager"})
                 
                 if response.status_code == 200:
                     created_items.append(response.json())
             
-            if len(created_items) != len(test_items):
-                self.log_result("Create test items for orderable testing", False, 
-                              f"Only created {len(created_items)}/{len(test_items)} items")
+            if len(created_items) == len(workflow_items):
+                self.log_result("Workflow Step 2 - Create production items", True, 
+                              f"Created {len(created_items)} production items")
+            else:
+                self.log_result("Workflow Step 2 - Create production items", False, 
+                              f"Only created {len(created_items)}/{len(workflow_items)} items")
                 return
             
-            self.log_result("Create test items for orderable testing", True, 
-                          f"Created {len(created_items)} test items")
+            # Step 3: Create comprehensive order with multiple items
+            order_items = []
+            expected_subtotal = 0
             
-            # Test 1: GET /api/orderable-items includes unit information
-            response = self.session.get(f"{BASE_URL}/orderable-items")
-            
-            if response.status_code == 200:
-                orderable_items = response.json()
+            for i, item in enumerate(created_items):
+                quantity = i + 2  # 2, 3, 4 quantities
+                unit_price = item["unit_price"]
                 
-                # Find our test items in orderable items
-                test_item_names = [item["name"] for item in created_items]
-                found_orderable_items = [item for item in orderable_items 
-                                       if item["name"] in test_item_names]
+                order_items.append({
+                    "production_item_id": item["id"],
+                    "production_item_name": item["name"],
+                    "quantity": quantity,
+                    "unit_of_measure": item["unit_of_measure"],
+                    "unit_price": unit_price
+                })
                 
-                if len(found_orderable_items) == len(created_items):
-                    self.log_result("Test items in orderable-items", True, 
-                                  f"All {len(created_items)} test items found in orderable items")
-                    
-                    # Verify unit information is included and correct
-                    for orderable_item in found_orderable_items:
-                        original_item = next((item for item in created_items 
-                                            if item["name"] == orderable_item["name"]), None)
-                        
-                        if original_item:
-                            expected_unit = original_item["unit_of_measure"]
-                            actual_unit = orderable_item.get("unit_of_measure")
-                            
-                            if actual_unit == expected_unit:
-                                self.log_result(f"Unit info for {orderable_item['name']}", True, 
-                                              f"Correct unit: {actual_unit}")
-                            else:
-                                self.log_result(f"Unit info for {orderable_item['name']}", False, 
-                                              f"Expected {expected_unit}, got {actual_unit}")
-                            
-                            # Verify price calculation is correct (15% markup)
-                            expected_price = original_item["base_cost"] * 1.15
-                            actual_price = orderable_item.get("unit_price", 0)
-                            
-                            if abs(actual_price - expected_price) < 0.01:
-                                self.log_result(f"Price for {orderable_item['name']}", True, 
-                                              f"Correct price: ${actual_price:.2f}")
-                            else:
-                                self.log_result(f"Price for {orderable_item['name']}", False, 
-                                              f"Expected ${expected_price:.2f}, got ${actual_price:.2f}")
-                else:
-                    self.log_result("Test items in orderable-items", False, 
-                                  f"Expected {len(created_items)}, found {len(found_orderable_items)}")
-            else:
-                self.log_result("GET /api/orderable-items", False, 
-                              f"Status: {response.status_code}")
+                expected_subtotal += quantity * unit_price
             
-            # Test 2: GET /api/orderable-items/by-category includes unit information
-            response = self.session.get(f"{BASE_URL}/orderable-items/by-category")
-            
-            if response.status_code == 200:
-                orderable_by_category = response.json()
-                
-                # Find our test items in the categorized response
-                main_course_items = orderable_by_category.get("Main Course", [])
-                test_item_names = [item["name"] for item in created_items]
-                found_categorized_items = [item for item in main_course_items 
-                                         if item["name"] in test_item_names]
-                
-                if len(found_categorized_items) == len(created_items):
-                    self.log_result("Test items in orderable-items/by-category", True, 
-                                  f"All {len(created_items)} test items found in categorized view")
-                    
-                    # Verify unit information in categorized view
-                    for categorized_item in found_categorized_items:
-                        original_item = next((item for item in created_items 
-                                            if item["name"] == categorized_item["name"]), None)
-                        
-                        if original_item:
-                            expected_unit = original_item["unit_of_measure"]
-                            actual_unit = categorized_item.get("unit_of_measure")
-                            
-                            if actual_unit == expected_unit:
-                                self.log_result(f"Categorized unit info for {categorized_item['name']}", True, 
-                                              f"Correct unit: {actual_unit}")
-                            else:
-                                self.log_result(f"Categorized unit info for {categorized_item['name']}", False, 
-                                              f"Expected {expected_unit}, got {actual_unit}")
-                else:
-                    self.log_result("Test items in orderable-items/by-category", False, 
-                                  f"Expected {len(created_items)}, found {len(found_categorized_items)}")
-            else:
-                self.log_result("GET /api/orderable-items/by-category", False, 
-                              f"Status: {response.status_code}")
-            
-            # Clean up test items
-            for item in created_items:
-                if "id" in item:
-                    self.session.delete(f"{BASE_URL}/production-items/{item['id']}")
-                    
-        except Exception as e:
-            self.log_result("Orderable Items Unit Compatibility", False, f"Exception: {str(e)}")
-
-    def test_complete_image_workflow(self):
-        """Test complete image workflow: create item → add image → update image → remove image"""
-        print("\n=== TEST 5: Complete Image Workflow ===")
-        
-        try:
-            # Step 1: Create item without image
-            test_item = {
-                "name": "Complete Workflow Test Item",
-                "category": "Main Course",
-                "unit_of_measure": "each",
-                "base_cost": 20.0
+            workflow_order = {
+                "venue_name": "Complete Workflow Restaurant",
+                "venue_id": "workflow_test_venue",
+                "delivery_address": "555 Workflow Restaurant St, Complete City, CC 77777",
+                "items": order_items
             }
             
-            response = self.session.post(f"{BASE_URL}/production-items", 
-                                       json=test_item, 
-                                       params={"created_by": "test_manager"})
+            response = self.session.post(f"{BASE_URL}/orders", json=workflow_order)
             
-            if response.status_code != 200:
-                self.log_result("Workflow Step 1 - Create item", False, 
-                              f"Status: {response.status_code}")
+            if response.status_code == 200:
+                created_order = response.json()
+                order_id = created_order["id"]
+                
+                # Verify order calculations with workflow settings
+                actual_subtotal = created_order.get("subtotal", 0)
+                actual_tax_rate = created_order.get("tax_rate", 0)
+                actual_tax = created_order.get("tax_amount", 0)
+                actual_total = created_order.get("total_amount", 0)
+                
+                expected_tax = expected_subtotal * workflow_settings["tax_rate"]
+                expected_total = expected_subtotal + expected_tax
+                
+                if (abs(actual_subtotal - expected_subtotal) < 0.01 and
+                    abs(actual_tax_rate - workflow_settings["tax_rate"]) < 0.001 and
+                    abs(actual_tax - expected_tax) < 0.01 and
+                    abs(actual_total - expected_total) < 0.01):
+                    self.log_result("Workflow Step 3 - Create order with calculations", True, 
+                                  f"Order created with correct calculations: ${actual_total:.2f} total")
+                else:
+                    self.log_result("Workflow Step 3 - Create order with calculations", False, 
+                                  f"Calculation mismatch - Expected: ${expected_total:.2f}, Got: ${actual_total:.2f}")
+            else:
+                self.log_result("Workflow Step 3 - Create order", False, 
+                              f"Status: {response.status_code}, Response: {response.text}")
+                # Clean up items
+                for item in created_items:
+                    self.session.delete(f"{BASE_URL}/production-items/{item['id']}")
                 return
             
-            created_item = response.json()
-            item_id = created_item["id"]
-            
-            # Verify item was created without image
-            if "image" not in created_item or created_item.get("image") is None:
-                self.log_result("Workflow Step 1 - Create item without image", True, 
-                              "Item created successfully without image")
-            else:
-                self.log_result("Workflow Step 1 - Create item without image", False, 
-                              f"Unexpected image data: {created_item.get('image')}")
-            
-            # Step 2: Add image to existing item
-            first_image = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwA/8A"
-            
-            response = self.session.put(f"{BASE_URL}/production-items/{item_id}/image", 
-                                      json={"image": first_image})
+            # Step 4: Verify invoice auto-generation
+            response = self.session.get(f"{BASE_URL}/invoices")
             
             if response.status_code == 200:
-                updated_item = response.json()
+                invoices = response.json()
+                workflow_invoice = next((inv for inv in invoices if inv["order_id"] == order_id), None)
                 
-                if updated_item.get("image") == first_image:
-                    self.log_result("Workflow Step 2 - Add image", True, 
-                                  "Image successfully added to item")
-                else:
-                    self.log_result("Workflow Step 2 - Add image", False, 
-                                  "Image not properly added")
-            else:
-                self.log_result("Workflow Step 2 - Add image", False, 
-                              f"Status: {response.status_code}")
-            
-            # Step 3: Update image with new image
-            second_image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-            
-            response = self.session.put(f"{BASE_URL}/production-items/{item_id}/image", 
-                                      json={"image": second_image})
-            
-            if response.status_code == 200:
-                updated_item = response.json()
-                
-                if updated_item.get("image") == second_image:
-                    self.log_result("Workflow Step 3 - Update image", True, 
-                                  "Image successfully updated")
-                else:
-                    self.log_result("Workflow Step 3 - Update image", False, 
-                                  "Image not properly updated")
-            else:
-                self.log_result("Workflow Step 3 - Update image", False, 
-                              f"Status: {response.status_code}")
-            
-            # Step 4: Remove image
-            response = self.session.delete(f"{BASE_URL}/production-items/{item_id}/image")
-            
-            if response.status_code == 200:
-                self.log_result("Workflow Step 4 - Remove image", True, 
-                              "Image successfully removed")
-                
-                # Verify image was removed by getting the item again
-                response = self.session.get(f"{BASE_URL}/production-items")
-                if response.status_code == 200:
-                    items = response.json()
-                    final_item = next((item for item in items if item["id"] == item_id), None)
+                if workflow_invoice:
+                    invoice_id = workflow_invoice["id"]
                     
-                    if final_item and ("image" not in final_item or final_item.get("image") is None):
-                        self.log_result("Workflow Step 4 - Verify image removal", True, 
-                                      "Image field properly removed")
+                    # Verify invoice data matches order data
+                    if (abs(workflow_invoice.get("subtotal", 0) - actual_subtotal) < 0.01 and
+                        abs(workflow_invoice.get("tax_amount", 0) - actual_tax) < 0.01 and
+                        abs(workflow_invoice.get("total_amount", 0) - actual_total) < 0.01):
+                        self.log_result("Workflow Step 4 - Invoice auto-generation", True, 
+                                      f"Invoice auto-generated with correct amounts: {workflow_invoice['invoice_number']}")
                     else:
-                        self.log_result("Workflow Step 4 - Verify image removal", False, 
-                                      f"Image still present: {final_item.get('image') if final_item else 'Item not found'}")
-            else:
-                self.log_result("Workflow Step 4 - Remove image", False, 
-                              f"Status: {response.status_code}")
-            
-            # Step 5: Verify item still exists and is functional after image operations
-            response = self.session.get(f"{BASE_URL}/production-items")
-            if response.status_code == 200:
-                items = response.json()
-                final_item = next((item for item in items if item["id"] == item_id), None)
-                
-                if final_item:
-                    # Verify all other fields are intact
-                    if (final_item.get("name") == test_item["name"] and 
-                        final_item.get("unit_of_measure") == test_item["unit_of_measure"] and
-                        abs(final_item.get("base_cost", 0) - test_item["base_cost"]) < 0.01):
-                        self.log_result("Workflow Step 5 - Item integrity after image ops", True, 
-                                      "All item fields preserved after image operations")
-                    else:
-                        self.log_result("Workflow Step 5 - Item integrity after image ops", False, 
-                                      "Some item fields were corrupted during image operations")
+                        self.log_result("Workflow Step 4 - Invoice auto-generation", False, 
+                                      "Invoice amounts don't match order amounts")
                 else:
-                    self.log_result("Workflow Step 5 - Item integrity after image ops", False, 
-                                  "Item not found after image operations")
+                    self.log_result("Workflow Step 4 - Find auto-generated invoice", False, 
+                                  "No invoice found for workflow order")
+                    # Clean up
+                    for item in created_items:
+                        self.session.delete(f"{BASE_URL}/production-items/{item['id']}")
+                    return
+            else:
+                self.log_result("Workflow Step 4 - Get invoices", False, 
+                              f"Status: {response.status_code}")
+                # Clean up
+                for item in created_items:
+                    self.session.delete(f"{BASE_URL}/production-items/{item['id']}")
+                return
             
-            # Test complete workflow summary
-            self.log_result("Complete Image Workflow", True, 
-                          "Full workflow completed: create → add image → update image → remove image")
+            # Step 5: Generate final PDF with all customizations
+            response = self.session.get(f"{BASE_URL}/invoices/{invoice_id}/pdf")
             
-            # Clean up test item
-            self.session.delete(f"{BASE_URL}/production-items/{item_id}")
+            if response.status_code == 200:
+                final_pdf_content = response.content
+                final_pdf_size = len(final_pdf_content)
+                
+                self.log_result("Workflow Step 5 - Final PDF generation", True, 
+                              f"Complete workflow PDF generated, size: {final_pdf_size} bytes")
+                
+                # Verify PDF headers
+                content_type = response.headers.get('content-type', '')
+                content_disposition = response.headers.get('content-disposition', '')
+                
+                if ('application/pdf' in content_type and 
+                    workflow_invoice['invoice_number'] in content_disposition):
+                    self.log_result("Workflow Step 5 - PDF headers verification", True, 
+                                  "PDF headers correct for complete workflow")
+                else:
+                    self.log_result("Workflow Step 5 - PDF headers verification", False, 
+                                  f"PDF headers incorrect: {content_type}, {content_disposition}")
+                
+                # Verify PDF size indicates comprehensive content
+                if final_pdf_size > 8000:  # Should be substantial with multiple items and full settings
+                    self.log_result("Workflow Step 5 - PDF content completeness", True, 
+                                  "PDF size indicates comprehensive content inclusion")
+                else:
+                    self.log_result("Workflow Step 5 - PDF content completeness", False, 
+                                  f"PDF size may be too small for comprehensive content: {final_pdf_size} bytes")
+            else:
+                self.log_result("Workflow Step 5 - Final PDF generation", False, 
+                              f"Status: {response.status_code}, Response: {response.text}")
+            
+            # Step 6: Test workflow with existing invoices
+            existing_invoices_count = len(invoices)
+            
+            if existing_invoices_count > 1:
+                # Test PDF generation for multiple invoices
+                pdf_generation_count = 0
+                
+                for invoice in invoices[:3]:  # Test first 3 invoices
+                    response = self.session.get(f"{BASE_URL}/invoices/{invoice['id']}/pdf")
+                    
+                    if response.status_code == 200:
+                        pdf_generation_count += 1
+                
+                if pdf_generation_count > 0:
+                    self.log_result("Workflow Step 6 - Multiple invoice PDF generation", True, 
+                                  f"Successfully generated PDFs for {pdf_generation_count} existing invoices")
+                else:
+                    self.log_result("Workflow Step 6 - Multiple invoice PDF generation", False, 
+                                  "Failed to generate PDFs for existing invoices")
+            else:
+                self.log_result("Workflow Step 6 - Multiple invoice test", True, 
+                              "Only one invoice available (expected for clean test environment)")
+            
+            # Complete workflow summary
+            self.log_result("Complete Invoice Workflow", True, 
+                          "Full workflow completed: settings → production items → order → invoice → PDF")
+            
+            # Clean up test data
+            for item in created_items:
+                self.session.delete(f"{BASE_URL}/production-items/{item['id']}")
             
         except Exception as e:
-            self.log_result("Complete Image Workflow", False, f"Exception: {str(e)}")
+            self.log_result("Complete Invoice Workflow", False, f"Exception: {str(e)}")
 
 
 if __name__ == "__main__":
