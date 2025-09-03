@@ -1020,14 +1020,14 @@ class KitchenAPITester:
 
 if __name__ == "__main__":
     print("🚀 STARTING BACKEND API TESTING")
-    print("Testing Enhanced Unit of Measure Options and Post-Creation Image Upload")
+    print("Testing Customizable Invoice PDF with Logo and Settings")
     print("=" * 80)
     
     tester = KitchenAPITester()
     
     try:
-        # Run the enhanced features tests
-        results = tester.test_enhanced_unit_measures_and_image_upload()
+        # Run the customizable invoice PDF tests
+        results = tester.test_customizable_invoice_pdf_system()
         
         print(f"\n🎯 FINAL TEST RESULTS")
         print("=" * 80)
@@ -1044,7 +1044,7 @@ if __name__ == "__main__":
         
         # Determine overall result
         if results['failed'] == 0:
-            print(f"\n🎉 ALL TESTS PASSED! Enhanced unit measures and image upload features are working correctly.")
+            print(f"\n🎉 ALL TESTS PASSED! Customizable invoice PDF system is working correctly.")
             sys.exit(0)
         elif success_rate >= 80:
             print(f"\n⚠️  MOSTLY SUCCESSFUL with {success_rate:.1f}% pass rate. Some minor issues found.")
