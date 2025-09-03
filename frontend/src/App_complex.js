@@ -992,9 +992,16 @@ const ManagerDashboard = ({ user, appSettings }) => {
 
   const updateAppSettings = async (newSettings) => {
     try {
+      console.log('Updating app settings with:', newSettings);
       const response = await axios.put(`${API}/settings`, newSettings);
+      console.log('Settings update response:', response.data);
       setSettings(response.data);
       alert('Settings saved successfully! Your changes have been applied.');
+      
+      // Refresh the page to ensure all components use the new settings
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       console.error('Error updating settings:', error);
       alert('Error saving settings. Please try again.');
