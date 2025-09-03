@@ -1609,103 +1609,211 @@ def format_date_for_pdf(date_value):
 
 @api_router.get("/invoices/{invoice_id}/pdf")
 async def export_invoice_pdf(invoice_id: str):
-    """Export invoice as PDF for Xero compatibility"""
+    """Export invoice as PDF with customizable settings and logo"""
     try:
         # Get invoice data
         invoice = await db.invoices.find_one({"id": invoice_id})
         if not invoice:
             raise HTTPException(status_code=404, detail="Invoice not found")
         
+        # Get app settings for invoice customization
+        settings = await db.app_settings.find_one()
+        if not settings:
+            settings = AppSettings().dict()
+        
         # Create PDF in memory
         buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=1*inch)
+        doc = SimpleDocTemplate(buffer, pagesize=letter, 
+                              topMargin=0.5*inch, bottomMargin=0.5*inch,
+                              leftMargin=0.5*inch, rightMargin=0.5*inch)
         
         # Get styles
         styles = getSampleStyleSheet()
         title_style = ParagraphStyle(
             'CustomTitle',
             parent=styles['Heading1'],
-            fontSize=18,
+            fontSize=24,
             alignment=TA_CENTER,
-            spaceAfter=30
+            spaceAfter=20,
+            textColor=colors.HexColor('#2c3e50')
+        )
+        
+        company_style = ParagraphStyle(
+            'CompanyStyle',
+            parent=styles['Normal'],
+            fontSize=10,
+            alignment=TA_LEFT,
+            spaceAfter=4
         )
         
         # Build PDF content
         story = []
         
-        # Title
+        # Header with logo and company info
+        header_data = []
+        
+        # Left side - Logo and company info
+        left_content = []
+        
+        # Add logo if enabled and available
+        if settings.get('show_logo', True) and settings.get('logo_url'):
+            try:
+                # Handle base64 logo
+                logo_data = settings['logo_url']
+                if logo_data.startswith('data:image'):
+                    # Extract base64 part
+                    header, encoded = logo_data.split(',', 1)
+                    logo_bytes = base64.b64decode(encoded)
+                    logo_buffer = io.BytesIO(logo_bytes)
+                    
+                    # Create reportlab image
+                    logo_img = RLImage(logo_buffer, width=80, height=80)
+                    left_content.append(logo_img)
+                else:
+                    # Handle URL (if needed in future)
+                    pass
+            except Exception as e:
+                print(f"Logo error: {e}")
+                # Continue without logo if there's an error
+                pass
+        
+        # Company information
+        company_name = settings.get('invoice_company_name') or settings.get('company_name', 'Kitchen Co.')
+        company_info = [Paragraph(f"<b>{company_name}</b>", company_style)]
+        
+        if settings.get('show_company_address', True):
+            company_info.append(Paragraph(settings.get('invoice_address', '123 Business St, City, State 12345'), company_style))
+        
+        if settings.get('show_company_phone', True):
+            company_info.append(Paragraph(f"Phone: {settings.get('invoice_phone', '(555) 123-4567')}", company_style))
+        
+        if settings.get('show_company_email', True):
+            company_info.append(Paragraph(f"Email: {settings.get('invoice_email', 'info@company.com')}", company_style))
+        
+        if settings.get('show_company_website', True):
+            company_info.append(Paragraph(f"Web: {settings.get('invoice_website', 'www.company.com')}", company_style))
+        
+        # Create header table
+        if left_content:  # If logo exists
+            header_table_data = [[left_content[0], company_info, ""]]
+            col_widths = [1.2*inch, 3*inch, 2.3*inch]
+        else:
+            header_table_data = [[company_info, ""]]
+            col_widths = [4.2*inch, 2.3*inch]
+        
+        header_table = Table(header_table_data, colWidths=col_widths)
+        header_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 20),
+        ]))
+        
+        story.append(header_table)
+        
+        # Invoice Title
         story.append(Paragraph("INVOICE", title_style))
         story.append(Spacer(1, 20))
         
-        # Invoice details table
+        # Invoice details
         invoice_data = [
             ["Invoice Number:", invoice.get("invoice_number", "N/A")],
             ["Date:", format_date_for_pdf(invoice.get("issue_date"))],
-            ["Due Date:", format_date_for_pdf(invoice.get("due_date")) if invoice.get("due_date") else "N/A"],
+        ]
+        
+        if settings.get('show_due_date', True):
+            invoice_data.append(["Due Date:", format_date_for_pdf(invoice.get("due_date")) if invoice.get("due_date") else "N/A"])
+        
+        invoice_data.extend([
             ["Customer:", invoice.get("venue_name", "N/A")],
             ["Delivery Address:", invoice.get("delivery_address", "N/A")],
-        ]
+        ])
+        
+        if settings.get('payment_terms'):
+            invoice_data.append(["Payment Terms:", settings['payment_terms']])
         
         invoice_table = Table(invoice_data, colWidths=[2*inch, 4*inch])
         invoice_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 12),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
         ]))
         
         story.append(invoice_table)
         story.append(Spacer(1, 30))
         
         # Items table
-        items_data = [["Item", "Quantity", "Unit", "Unit Price", "Total"]]
+        items_headers = ["Item", "Quantity", "Unit", "Unit Price", "Total"]
+        items_data = [items_headers]
         
         for item in invoice.get("items", []):
             item_total = item.get("quantity", 0) * item.get("unit_price", 0)
-            items_data.append([
+            row_data = [
                 item.get("production_item_name", "N/A"),
                 str(item.get("quantity", 0)),
                 item.get("unit_of_measure", "kilo"),
                 f"${item.get('unit_price', 0):.2f}",
                 f"${item_total:.2f}"
-            ])
+            ]
+            items_data.append(row_data)
         
         items_table = Table(items_data, colWidths=[2.5*inch, 1*inch, 1*inch, 1*inch, 1*inch])
         items_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#34495e')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
             ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('ALIGN', (1, 1), (-1, -1), 'CENTER'),
+            ('ALIGN', (3, 1), (-1, -1), 'RIGHT'),
+            ('ALIGN', (4, 1), (-1, -1), 'RIGHT'),
         ]))
         
         story.append(items_table)
         story.append(Spacer(1, 20))
         
-        # Totals
+        # Totals section
         subtotal = invoice.get("subtotal", 0)
+        tax_rate = settings.get("tax_rate", 0.08)
         tax_amount = invoice.get("tax_amount", 0)
         total_amount = invoice.get("total_amount", 0)
         
         totals_data = [
             ["Subtotal:", f"${subtotal:.2f}"],
-            ["Tax (8%):", f"${tax_amount:.2f}"],
-            ["Total:", f"${total_amount:.2f}"]
         ]
         
-        totals_table = Table(totals_data, colWidths=[4*inch, 1.5*inch])
+        if settings.get('show_tax_breakdown', True):
+            totals_data.append([f"Tax ({tax_rate*100:.1f}%):", f"${tax_amount:.2f}"])
+        
+        totals_data.append(["Total:", f"${total_amount:.2f}"])
+        
+        totals_table = Table(totals_data, colWidths=[4.5*inch, 1.5*inch])
         totals_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'RIGHT'),
             ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 12),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+            ('FONTSIZE', (0, 0), (-1, -1), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
             ('LINEBELOW', (0, -1), (-1, -1), 2, colors.black),
+            ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
         ]))
         
         story.append(totals_table)
+        
+        # Invoice notes
+        if settings.get('invoice_notes'):
+            story.append(Spacer(1, 30))
+            notes_style = ParagraphStyle(
+                'NotesStyle',
+                parent=styles['Normal'],
+                fontSize=10,
+                alignment=TA_CENTER,
+                textColor=colors.HexColor('#7f8c8d')
+            )
+            story.append(Paragraph(settings['invoice_notes'], notes_style))
         
         # Build PDF
         doc.build(story)
