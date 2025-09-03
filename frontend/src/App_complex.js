@@ -2780,14 +2780,8 @@ const ManagerDashboard = ({ user, appSettings }) => {
                       <label key={option.key} className="flex items-center space-x-2 p-2 border rounded hover:bg-gray-50">
                         <input
                           name={option.key}
-                          type="hidden"
-                          value="false"
-                        />
-                        <input
-                          name={option.key}
                           type="checkbox"
-                          defaultChecked={settings[option.key] ?? option.default}
-                          value="true"
+                          defaultChecked={settings[option.key] !== undefined ? settings[option.key] : option.default}
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
                         <span className="text-sm text-gray-700">{option.label}</span>
