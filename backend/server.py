@@ -451,6 +451,24 @@ class AppSettings(BaseModel):
     default_markup: float = 0.15
     currency: str = "USD"
     timezone: str = "UTC"
+    # Invoice Settings
+    invoice_company_name: Optional[str] = None  # If None, uses company_name
+    invoice_address: str = "123 Business St, City, State 12345"
+    invoice_phone: str = "(555) 123-4567"
+    invoice_email: str = "info@company.com"
+    invoice_website: str = "www.company.com"
+    # Invoice Display Toggles
+    show_logo: bool = True
+    show_due_date: bool = True
+    show_company_address: bool = True
+    show_company_phone: bool = True
+    show_company_email: bool = True
+    show_company_website: bool = True
+    show_tax_breakdown: bool = True
+    show_item_images: bool = False  # Default off for cleaner PDFs
+    # Invoice Customization
+    invoice_notes: str = "Thank you for your business!"
+    payment_terms: str = "Net 30"
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
