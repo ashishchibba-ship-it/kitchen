@@ -37,29 +37,29 @@ class KitchenAPITester:
             self.test_results["errors"].append(f"{test_name}: {message}")
             print(f"❌ {test_name}: FAILED - {message}")
     
-    def test_enhanced_unit_measures_and_image_upload(self):
-        """Test the enhanced unit of measure options and post-creation image upload"""
-        print("🔧 STARTING ENHANCED UNIT MEASURES AND IMAGE UPLOAD TESTS")
+    def test_customizable_invoice_pdf_system(self):
+        """Test the complete customizable invoice PDF system with logo and settings"""
+        print("🔧 STARTING CUSTOMIZABLE INVOICE PDF SYSTEM TESTS")
         print("=" * 70)
         
-        # Test 1: Enhanced Unit of Measure Options
-        self.test_enhanced_unit_of_measure_options()
+        # Test 1: Invoice Settings in AppSettings Model
+        self.test_invoice_settings_in_appsettings()
         
-        # Test 2: Post-Creation Image Upload
-        self.test_post_creation_image_upload()
+        # Test 2: Enhanced PDF Generation with Customizable Settings
+        self.test_enhanced_pdf_generation()
         
-        # Test 3: Backward Compatibility for Units
-        self.test_backward_compatibility_units()
+        # Test 3: Tax Rate Integration from Settings
+        self.test_tax_rate_integration()
         
-        # Test 4: Orderable Items Unit Information
-        self.test_orderable_items_unit_compatibility()
+        # Test 4: PDF Content Verification
+        self.test_pdf_content_verification()
         
-        # Test 5: Complete Image Workflow
-        self.test_complete_image_workflow()
+        # Test 5: Complete Invoice Workflow
+        self.test_complete_invoice_workflow()
         
         # Print summary
         print("\n" + "=" * 70)
-        print("🔧 ENHANCED FEATURES TEST SUMMARY")
+        print("🔧 CUSTOMIZABLE INVOICE PDF TEST SUMMARY")
         print("=" * 70)
         print(f"✅ Tests Passed: {self.test_results['passed']}")
         print(f"❌ Tests Failed: {self.test_results['failed']}")
