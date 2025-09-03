@@ -2651,6 +2651,172 @@ const ManagerDashboard = ({ user, appSettings }) => {
                 </button>
               </form>
             </div>
+
+            {/* Invoice Settings Section */}
+            <div className="bg-white p-6 rounded-lg shadow">
+              <div className="border-b pb-4 mb-6">
+                <h3 className="text-lg font-semibold text-gray-800">Invoice Settings</h3>
+                <p className="text-sm text-gray-600 mt-1">Customize your invoice PDF appearance and information</p>
+              </div>
+              
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const invoiceSettings = {
+                  tax_rate: parseFloat(formData.get('tax_rate')) / 100, // Convert percentage to decimal
+                  invoice_company_name: formData.get('invoice_company_name') || null,
+                  invoice_address: formData.get('invoice_address'),
+                  invoice_phone: formData.get('invoice_phone'),
+                  invoice_email: formData.get('invoice_email'),
+                  invoice_website: formData.get('invoice_website'),
+                  show_logo: formData.get('show_logo') === 'true',
+                  show_due_date: formData.get('show_due_date') === 'true',
+                  show_company_address: formData.get('show_company_address') === 'true',
+                  show_company_phone: formData.get('show_company_phone') === 'true',
+                  show_company_email: formData.get('show_company_email') === 'true',
+                  show_company_website: formData.get('show_company_website') === 'true',
+                  show_tax_breakdown: formData.get('show_tax_breakdown') === 'true',
+                  show_item_images: formData.get('show_item_images') === 'true',
+                  invoice_notes: formData.get('invoice_notes'),
+                  payment_terms: formData.get('payment_terms')
+                };
+                updateAppSettings(invoiceSettings);
+              }} className="space-y-6">
+                
+                {/* Basic Invoice Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tax Rate (%)</label>
+                    <input
+                      name="tax_rate"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="100"
+                      defaultValue={(settings.tax_rate || 0.08) * 100}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="8.0"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Enter as percentage (e.g., 8 for 8%)</p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Company Name (Invoice)</label>
+                    <input
+                      name="invoice_company_name"
+                      type="text"
+                      defaultValue={settings.invoice_company_name || ''}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Leave blank to use main company name"
+                    />
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Company Address</label>
+                    <input
+                      name="invoice_address"
+                      type="text"
+                      defaultValue={settings.invoice_address || '123 Business St, City, State 12345'}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                    <input
+                      name="invoice_phone"
+                      type="text"
+                      defaultValue={settings.invoice_phone || '(555) 123-4567'}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <input
+                      name="invoice_email"
+                      type="email"
+                      defaultValue={settings.invoice_email || 'info@company.com'}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                    <input
+                      name="invoice_website"
+                      type="text"
+                      defaultValue={settings.invoice_website || 'www.company.com'}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Payment Terms</label>
+                    <input
+                      name="payment_terms"
+                      type="text"
+                      defaultValue={settings.payment_terms || 'Net 30'}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Net 30, Due on Receipt"
+                    />
+                  </div>
+                </div>
+
+                {/* Display Options */}
+                <div>
+                  <h4 className="text-md font-medium text-gray-800 mb-3">Invoice Display Options</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                      {key: 'show_logo', label: 'Show Logo', default: true},
+                      {key: 'show_due_date', label: 'Show Due Date', default: true},
+                      {key: 'show_company_address', label: 'Show Address', default: true},
+                      {key: 'show_company_phone', label: 'Show Phone', default: true},
+                      {key: 'show_company_email', label: 'Show Email', default: true},
+                      {key: 'show_company_website', label: 'Show Website', default: true},
+                      {key: 'show_tax_breakdown', label: 'Show Tax Breakdown', default: true},
+                      {key: 'show_item_images', label: 'Show Item Images', default: false}
+                    ].map(option => (
+                      <label key={option.key} className="flex items-center space-x-2 p-2 border rounded hover:bg-gray-50">
+                        <input
+                          name={option.key}
+                          type="hidden"
+                          value="false"
+                        />
+                        <input
+                          name={option.key}
+                          type="checkbox"
+                          defaultChecked={settings[option.key] ?? option.default}
+                          value="true"
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-700">{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Invoice Notes */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Notes</label>
+                  <textarea
+                    name="invoice_notes"
+                    rows="3"
+                    defaultValue={settings.invoice_notes || 'Thank you for your business!'}
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Add a note that appears at the bottom of invoices"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full text-white py-3 px-4 rounded-md hover:opacity-90 transition-colors"
+                  style={primaryButtonStyle}
+                >
+                  Save Invoice Settings
+                </button>
+              </form>
+            </div>
           </div>
         )}
       </div>
