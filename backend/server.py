@@ -485,6 +485,24 @@ class AppSettingsUpdate(BaseModel):
     default_markup: Optional[float] = None
     currency: Optional[str] = None
     timezone: Optional[str] = None
+    # Invoice Settings
+    invoice_company_name: Optional[str] = None
+    invoice_address: Optional[str] = None
+    invoice_phone: Optional[str] = None
+    invoice_email: Optional[str] = None
+    invoice_website: Optional[str] = None
+    # Invoice Display Toggles
+    show_logo: Optional[bool] = None
+    show_due_date: Optional[bool] = None
+    show_company_address: Optional[bool] = None
+    show_company_phone: Optional[bool] = None
+    show_company_email: Optional[bool] = None
+    show_company_website: Optional[bool] = None
+    show_tax_breakdown: Optional[bool] = None
+    show_item_images: Optional[bool] = None
+    # Invoice Customization
+    invoice_notes: Optional[str] = None
+    payment_terms: Optional[str] = None
 
 # Initialize predefined users and settings
 async def init_predefined_data():
