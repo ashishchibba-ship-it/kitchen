@@ -16,9 +16,11 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage
+from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
 import io
+import base64
+from PIL import Image as PILImage
 import base64
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
