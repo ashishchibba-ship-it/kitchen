@@ -1329,9 +1329,14 @@ async def get_venue_order_history(venue_id: str):
 # Order management endpoints
 @api_router.post("/orders", response_model=Order)
 async def create_order(order: OrderCreate):
-    # Calculate pricing
+    # Get app settings for tax rate
+    settings = await db.app_settings.find_one()
+    if not settings:
+        settings = AppSettings().dict()
+    
+    # Calculate pricing using settings tax rate
     subtotal = sum(item.quantity * item.unit_price for item in order.items)
-    tax_rate = 0.08  # 8% tax
+    tax_rate = settings.get('tax_rate', 0.08)  # Default to 8% if not set
     tax_amount = subtotal * tax_rate
     total_amount = subtotal + tax_amount
     
