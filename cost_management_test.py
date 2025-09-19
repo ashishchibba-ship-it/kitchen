@@ -25,7 +25,7 @@ import time
 import sys
 
 # Backend URL from frontend/.env
-BASE_URL = "https://kitchen-manager-2.preview.emergentagent.com/api"
+BASE_URL = "https://prepcart.preview.emergentagent.com/api"
 
 class CostManagementTester:
     def __init__(self):

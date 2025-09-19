@@ -17,7 +17,7 @@ from datetime import datetime, date
 import sys
 
 # Backend URL from frontend/.env
-BASE_URL = "https://kitchen-manager-2.preview.emergentagent.com/api"
+BASE_URL = "https://prepcart.preview.emergentagent.com/api"
 
 class VenueItemsDebugTester:
     def __init__(self):

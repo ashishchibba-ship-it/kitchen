@@ -1,0 +1,67 @@
+<analysis>
+The trajectory details the AI engineer's work on a kitchen management app. Initially, the AI implemented production item unit options (kilo, litre, carton, each) and post-creation image upload. This involved extensive backend () and frontend () modifications. A recurring problem of database data loss during testing, coupled with confusion around  and redeployment, led to multiple re-implementations and user frustration. Subsequently, invoice customization was implemented, allowing logo display and toggleable settings for tax, company info, etc. Another feature was real-time price calculation in the venue ordering interface. Both these features also faced deployment hurdles, requiring re-implementation and careful synchronization with GitHub saves. Finally, the kitchen staff dashboard was enhanced with Requested Delivery Date display and individual item checkboxes for prepping. The trajectory ends with a critical issue: repeated data loss of production items, with the user demanding their original 20+ items back and correcting unit/category discrepancies based on provided screenshots, a task the AI is currently struggling to complete accurately.
+</analysis>
+
+<product_requirements>
+The application is a full-stack kitchen management system with CRUD for production items (including availability, categories, units), intuitive ordering, financial tracking (markup, PO/invoice), and role-based user management.
+Recent explicit requests in this trajectory include:
+1.  **Production Item Enhancements:** Implement new unit of measure options (kilo, litre, carton, each) and enable adding images to existing items.
+2.  **Invoice Customization:** Add the app's logo to invoice PDFs and provide customizable settings (tax, company info, toggleable elements) in the Settings tab.
+3.  **Real-time Price Calculation (Venue Staff Dashboard):** Display the dynamic total price when quantities change during ordering, without explicit calculation breakdown.
+4.  **Kitchen Staff Dashboard Enhancements:** Display Requested Delivery Date on orders, implement individual item checkboxes for prepping, and enable Ready for Pickup only when all items are ticked.
+5.  **Data Integrity:** Restore the user's original production items (over 20 items) with accurate categories and units, addressing repeated data loss.
+</product_requirements>
+
+<key_technical_concepts>
+-   **FastAPI**: Python backend for REST APIs.
+-   **React**: Frontend library for UI.
+-   **MongoDB**: NoSQL database for data persistence.
+-   **Gmail API**: For email notifications.
+-   **Environment Variables**: Secure configuration.
+-   **CORS**: Cross-Origin Resource Sharing.
+-   **Supervisor**: Manages processes.
+-   **OAuth 2.0**: Authentication framework.
+-   **Pillow (PIL)**: Python Imaging Library for PDF image handling.
+</key_technical_concepts>
+
+<code_architecture>
+The application uses a React frontend, FastAPI backend, and MongoDB database.
+
+
+
+-   ****
+    -   **Summary:** Main FastAPI application, handling API endpoints, data models, and business logic.
+    -   **Changes Made:**
+        -   **Unit of Measure:** Modified , ,  models to accept , , , . Updated CRUD and ordering endpoints to support these units.
+        -   **Image Upload (Post-creation):** Added  endpoint.
+        -   **Invoice Customization:** Updated  and  models for , , company info fields, and display toggles. Rewrote  to use these settings and the app logo. Updated order creation to use  from settings.
+
+-   ****
+    -   **Summary:** Lists Python dependencies for the backend.
+    -   **Changes Made:** Added  (PIL) for image processing in PDF generation.
+
+-   ****
+    -   **Summary:** The primary React component for the application's UI, including dashboards and settings.
+    -   **Changes Made:**
+        -   **Unit of Measure & Image Upload:** Updated  and edit modals to use unit dropdowns and image upload fields, fixing validation.
+        -   **Invoice Customization:** Added a comprehensive Invoice Settings section to the Manager Settings tab, including input fields, checkboxes, and save logic. Fixed checkbox persistence issues.
+        -   **Real-time Price Calculation:** For , added  state and helper functions (, , ). Modified the ordering interface to display a dynamic total price that updates in real-time, removing the calculation breakdown.
+        -   **Kitchen Staff Dashboard:** For , added  state and helper functions (, , ). Updated order displays to show Requested Delivery Date. Enhanced Currently Preparing with individual item checkboxes, progress tracking, and conditional Mark Ready button enabling.
+        -   **Refactoring:** Addressed duplicate function definitions and state management.
+
+-   ****
+    -   **Summary:** Logs testing information, tasks, and communication.
+    -   **Changes Made:** Updated to reflect feature implementations, testing results, and detailed logs of data loss incidents and restoration attempts.
+</code_architecture>
+
+<pending_tasks>
+-   Identify and correctly restore the user's complete original production item data (over 20 items) with accurate categories and units (each, kilo, litre, etc.) based on user feedback and screenshots.
+</pending_tasks>
+
+<current_work>
+Immediately before this summary request, the AI engineer was critically engaged in restoring the user's production item data. The user repeatedly expressed frustration that their original 20+ production items were being overwritten by test data during development and deployment, and that previous restoration attempts by the AI were incorrect regarding categories and units. The AI had just performed a restoration, identifying 19 items and their units (each, kilo, litre) and categories (including Asian groceries) from analyzing user-provided screenshots. However, the user emphatically stated, they are NOT correct! check the screenshots again and put in the correct category with the correct unit , i will not ask again. The AI then attempted to use a vision tool to re-extract information from the first screenshot, but it returned garbled text, indicating a failure to interpret the image content accurately. The engineer is now attempting to use a different approach by looking at the second image to gather the required, precise item details. This task is currently blocked by the inability to accurately parse the visual data from the user's screenshots to verify the correct item details, leading to persistent data integrity issues.
+</current_work>
+
+<optional_next_step>
+Attempt to extract item details (categories, units) from the *second* provided screenshot more accurately to resolve the data discrepancy.
+</optional_next_step>
