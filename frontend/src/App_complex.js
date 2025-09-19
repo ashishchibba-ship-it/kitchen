@@ -3483,23 +3483,31 @@ const VenueStaffDashboard = ({ user, appSettings }) => {
                   )}
                   <div className="p-3">
                     <h3 className="text-md font-semibold text-gray-800 mb-1">{item.name}</h3>
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="text-md font-bold text-green-600">${item.unit_price.toFixed(2)}</span>
-                      <span className="text-xs text-gray-500">per {item.unit_of_measure}</span>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-gray-600">${item.unit_price.toFixed(2)} per {item.unit_of_measure}</span>
+                    </div>
+                    <div className="bg-green-50 border border-green-200 rounded p-2 mb-3">
+                      <div className="text-lg font-bold text-green-700">
+                        Total: ${calculateTotalPrice(item, getItemQuantity(item.id))}
+                      </div>
+                      <div className="text-xs text-green-600">
+                        {getItemQuantity(item.id)} {item.unit_of_measure} × ${item.unit_price.toFixed(2)}
+                      </div>
                     </div>
                     <div className="flex items-center space-x-2">
                       <input
                         type="number"
                         min="1"
                         max={item.available_quantity}
-                        defaultValue="1"
-                        className="w-12 p-1 border border-gray-300 rounded text-xs"
+                        value={getItemQuantity(item.id)}
+                        onChange={(e) => updateItemQuantity(item.id, e.target.value)}
+                        className="w-16 p-1 border border-gray-300 rounded text-xs"
                         id={`quantity-${item.id}`}
                       />
                       <span className="text-xs text-gray-600">{item.unit_of_measure}</span>
                       <button
                         onClick={() => {
-                          const quantity = parseInt(document.getElementById(`quantity-${item.id}`).value);
+                          const quantity = getItemQuantity(item.id);
                           addToCart(item, quantity);
                         }}
                         className="flex-1 text-white py-1 px-2 rounded-md hover:opacity-90 transition-colors text-xs"
