@@ -3083,13 +3083,38 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
                         </div>
                         <div className="font-medium text-blue-600 mb-2">For: {order.venue_name}</div>
                         <div className="text-sm mb-3">
-                          <div className="bg-white p-3 rounded">
+                          <strong className="text-orange-600">📅 Requested Delivery Date:</strong> 
+                          <span className="ml-2 font-medium text-orange-700">
+                            {formatDeliveryDate(order.delivery_date)}
+                          </span>
+                        </div>
+                        <div className="text-sm mb-3">
+                          <strong>Items Progress:</strong>
+                          <div className="bg-white p-3 rounded mt-2 space-y-2">
                             {order.items.map((item, index) => (
-                              <div key={index} className="flex justify-between items-center py-1">
-                                <span>{item.production_item_name}</span>
-                                <span className="font-medium">{item.quantity} {item.unit_of_measure}</span>
+                              <div key={index} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                                <div className="flex items-center space-x-3">
+                                  <input
+                                    type="checkbox"
+                                    checked={isItemCompleted(order.id, index)}
+                                    onChange={() => toggleItemCompletion(order.id, index)}
+                                    className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                                  />
+                                  <span className={`${isItemCompleted(order.id, index) ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                                    {item.production_item_name}
+                                  </span>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <span className="font-medium">{item.quantity} {item.unit_of_measure}</span>
+                                  {isItemCompleted(order.id, index) && (
+                                    <span className="text-green-600 text-sm">✓ Done</span>
+                                  )}
+                                </div>
                               </div>
                             ))}
+                          </div>
+                          <div className="mt-2 text-xs text-gray-600">
+                            Progress: {order.items.filter((_, index) => isItemCompleted(order.id, index)).length} of {order.items.length} items completed
                           </div>
                         </div>
                       </div>
