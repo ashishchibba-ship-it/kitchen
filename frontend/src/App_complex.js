@@ -589,18 +589,35 @@ const ManagerDashboard = ({ user, appSettings }) => {
               const originalItem = productionItems.find(item => item.id === itemId);
               if (originalItem) {
                 console.log('Updating existing item:', localItem.name, 'ID:', itemId);
-                // Filter to only send fields expected by backend ProductionItemCreate model
+                
+                // Separate image from other data
+                const { image, ...basicData } = localItem;
                 const updateData = {
-                  name: localItem.name,
-                  category: localItem.category,
-                  unit_of_measure: localItem.unit_of_measure || 'kg',
-                  assigned_staff: localItem.assigned_staff,
-                  image: localItem.image,
-                  base_cost: localItem.base_cost
+                  name: basicData.name,
+                  category: basicData.category,
+                  unit_of_measure: basicData.unit_of_measure || 'kg',
+                  assigned_staff: basicData.assigned_staff,
+                  base_cost: basicData.base_cost
                 };
+                
                 console.log('Update data being sent:', updateData);
+                
+                // Update basic data first
                 const response = await axios.put(`${API}/production-items/${itemId}`, updateData);
                 console.log('Update response status:', response.status);
+                
+                // Handle image separately if it changed
+                if (image !== originalItem.image) {
+                  if (image === null || image === '') {
+                    // Remove image
+                    await axios.delete(`${API}/production-items/${itemId}/image`);
+                    console.log('Image removed for item:', itemId);
+                  } else if (image) {
+                    // Update/add image
+                    await axios.put(`${API}/production-items/${itemId}/image`, { image });
+                    console.log('Image updated for item:', itemId);
+                  }
+                }
               }
             }
             successCount++;
