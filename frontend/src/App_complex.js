@@ -3445,9 +3445,6 @@ const VenueStaffDashboard = ({ user, appSettings }) => {
                         <div className="text-lg font-bold text-green-700">
                           Total: ${calculateTotalPrice(currentItem, getItemQuantity(historyItem.item_id))}
                         </div>
-                        <div className="text-xs text-green-600">
-                          {getItemQuantity(historyItem.item_id)} {currentItem.unit_of_measure} × ${currentItem.unit_price.toFixed(2)}
-                        </div>
                       </div>
                       <div className="flex items-center space-x-2">
                         <input
