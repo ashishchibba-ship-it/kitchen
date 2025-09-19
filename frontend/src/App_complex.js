@@ -246,6 +246,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
     notifications: [],
     settings: false
   });
+  const [itemCompletion, setItemCompletion] = useState({});
 
   const [newItem, setNewItem] = useState({
     name: '',
