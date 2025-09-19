@@ -576,14 +576,23 @@ const ManagerDashboard = ({ user, appSettings }) => {
             if (itemId.startsWith('temp_')) {
               // New item - create
               console.log('Creating new item:', localItem.name);
-              const { id, unit_price, created_at, updated_at, ...itemData } = localItem;
+              const { id, unit_price, created_at, updated_at, image, ...itemData } = localItem;
+              
+              // Create the item first without image
               const response = await axios.post(`${API}/production-items?created_by=${user.username}`, itemData);
+              const newItemId = response.data.id;
               
               // Update local state with real ID
               setLocalProductionItems(prev => 
-                prev.map(item => item.id === itemId ? { ...item, id: response.data.id } : item)
+                prev.map(item => item.id === itemId ? { ...item, id: newItemId } : item)
               );
-              console.log('Created item with ID:', response.data.id);
+              console.log('Created item with ID:', newItemId);
+              
+              // Add image if provided
+              if (image) {
+                await axios.put(`${API}/production-items/${newItemId}/image`, { image });
+                console.log('Image added to new item:', newItemId);
+              }
             } else {
               // Existing item - update
               const originalItem = productionItems.find(item => item.id === itemId);
