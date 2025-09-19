@@ -3153,9 +3153,17 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
                       <div className="text-right ml-4">
                         <button
                           onClick={() => updateOrderStatus(order.id, 'ready')}
-                          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
+                          disabled={!isOrderCompleted(order.id, order.items.length)}
+                          className={`px-4 py-2 rounded transition-colors ${
+                            isOrderCompleted(order.id, order.items.length)
+                              ? 'bg-green-600 text-white hover:bg-green-700'
+                              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          }`}
                         >
-                          Mark Ready
+                          {isOrderCompleted(order.id, order.items.length) 
+                            ? 'Ready for Pickup' 
+                            : `${order.items.filter((_, index) => isItemCompleted(order.id, index)).length}/${order.items.length} Done`
+                          }
                         </button>
                       </div>
                     </div>
