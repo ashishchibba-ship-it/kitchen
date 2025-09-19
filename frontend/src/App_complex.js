@@ -3435,26 +3435,34 @@ const VenueStaffDashboard = ({ user, appSettings }) => {
                       <h3 className="text-md font-semibold text-gray-800 mb-1">{currentItem.name}</h3>
                       <p className="text-xs text-gray-600 mb-2">{currentItem.category}</p>
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-md font-bold text-green-600">${currentItem.unit_price.toFixed(2)}</span>
-                        <span className="text-xs text-gray-500">per {currentItem.unit_of_measure}</span>
+                        <span className="text-sm text-gray-600">${currentItem.unit_price.toFixed(2)} per {currentItem.unit_of_measure}</span>
                       </div>
-                      <div className="text-xs text-gray-500 mb-3">
+                      <div className="text-xs text-gray-500 mb-2">
                         <p>Previously: {historyItem.total_ordered} {currentItem.unit_of_measure}</p>
                         <p>Ordered {historyItem.times_ordered} times</p>
+                      </div>
+                      <div className="bg-green-50 border border-green-200 rounded p-2 mb-3">
+                        <div className="text-lg font-bold text-green-700">
+                          Total: ${calculateTotalPrice(currentItem, getItemQuantity(historyItem.item_id))}
+                        </div>
+                        <div className="text-xs text-green-600">
+                          {getItemQuantity(historyItem.item_id)} {currentItem.unit_of_measure} × ${currentItem.unit_price.toFixed(2)}
+                        </div>
                       </div>
                       <div className="flex items-center space-x-2">
                         <input
                           type="number"
                           min="1"
                           max={currentItem.available_quantity}
-                          defaultValue="1"
-                          className="w-12 p-1 border border-gray-300 rounded text-xs"
+                          value={getItemQuantity(historyItem.item_id)}
+                          onChange={(e) => updateItemQuantity(historyItem.item_id, e.target.value)}
+                          className="w-16 p-1 border border-gray-300 rounded text-xs"
                           id={`quantity-${historyItem.item_id}`}
                         />
                         <span className="text-xs text-gray-600">{currentItem.unit_of_measure}</span>
                         <button
                           onClick={() => {
-                            const quantity = parseInt(document.getElementById(`quantity-${historyItem.item_id}`).value);
+                            const quantity = getItemQuantity(historyItem.item_id);
                             addToCart(currentItem, quantity);
                           }}
                           className="flex-1 text-white py-1 px-2 rounded-md hover:opacity-90 transition-colors text-xs"
