@@ -3198,6 +3198,12 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
                           </div>
                         </div>
                         <div className="font-medium text-blue-600 mb-2">For: {order.venue_name}</div>
+                        <div className="text-sm mb-2">
+                          <strong className="text-orange-600">📅 Requested Delivery Date:</strong> 
+                          <span className="ml-2 font-medium text-orange-700">
+                            {formatDeliveryDate(order.delivery_date)}
+                          </span>
+                        </div>
                         <div className="text-sm text-gray-600 mb-2">
                           <strong>Delivery Address:</strong> {order.delivery_address}
                         </div>
