@@ -2836,6 +2836,7 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
   const [deliveredOrders, setDeliveredOrders] = useState([]);
   const [archivedOrders, setArchivedOrders] = useState([]);
   const [activeTab, setActiveTab] = useState('active');
+  const [itemCompletion, setItemCompletion] = useState({}); // Track individual item completion
 
   useEffect(() => {
     fetchAllOrders();
