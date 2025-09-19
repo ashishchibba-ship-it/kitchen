@@ -1,0 +1,32 @@
+[
+  {
+    "_id": "6881b9f66ebb3ee128f6d849",
+    "id": "3991e544-5d09-4cc4-848a-54c078cfe38b",
+    "primary_color": "#3b82f6",
+    "secondary_color": "#1f2937",
+    "accent_color": "#10b981",
+    "font_family": "Inter",
+    "app_name": "Street Eats Planner",
+    "logo_url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+    "layout_style": "modern",
+    "created_at": "2025-07-24 04:43:34.260000",
+    "updated_at": "2025-09-03 06:59:08.960000",
+    "invoice_address": "456 Food Street, Culinary City, FC 12345",
+    "invoice_company_name": "Street Eats Planner Inc.",
+    "invoice_email": "billing@streeteatsplanner.com",
+    "invoice_notes": "Thank you for choosing Street Eats Planner! We appreciate your business and look forward to serving you again.",
+    "invoice_phone": "(555) 987-6543",
+    "invoice_website": "www.streeteatsplanner.com",
+    "payment_terms": "Net 15",
+    "show_company_address": true,
+    "show_company_email": false,
+    "show_company_phone": false,
+    "show_company_website": false,
+    "show_due_date": true,
+    "show_item_images": false,
+    "show_logo": true,
+    "show_tax_breakdown": true,
+    "tax_rate": 0.1,
+    "company_name": "Workflow Test Kitchen"
+  }
+]
