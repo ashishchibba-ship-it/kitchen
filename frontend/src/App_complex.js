@@ -922,12 +922,34 @@ const ManagerDashboard = ({ user, appSettings }) => {
 
   const handleEditProductionItem = async (itemId, updatedData) => {
     try {
-      await axios.put(`${API}/production-items/${itemId}`, updatedData);
+      // If image is being updated, handle it separately
+      if (updatedData.image !== undefined) {
+        const { image, ...otherData } = updatedData;
+        
+        // Update basic item data first
+        if (Object.keys(otherData).length > 0) {
+          await axios.put(`${API}/production-items/${itemId}`, otherData);
+        }
+        
+        // Handle image update/removal separately
+        if (image === null) {
+          // Remove image
+          await axios.delete(`${API}/production-items/${itemId}/image`);
+        } else if (image) {
+          // Update/add image
+          await axios.put(`${API}/production-items/${itemId}/image`, { image });
+        }
+      } else {
+        // No image update, just regular data update
+        await axios.put(`${API}/production-items/${itemId}`, updatedData);
+      }
+      
       fetchProductionItems();
       setEditingItem(null);
+      alert('Item updated successfully!');
     } catch (error) {
       console.error('Error updating production item:', error);
-      alert('Error updating production item.');
+      alert(`Error updating production item: ${error.response?.data?.detail || error.message}`);
     }
   };
 
