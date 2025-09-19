@@ -3293,10 +3293,6 @@ const VenueStaffDashboard = ({ user, appSettings }) => {
     }
   };
 
-  const calculateTotalPrice = (item, quantity) => {
-    return (item.unit_price * quantity).toFixed(2);
-  };
-
   const addToCart = (item, quantity = 1) => {
     const existingItem = cart.find(cartItem => cartItem.id === item.id);
     if (existingItem) {
