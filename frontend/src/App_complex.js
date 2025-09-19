@@ -3278,6 +3278,21 @@ const VenueStaffDashboard = ({ user, appSettings }) => {
     }
   };
 
+  const updateItemQuantity = (itemId, quantity) => {
+    setItemQuantities(prev => ({
+      ...prev,
+      [itemId]: Math.max(1, parseInt(quantity) || 1)
+    }));
+  };
+
+  const getItemQuantity = (itemId) => {
+    return itemQuantities[itemId] || 1;
+  };
+
+  const calculateTotalPrice = (item, quantity) => {
+    return (item.unit_price * quantity).toFixed(2);
+  };
+
   const addToCart = (item, quantity = 1) => {
     const existingItem = cart.find(cartItem => cartItem.id === item.id);
     if (existingItem) {
