@@ -1338,6 +1338,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                     Item Image (Optional)
                   </label>
                   <ImageUpload 
+                    id="new-item-image-upload"
                     onImageSelect={(image) => setNewItem({...newItem, image})}
                     currentImage={newItem.image}
                   />
