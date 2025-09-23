@@ -396,6 +396,7 @@ class Order(BaseModel):
     status: OrderStatus = OrderStatus.PENDING
     order_date: datetime = Field(default_factory=datetime.utcnow)
     delivery_date: Optional[date] = None
+    delivery_time: Optional[str] = None  # New field for delivery time (HH:MM format)
     delivered_at: Optional[datetime] = None
     subtotal: float
     tax_rate: float = 0.08  # 8% tax
