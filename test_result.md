@@ -639,6 +639,18 @@ agent_communication:
           agent: "testing"
           comment: "✅ COMPREHENSIVE UI TESTING COMPLETED - Post-creation image upload functionality working excellently in edit modal. DETAILED VERIFICATION: 1) EDIT MODAL ACCESS: Found 31 Edit buttons in production table, edit modal opens successfully when clicked, modal contains all required form fields (6 fields found) 2) IMAGE UPLOAD SECTION: Image upload section found in edit modal with drag/drop interface, current image preview displayed correctly for items with images, 'Click to change image' functionality present 3) REMOVE IMAGE FUNCTIONALITY: 'Remove Image' button found and functional for items with existing images, button properly hidden for items without images (expected behavior) 4) MODAL LAYOUT AND DESIGN: Redesigned edit modal includes all form fields (name, category, unit dropdown, base cost, staff), responsive design working properly, professional appearance maintained 5) MODAL FUNCTIONALITY: Update Item button present and functional, Cancel button working correctly - modal closes without saving changes, form validation working in edit modal 6) COMPLETE WORKFLOW: Edit button → modal opens → image upload section visible → form fields editable → cancel/update options available. The post-creation image upload functionality provides excellent user experience with proper modal design, image handling, and form validation."
 
+  - task: "Image upload isolation bug fix for edit modal"
+    implemented: true
+    working: true
+    file: "App_complex.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ SPECIFIC BUG FIX VERIFICATION COMPLETED - Image upload isolation bug fix working perfectly (100% success rate). CRITICAL TEST SCENARIO RESULTS: 1) LOGIN AS MANAGER: Successfully logged in as Manager using 'admin123' password and navigated to Production tab 2) EDIT EXISTING PRODUCTION ITEM: Found 'Bao Buns' item and successfully opened edit modal, confirmed unique ID implementation with 'edit-item-image-upload-0e6620cc-a45b-4d8f-acec-b56de3e9277f' 3) IMAGE UPLOAD IN EDIT MODAL: Successfully uploaded test image (red 100x100 pixel) to existing 'Bao Buns' item, image preview appeared correctly in edit modal, console debug messages confirmed correct item ID being updated 4) SAVE AND VERIFY PERSISTENCE: Saved changes successfully with console showing 'EDIT DEBUG: Updating/adding image for item: 0e6620cc-a45b-4d8f-acec-b56de3e9277f', image persisted correctly when editing same item again, red square image now visible in production items table 5) VERIFY IMAGE ISOLATION: Confirmed image from edit modal did NOT appear in 'Add New Item' form, separate IDs working correctly (edit: unique per item, new: 'new-item-image-upload') 6) CONSOLE DEBUG MONITORING: All debug messages working correctly showing proper item ID association and image endpoint calls. BUG FIX CONFIRMED: The issue where uploading an image in edit modal would mistakenly associate it with new item creation has been completely resolved. Images now correctly save to the specific item being edited and do not cross-contaminate between edit and new item forms."
+
   - task: "Customizable invoice PDF with logo and settings"
     implemented: true
     working: true
