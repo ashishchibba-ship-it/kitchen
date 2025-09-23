@@ -411,6 +411,7 @@ class OrderCreate(BaseModel):
     delivery_address: str
     items: List[OrderItem]
     delivery_date: Optional[date] = None
+    delivery_time: Optional[str] = None  # New field for delivery time (HH:MM format)
 
 class Invoice(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
