@@ -3026,11 +3026,17 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
     return true;
   };
 
-  const formatDeliveryDate = (deliveryDate) => {
+  const formatDeliveryDate = (deliveryDate, deliveryTime) => {
     if (!deliveryDate) return 'Not specified';
     try {
       const date = new Date(deliveryDate);
-      return date.toLocaleDateString() + ' at ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      let formatted = date.toLocaleDateString();
+      
+      if (deliveryTime) {
+        formatted += ` at ${deliveryTime}`;
+      }
+      
+      return formatted;
     } catch (error) {
       return deliveryDate;
     }
