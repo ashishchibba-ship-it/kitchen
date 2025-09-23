@@ -3416,6 +3416,7 @@ const VenueStaffDashboard = ({ user, appSettings }) => {
   const [activeTab, setActiveTab] = useState('recently-ordered');
   const [deliveryAddress, setDeliveryAddress] = useState(user.address || '');
   const [deliveryDate, setDeliveryDate] = useState('');
+  const [deliveryTime, setDeliveryTime] = useState(''); // New state for delivery time
   const [itemQuantities, setItemQuantities] = useState({}); // Track quantities for real-time price calculation
 
   useEffect(() => {
