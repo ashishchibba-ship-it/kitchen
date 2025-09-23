@@ -3278,7 +3278,7 @@ const KitchenStaffDashboard = ({ user, appSettings }) => {
                         <div className="text-sm mb-2">
                           <strong className="text-orange-600">📅 Requested Delivery Date:</strong> 
                           <span className="ml-2 font-medium text-orange-700">
-                            {formatDeliveryDate(order.delivery_date)}
+                            {formatDeliveryDate(order.delivery_date, order.delivery_time)}
                           </span>
                         </div>
                         <div className="text-sm text-gray-600 mb-2">
