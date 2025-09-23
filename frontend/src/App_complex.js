@@ -3871,6 +3871,7 @@ const VenueStaffDashboardOriginal = ({ user, appSettings }) => {
   const [activeTab, setActiveTab] = useState('order');
   const [deliveryAddress, setDeliveryAddress] = useState(user.address || '');
   const [deliveryDate, setDeliveryDate] = useState('');
+  const [deliveryTime, setDeliveryTime] = useState(''); // New state for delivery time
 
   useEffect(() => {
     fetchCompletedItems();
