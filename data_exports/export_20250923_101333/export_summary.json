@@ -1,0 +1,10 @@
+{
+  "export_timestamp": "20250923_101333",
+  "database_name": "production_database",
+  "production_items_count": 23,
+  "users_count": 14,
+  "orders_count": 13,
+  "settings_count": 1,
+  "items_with_images": 1,
+  "total_backup_files": 4
+}

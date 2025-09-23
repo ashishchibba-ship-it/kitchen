@@ -1,0 +1,132 @@
+[
+  {
+    "_id": "68cd06f5bda175a1fc7c3d9a",
+    "id": "6f779494-1139-4dff-8008-2d6355935cf4",
+    "name": "Kitchen Manager",
+    "role": "manager",
+    "username": "manager",
+    "password": "admin123",
+    "address": null
+  },
+  {
+    "_id": "68cd06f5bda175a1fc7c3d9b",
+    "id": "039b22a8-7ad6-4684-ba04-bdae6f2a5a00",
+    "name": "Chef Alice",
+    "role": "kitchen_staff",
+    "username": "chef_alice",
+    "password": "chef123",
+    "address": null
+  },
+  {
+    "_id": "68cd06f5bda175a1fc7c3d9c",
+    "id": "a73d4c88-24f9-42ac-a9bb-77b7db4c2507",
+    "name": "Chef Bob",
+    "role": "kitchen_staff",
+    "username": "chef_bob",
+    "password": "chef456",
+    "address": null
+  },
+  {
+    "_id": "68cd06f5bda175a1fc7c3d9d",
+    "id": "eac2c85b-c829-4d5e-870c-63105ea651b6",
+    "name": "Downtown Cafe",
+    "role": "venue_staff",
+    "username": "downtown_cafe",
+    "password": "venue123",
+    "address": "123 Main St, Downtown, City 12345"
+  },
+  {
+    "_id": "68cd06f5bda175a1fc7c3d9e",
+    "id": "839aebd2-45f7-4340-a465-271b1de3a11f",
+    "name": "Uptown Restaurant",
+    "role": "venue_staff",
+    "username": "uptown_restaurant",
+    "password": "venue456",
+    "address": "456 Oak Ave, Uptown, City 67890"
+  },
+  {
+    "_id": "6880b06f94b806fb500e6b74",
+    "id": "63a4873a-ac7f-45a4-b434-bdd331f19d61",
+    "name": "Manager",
+    "role": "manager",
+    "username": "system_manager",
+    "password": "admin123",
+    "updated_at": "2025-08-13 10:25:21.381000",
+    "address": "Mount Hawthorn"
+  },
+  {
+    "_id": "6880b06f94b806fb500e6b75",
+    "id": "57518266-6334-460a-af68-06253c60f007",
+    "name": "Production Kitchen",
+    "role": "kitchen_staff",
+    "username": "production_kitchen",
+    "password": "chef456",
+    "updated_at": "2025-08-13 10:25:21.037000",
+    "address": "23-27 Hastings street, Scarborough"
+  },
+  {
+    "_id": "6880b06f94b806fb500e6b77",
+    "id": "1b26e90c-3b4b-4559-9546-905eb3eaf813",
+    "name": "Street Eats City",
+    "role": "venue_staff",
+    "username": "yagansquare_streeteats",
+    "password": "venue456",
+    "updated_at": "2025-08-13 10:25:21.187000",
+    "address": "Yagan Square, Horseshoe Lane, 420 Wellington St"
+  },
+  {
+    "_id": "6880b06f94b806fb500e6b78",
+    "id": "a8d1ce78-063a-4b6f-88ac-5e4078bbbb3e",
+    "name": "Street Eats Rockingham",
+    "role": "venue_staff",
+    "username": "rockingham_streeteats",
+    "password": "Rockingham08!",
+    "updated_at": "2025-08-13 03:16:14.362000",
+    "address": "TBA"
+  },
+  {
+    "_id": "68b0184120d2179d9c73b472",
+    "id": "80feb720-9ab8-404c-b38f-b3dd695d1287",
+    "name": "Kitchen Manager",
+    "role": "manager",
+    "username": "manager",
+    "password": "admin123",
+    "address": null
+  },
+  {
+    "_id": "68b0185e20d2179d9c73b473",
+    "id": "a9fc6bcc-3077-4d8a-8ec2-7317c83c82a2",
+    "name": "Chef Alice",
+    "role": "kitchen_staff",
+    "username": "chef_alice",
+    "password": "chef123",
+    "address": null
+  },
+  {
+    "_id": "68b0186c20d2179d9c73b474",
+    "id": "e94e7251-ddfa-4335-98f2-07e5edf14a15",
+    "name": "Chef Bob",
+    "role": "kitchen_staff",
+    "username": "chef_bob",
+    "password": "chef456",
+    "address": null
+  },
+  {
+    "_id": "68b0187220d2179d9c73b475",
+    "id": "750f3b3e-0b9c-4e73-b558-4c75573df0d6",
+    "name": "Downtown Cafe",
+    "role": "venue_staff",
+    "username": "downtown_cafe",
+    "password": "venue123",
+    "address": "123 Main St, Downtown, City 12345"
+  },
+  {
+    "_id": "68b0187720d2179d9c73b476",
+    "id": "d2873032-5eb2-401c-8153-294c1d9f00cd",
+    "name": "Uptown Restaurant",
+    "role": "venue_staff",
+    "username": "uptown_restaurant",
+    "password": "venue456",
+    "address": "456 Oak Ave, Uptown, City 67890"
+  }
+]
