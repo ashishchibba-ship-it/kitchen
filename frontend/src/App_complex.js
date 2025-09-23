@@ -3949,10 +3949,15 @@ const VenueStaffDashboardOriginal = ({ user, appSettings }) => {
         orderData.delivery_date = deliveryDate;
       }
 
+      if (deliveryTime) {
+        orderData.delivery_time = deliveryTime;
+      }
+
       await axios.post(`${API}/orders`, orderData);
 
       setCart([]);
       setDeliveryDate('');
+      setDeliveryTime(''); // Clear delivery time
       fetchOrders();
       alert('Order placed successfully!');
     } catch (error) {
