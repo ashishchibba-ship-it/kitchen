@@ -953,25 +953,35 @@ const ManagerDashboard = ({ user, appSettings }) => {
 
   const handleEditProductionItem = async (itemId, updatedData) => {
     try {
+      console.log('EDIT DEBUG: Saving item with ID:', itemId);
+      console.log('EDIT DEBUG: Updated data:', updatedData);
+      
       // If image is being updated, handle it separately
       if (updatedData.image !== undefined) {
         const { image, ...otherData } = updatedData;
         
+        console.log('EDIT DEBUG: Image data present:', !!image);
+        console.log('EDIT DEBUG: Other data:', otherData);
+        
         // Update basic item data first
         if (Object.keys(otherData).length > 0) {
+          console.log('EDIT DEBUG: Updating basic data for item:', itemId);
           await axios.put(`${API}/production-items/${itemId}`, otherData);
         }
         
         // Handle image update/removal separately
         if (image === null) {
           // Remove image
+          console.log('EDIT DEBUG: Removing image for item:', itemId);
           await axios.delete(`${API}/production-items/${itemId}/image`);
         } else if (image) {
           // Update/add image
+          console.log('EDIT DEBUG: Updating/adding image for item:', itemId);
           await axios.put(`${API}/production-items/${itemId}/image`, { image });
         }
       } else {
         // No image update, just regular data update
+        console.log('EDIT DEBUG: No image data, regular update for item:', itemId);
         await axios.put(`${API}/production-items/${itemId}`, updatedData);
       }
       
