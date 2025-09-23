@@ -1566,6 +1566,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                       Item Image
                     </label>
                     <ImageUpload 
+                      id={`edit-item-image-upload-${editingItem.id}`}
                       onImageSelect={(image) => setEditingItem({...editingItem, image})}
                       currentImage={editingItem.image}
                     />
