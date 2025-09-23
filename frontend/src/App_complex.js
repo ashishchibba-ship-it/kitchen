@@ -4040,14 +4040,27 @@ const VenueStaffDashboardOriginal = ({ user, appSettings }) => {
                     />
                   </div>
                   
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Delivery Date (Optional)</label>
-                    <input
-                      type="date"
-                      value={deliveryDate}
-                      onChange={(e) => setDeliveryDate(e.target.value)}
-                      className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Delivery Date (Optional)</label>
+                      <input
+                        type="date"
+                        value={deliveryDate}
+                        onChange={(e) => setDeliveryDate(e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Delivery Time (Optional)</label>
+                      <input
+                        type="time"
+                        value={deliveryTime}
+                        onChange={(e) => setDeliveryTime(e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Select time"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Leave empty if no specific time required</p>
+                    </div>
                   </div>
 
                   {cart.map(item => (
