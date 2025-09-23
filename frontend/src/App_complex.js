@@ -20,8 +20,13 @@ const fileToBase64 = (file) => {
 };
 
 // Image Upload Component
-const ImageUpload = ({ onImageSelect, currentImage }) => {
+const ImageUpload = ({ onImageSelect, currentImage, id = "image-upload" }) => {
   const [preview, setPreview] = useState(currentImage);
+
+  // Update preview when currentImage changes (important for edit modals)
+  React.useEffect(() => {
+    setPreview(currentImage);
+  }, [currentImage]);
 
   const handleFileSelect = async (e) => {
     const file = e.target.files[0];
@@ -43,10 +48,10 @@ const ImageUpload = ({ onImageSelect, currentImage }) => {
         accept="image/*"
         onChange={handleFileSelect}
         className="hidden"
-        id="image-upload"
+        id={id}
       />
       <label
-        htmlFor="image-upload"
+        htmlFor={id}
         className="cursor-pointer block w-full p-3 border-2 border-dashed border-gray-300 rounded-md text-center hover:border-blue-500 transition-colors"
       >
         {preview ? (
