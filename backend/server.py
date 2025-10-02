@@ -720,17 +720,34 @@ async def get_app_settings():
 
 @api_router.put("/settings", response_model=AppSettings)
 async def update_app_settings(settings_update: AppSettingsUpdate):
+    # First, get the existing settings to ensure we have an ID
+    existing_settings = await db.app_settings.find_one()
+    
+    if not existing_settings:
+        # Create default settings if none exist
+        default_settings = AppSettings()
+        await db.app_settings.insert_one(default_settings.dict())
+        existing_settings = await db.app_settings.find_one()
+    
+    # Prepare update data
     update_data = {k: v for k, v in settings_update.dict().items() if v is not None}
     update_data["updated_at"] = datetime.utcnow()
     
+    print(f"DEBUG: Updating settings with tax_rate: {update_data.get('tax_rate', 'NOT_SET')}")
+    
+    # Update the specific settings document by ID
     result = await db.app_settings.update_one(
-        {},
-        {"$set": update_data},
-        upsert=True
+        {"id": existing_settings["id"]},
+        {"$set": update_data}
     )
     
-    settings = await db.app_settings.find_one()
-    return AppSettings(**settings)
+    print(f"DEBUG: Update result - matched: {result.matched_count}, modified: {result.modified_count}")
+    
+    # Retrieve and return updated settings
+    updated_settings = await db.app_settings.find_one({"id": existing_settings["id"]})
+    print(f"DEBUG: Retrieved tax_rate after update: {updated_settings.get('tax_rate', 'NOT_FOUND')}")
+    
+    return AppSettings(**updated_settings)
 
 # Notification Management Endpoints
 @api_router.get("/notification-preferences", response_model=List[NotificationPreference])
