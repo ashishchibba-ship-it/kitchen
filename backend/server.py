@@ -733,19 +733,14 @@ async def update_app_settings(settings_update: AppSettingsUpdate):
     update_data = {k: v for k, v in settings_update.dict().items() if v is not None}
     update_data["updated_at"] = datetime.utcnow()
     
-    print(f"DEBUG: Updating settings with tax_rate: {update_data.get('tax_rate', 'NOT_SET')}")
-    
     # Update the specific settings document by ID
     result = await db.app_settings.update_one(
         {"id": existing_settings["id"]},
         {"$set": update_data}
     )
     
-    print(f"DEBUG: Update result - matched: {result.matched_count}, modified: {result.modified_count}")
-    
     # Retrieve and return updated settings
     updated_settings = await db.app_settings.find_one({"id": existing_settings["id"]})
-    print(f"DEBUG: Retrieved tax_rate after update: {updated_settings.get('tax_rate', 'NOT_FOUND')}")
     
     return AppSettings(**updated_settings)
 
