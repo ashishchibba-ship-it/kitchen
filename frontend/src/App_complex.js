@@ -2808,7 +2808,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                       step="0.1"
                       min="0"
                       max="100"
-                      defaultValue={(settings.tax_rate || 0.08) * 100}
+                      defaultValue={(settings.tax_rate !== undefined ? settings.tax_rate : 0.08) * 100}
                       className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="8.0"
                     />
