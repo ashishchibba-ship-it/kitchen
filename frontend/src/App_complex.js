@@ -2804,12 +2804,8 @@ const ManagerDashboard = ({ user, appSettings }) => {
                       step="0.1"
                       min="0"
                       max="100"
-                      defaultValue={(() => {
-                        const taxRate = settings.tax_rate !== undefined ? settings.tax_rate : 0.08;
-                        console.log('DEBUG: settings.tax_rate =', settings.tax_rate);
-                        console.log('DEBUG: calculated defaultValue =', taxRate * 100);
-                        return taxRate * 100;
-                      })()}
+                      key={settings.tax_rate} // Force re-render when settings change
+                      defaultValue={(settings.tax_rate !== undefined ? settings.tax_rate : 0.08) * 100}
                       className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="8.0"
                     />
