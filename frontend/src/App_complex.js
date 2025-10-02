@@ -1100,11 +1100,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
       console.log('Settings update response:', response.data);
       setSettings(response.data);
       alert('Settings saved successfully! Your changes have been applied.');
-      
-      // Refresh the page to ensure all components use the new settings
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // No need to reload - React state will update the UI automatically
     } catch (error) {
       console.error('Error updating settings:', error);
       alert('Error saving settings. Please try again.');
