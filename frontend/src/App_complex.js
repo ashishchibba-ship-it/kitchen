@@ -3810,11 +3810,13 @@ const VenueStaffDashboard = ({ user, appSettings }) => {
                     <p className="text-lg">
                       Subtotal: ${cart.reduce((total, item) => total + (item.unit_price * item.orderQuantity), 0).toFixed(2)}
                     </p>
-                    <p className="text-sm text-gray-600">
-                      Tax (8%): ${(cart.reduce((total, item) => total + (item.unit_price * item.orderQuantity), 0) * 0.08).toFixed(2)}
-                    </p>
+                    {appSettings.tax_rate > 0 && (
+                      <p className="text-sm text-gray-600">
+                        Tax ({(appSettings.tax_rate * 100).toFixed(1)}%): ${(cart.reduce((total, item) => total + (item.unit_price * item.orderQuantity), 0) * appSettings.tax_rate).toFixed(2)}
+                      </p>
+                    )}
                     <p className="text-xl font-bold">
-                      Total: ${(cart.reduce((total, item) => total + (item.unit_price * item.orderQuantity), 0) * 1.08).toFixed(2)}
+                      Total: ${(cart.reduce((total, item) => total + (item.unit_price * item.orderQuantity), 0) * (1 + appSettings.tax_rate)).toFixed(2)}
                     </p>
                   </div>
                   <button
