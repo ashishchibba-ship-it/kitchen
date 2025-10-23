@@ -3422,9 +3422,10 @@ const VenueStaffDashboard = ({ user, appSettings }) => {
   const [cart, setCart] = useState([]);
   const [orders, setOrders] = useState([]);
   
-  // Debug logging
-  console.log('VenueStaffDashboard - appSettings.tax_rate:', appSettings?.tax_rate);
-  console.log('VenueStaffDashboard - full appSettings:', appSettings);
+  // Debug logging - VERSION 2.0
+  console.log('VenueStaffDashboard v2.0 - appSettings.tax_rate:', appSettings?.tax_rate);
+  console.log('VenueStaffDashboard v2.0 - full appSettings:', appSettings);
+  window.DEBUG_TAX_RATE = appSettings?.tax_rate; // Make it globally accessible
   const [orderHistory, setOrderHistory] = useState({ most_ordered: [], recently_ordered: [] });
   const [activeTab, setActiveTab] = useState('recently-ordered');
   const [deliveryAddress, setDeliveryAddress] = useState(user.address || '');
