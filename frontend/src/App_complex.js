@@ -4129,6 +4129,7 @@ const VenueStaffDashboardOriginal = ({ user, appSettings }) => {
                       {appSettings.tax_rate > 0 && (
                         <p className="text-sm text-gray-600">Tax ({(appSettings.tax_rate * 100).toFixed(1)}%): ${(cart.reduce((total, item) => total + (item.unit_price * item.orderQuantity), 0) * appSettings.tax_rate).toFixed(2)}</p>
                       )}
+                      {/* DEBUG v2.0: Tax rate is {appSettings.tax_rate} */}
                       <p className="text-xl font-bold">
                         Total: ${(cart.reduce((total, item) => total + (item.unit_price * item.orderQuantity), 0) * (1 + appSettings.tax_rate)).toFixed(2)}
                       </p>
