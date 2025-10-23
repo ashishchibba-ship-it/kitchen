@@ -3421,6 +3421,10 @@ const VenueStaffDashboard = ({ user, appSettings }) => {
   const [activeCategory, setActiveCategory] = useState('');
   const [cart, setCart] = useState([]);
   const [orders, setOrders] = useState([]);
+  
+  // Debug logging
+  console.log('VenueStaffDashboard - appSettings.tax_rate:', appSettings?.tax_rate);
+  console.log('VenueStaffDashboard - full appSettings:', appSettings);
   const [orderHistory, setOrderHistory] = useState({ most_ordered: [], recently_ordered: [] });
   const [activeTab, setActiveTab] = useState('recently-ordered');
   const [deliveryAddress, setDeliveryAddress] = useState(user.address || '');
