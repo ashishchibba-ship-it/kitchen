@@ -1963,7 +1963,7 @@ async def get_dashboard_stats():
     }
 
 @api_router.get("/gmail/auth-url")
-async def get_gmail_auth_url(request: Request):
+async def get_gmail_auth_url():
     """Get Gmail authorization URL for web application"""
     try:
         # Use web application flow instead of installed app flow
@@ -1989,8 +1989,7 @@ async def get_gmail_auth_url(request: Request):
         )
         
         # Set redirect URI to current domain
-        base_url = str(request.base_url).rstrip('/')
-        flow.redirect_uri = f"{base_url}/api/gmail/oauth-callback"
+        flow.redirect_uri = "https://prepcart.preview.emergentagent.com/api/gmail/oauth-callback"
         
         auth_url, _ = flow.authorization_url(
             prompt='consent',
