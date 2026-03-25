@@ -2006,6 +2006,59 @@ async def get_gmail_auth_url(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating auth URL: {str(e)}")
 
+@api_router.get("/gmail/oauth-callback")
+async def gmail_oauth_callback(request: Request):
+    """Handle Gmail OAuth callback"""
+    try:
+        # Get authorization code from query parameters
+        auth_code = request.query_params.get('code')
+        if not auth_code:
+            raise HTTPException(status_code=400, detail="Missing authorization code")
+        
+        # Create flow with same config as auth URL
+        credentials_info = json.loads(open(str(GMAIL_CREDENTIALS_FILE)).read())
+        if 'web' in credentials_info:
+            client_config = credentials_info['web']
+        else:
+            client_config = credentials_info['installed']
+            
+        flow = Flow.from_client_config(
+            {
+                "web": {
+                    "client_id": client_config["client_id"],
+                    "client_secret": client_config["client_secret"],
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "token_uri": "https://oauth2.googleapis.com/token"
+                }
+            },
+            scopes=SCOPES
+        )
+        
+        base_url = str(request.base_url).rstrip('/')
+        flow.redirect_uri = f"{base_url}/api/gmail/oauth-callback"
+        
+        # Exchange authorization code for tokens
+        flow.fetch_token(code=auth_code)
+        
+        # Save credentials
+        creds = flow.credentials
+        with open(str(GMAIL_TOKEN_FILE), 'w') as token:
+            token.write(creds.to_json())
+        
+        # Reset gmail service to use new credentials
+        global gmail_service
+        gmail_service = None
+        
+        # Test the connection
+        test_service = get_gmail_service()
+        if test_service:
+            return {"message": "Gmail API successfully authorized! You can close this tab."}
+        else:
+            raise Exception("Failed to initialize Gmail service")
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"OAuth callback error: {str(e)}")
+
 @api_router.post("/gmail/callback")
 async def gmail_callback(auth_code: str):
     """Handle Gmail authorization callback with auth code"""
