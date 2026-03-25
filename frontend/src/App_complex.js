@@ -2134,11 +2134,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                             alert('Please authorize Gmail access in the new window, then come back and click "Check Status"');
                           }
                         } catch (error) {
-                          if (error.response?.status === 503) {
-                            alert('Gmail notifications are temporarily disabled. Your app works normally without them.');
-                          } else {
-                            alert('Error getting Gmail authorization URL: ' + error.message);
-                          }
+                          alert('Error getting Gmail authorization URL: ' + error.message);
                         }
                       }}
                       className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
