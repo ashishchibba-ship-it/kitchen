@@ -1963,12 +1963,48 @@ async def get_dashboard_stats():
     }
 
 @api_router.get("/gmail/auth-url")
-async def get_gmail_auth_url():
-    """Get Gmail authorization URL for setup - temporarily disabled"""
-    raise HTTPException(
-        status_code=503, 
-        detail="Gmail notifications temporarily unavailable. Your app works normally without them."
-    )
+async def get_gmail_auth_url(request: Request):
+    """Get Gmail authorization URL for web application"""
+    try:
+        # Use web application flow instead of installed app flow
+        credentials_info = json.loads(open(str(GMAIL_CREDENTIALS_FILE)).read())
+        
+        # Extract web client credentials or use installed app credentials
+        if 'web' in credentials_info:
+            client_config = credentials_info['web']
+        else:
+            client_config = credentials_info['installed']
+        
+        # Create flow for web application
+        flow = Flow.from_client_config(
+            {
+                "web": {
+                    "client_id": client_config["client_id"],
+                    "client_secret": client_config["client_secret"],
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "token_uri": "https://oauth2.googleapis.com/token"
+                }
+            },
+            scopes=SCOPES
+        )
+        
+        # Set redirect URI to current domain
+        base_url = str(request.base_url).rstrip('/')
+        flow.redirect_uri = f"{base_url}/api/gmail/oauth-callback"
+        
+        auth_url, _ = flow.authorization_url(
+            prompt='consent',
+            access_type='offline',
+            include_granted_scopes='true'
+        )
+        
+        return {
+            "auth_url": auth_url, 
+            "redirect_uri": flow.redirect_uri,
+            "message": "Visit this URL to authorize Gmail API access"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating auth URL: {str(e)}")
 
 @api_router.post("/gmail/callback")
 async def gmail_callback(auth_code: str):
