@@ -2007,12 +2007,11 @@ async def get_gmail_auth_url(request: Request):
         raise HTTPException(status_code=500, detail=f"Error generating auth URL: {str(e)}")
 
 @api_router.get("/gmail/oauth-callback")
-async def gmail_oauth_callback(request: Request):
+async def gmail_oauth_callback(code: str = None):
     """Handle Gmail OAuth callback"""
     try:
         # Get authorization code from query parameters
-        auth_code = request.query_params.get('code')
-        if not auth_code:
+        if not code:
             raise HTTPException(status_code=400, detail="Missing authorization code")
         
         # Create flow with same config as auth URL
@@ -2034,11 +2033,11 @@ async def gmail_oauth_callback(request: Request):
             scopes=SCOPES
         )
         
-        base_url = str(request.base_url).rstrip('/')
-        flow.redirect_uri = f"{base_url}/api/gmail/oauth-callback"
+        # Use a fixed redirect URI for the callback
+        flow.redirect_uri = "https://prepcart.preview.emergentagent.com/api/gmail/oauth-callback"
         
         # Exchange authorization code for tokens
-        flow.fetch_token(code=auth_code)
+        flow.fetch_token(code=code)
         
         # Save credentials
         creds = flow.credentials
