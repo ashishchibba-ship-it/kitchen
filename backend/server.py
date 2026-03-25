@@ -1964,11 +1964,34 @@ async def get_dashboard_stats():
 
 @api_router.get("/gmail/auth-url")
 async def get_gmail_auth_url():
-    """Gmail notifications temporarily disabled"""
-    return {
-        "message": "Gmail notifications are temporarily disabled. Your app works fully without them.",
-        "status": "disabled"
-    }
+    """Get Gmail authorization URL for web application"""
+    try:
+        # Use web application flow
+        credentials_info = json.loads(open(str(GMAIL_CREDENTIALS_FILE)).read())
+        client_config = credentials_info['web']
+        
+        # Create flow for web application
+        flow = Flow.from_client_config(
+            credentials_info,
+            scopes=SCOPES
+        )
+        
+        # Set redirect URI from credentials
+        flow.redirect_uri = "https://prepcart.preview.emergentagent.com/api/gmail/oauth-callback"
+        
+        auth_url, _ = flow.authorization_url(
+            prompt='consent',
+            access_type='offline',
+            include_granted_scopes='true'
+        )
+        
+        return {
+            "auth_url": auth_url, 
+            "redirect_uri": flow.redirect_uri,
+            "message": "Visit this URL to authorize Gmail API access"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating auth URL: {str(e)}")
 
 @api_router.get("/gmail/oauth-callback")
 async def gmail_oauth_callback(code: str = None):
