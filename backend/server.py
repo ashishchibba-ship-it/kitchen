@@ -1964,13 +1964,11 @@ async def get_dashboard_stats():
 
 @api_router.get("/gmail/auth-url")
 async def get_gmail_auth_url():
-    """Get Gmail authorization URL for setup"""
-    try:
-        flow = InstalledAppFlow.from_client_secrets_file(str(GMAIL_CREDENTIALS_FILE), SCOPES)
-        auth_url, _ = flow.authorization_url(prompt='consent')
-        return {"auth_url": auth_url, "message": "Visit this URL to authorize Gmail API access"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating auth URL: {str(e)}")
+    """Get Gmail authorization URL for setup - temporarily disabled"""
+    raise HTTPException(
+        status_code=503, 
+        detail="Gmail notifications temporarily unavailable. Your app works normally without them."
+    )
 
 @api_router.post("/gmail/callback")
 async def gmail_callback(auth_code: str):
