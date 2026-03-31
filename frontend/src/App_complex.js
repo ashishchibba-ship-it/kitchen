@@ -2946,6 +2946,114 @@ const ManagerDashboard = ({ user, appSettings }) => {
               </form>
             </div>
           </div>
+
+          {/* Units of Measure Management */}
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">Units of Measure</h3>
+              <p className="text-sm text-gray-600">Manage custom units for your production items</p>
+            </div>
+            
+            {/* Add New Unit Form */}
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-medium text-gray-800 mb-3">Add New Unit</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Dozen, Box, Bag"
+                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    id="new-unit-name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Abbreviation (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., doz, box, bag"
+                    className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    id="new-unit-abbrev"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const nameInput = document.getElementById('new-unit-name');
+                      const abbrevInput = document.getElementById('new-unit-abbrev');
+                      
+                      if (!nameInput.value.trim()) {
+                        alert('Please enter a unit name');
+                        return;
+                      }
+                      
+                      try {
+                        await axios.post(`${API}/units`, {
+                          name: nameInput.value.trim(),
+                          abbreviation: abbrevInput.value.trim() || null
+                        });
+                        
+                        nameInput.value = '';
+                        abbrevInput.value = '';
+                        fetchUnits();
+                        alert('Unit added successfully!');
+                      } catch (error) {
+                        alert('Error adding unit: ' + (error.response?.data?.detail || error.message));
+                      }
+                    }}
+                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    Add Unit
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Units List */}
+            <div>
+              <h4 className="font-medium text-gray-800 mb-3">Current Units</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {units.map(unit => (
+                  <div key={unit.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                    <div>
+                      <div className="font-medium text-gray-800">{unit.name}</div>
+                      {unit.abbreviation && (
+                        <div className="text-sm text-gray-600">({unit.abbreviation})</div>
+                      )}
+                      {unit.is_default && (
+                        <div className="text-xs text-blue-600 font-medium">Default</div>
+                      )}
+                    </div>
+                    {!unit.is_default && (
+                      <button
+                        onClick={async () => {
+                          if (confirm(`Delete unit "${unit.name}"? This cannot be undone.`)) {
+                            try {
+                              await axios.delete(`${API}/units/${unit.id}`);
+                              fetchUnits();
+                              alert('Unit deleted successfully!');
+                            } catch (error) {
+                              alert('Error deleting unit: ' + (error.response?.data?.detail || error.message));
+                            }
+                          }
+                        }}
+                        className="text-red-600 hover:text-red-800 p-1"
+                        title="Delete unit"
+                      >
+                        🗑️
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {units.length === 0 && (
+                <div className="text-center py-4 text-gray-500">
+                  No units found. Add your first unit above.
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </div>
