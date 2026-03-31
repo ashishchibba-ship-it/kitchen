@@ -329,7 +329,6 @@ class Unit(BaseModel):
 class UnitCreate(BaseModel):
     name: str
     abbreviation: Optional[str] = None
-    updated_at: datetime
 
 class NotificationEvent(BaseModel):
     id: str
