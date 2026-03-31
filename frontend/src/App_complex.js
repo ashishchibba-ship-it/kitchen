@@ -1326,10 +1326,12 @@ const ManagerDashboard = ({ user, appSettings }) => {
                       className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
                     >
-                      <option value="kilo">Kilo (kg)</option>
-                      <option value="litre">Litre (L)</option>
-                      <option value="carton">Carton</option>
-                      <option value="each">Each</option>
+                      <option value="">Select Unit</option>
+                      {units.map(unit => (
+                        <option key={unit.id} value={unit.name.toLowerCase()}>
+                          {unit.name} {unit.abbreviation ? `(${unit.abbreviation})` : ''}
+                        </option>
+                      ))}
                     </select>
                     <p className="text-xs text-gray-500 mt-1">Select the unit of measure for this item</p>
                   </div>
