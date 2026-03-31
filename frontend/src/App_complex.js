@@ -287,6 +287,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
     fetchArchivedOrders();
     fetchUsers();
     fetchCategories();
+    fetchUnits();
     fetchDetailedCategories();
     fetchInvoices();
     fetchPurchaseOrders();
