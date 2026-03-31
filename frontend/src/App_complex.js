@@ -238,6 +238,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
   });
   const [notificationPreferences, setNotificationPreferences] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [units, setUnits] = useState([]);
   const [localNotificationPreferences, setLocalNotificationPreferences] = useState([]);
   const [localProductionItems, setLocalProductionItems] = useState([]);
   const [localUsers, setLocalUsers] = useState([]);
