@@ -1280,7 +1280,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
                   <strong>Required Fields:</strong> Item Name, Category, Unit of Measure, and Base Cost are required to create a production item.
                 </p>
                 <p className="text-xs text-blue-600 mt-1">
-                  💡 Choose from kilo, litre, carton, or each as unit of measure. All items are always available for ordering.
+                  💡 Add production items with custom units of measure. All items are always available for ordering.
                 </p>
               </div>
               <form onSubmit={handleCreateItem} className="space-y-4">
