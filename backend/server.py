@@ -318,6 +318,17 @@ class NotificationPreference(BaseModel):
     notify_sms: bool = False
     notify_in_app: bool = True
     created_at: datetime
+
+class Unit(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    abbreviation: Optional[str] = None
+    is_default: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class UnitCreate(BaseModel):
+    name: str
+    abbreviation: Optional[str] = None
     updated_at: datetime
 
 class NotificationEvent(BaseModel):
