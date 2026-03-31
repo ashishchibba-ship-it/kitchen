@@ -2009,7 +2009,9 @@ async def gmail_oauth_callback(code: str = None):
             scopes=SCOPES
         )
         
-        flow.redirect_uri = "https://prepcart.preview.emergentagent.com/api/gmail/oauth-callback"
+        # Set redirect URI dynamically based on environment
+        base_url = os.environ.get('OAUTH_REDIRECT_BASE_URL', 'https://prepcart.preview.emergentagent.com')
+        flow.redirect_uri = f"{base_url}/api/gmail/oauth-callback"
         
         # Exchange authorization code for tokens
         flow.fetch_token(code=code)
