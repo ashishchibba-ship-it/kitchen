@@ -2951,7 +2951,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
             </div>
           </div>
 
-          {/* Units of Measure Management - Temporarily commented out for testing
+          {/* Units of Measure Management */}
           <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-gray-800">Units of Measure</h3>
