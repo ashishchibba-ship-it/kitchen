@@ -2090,6 +2090,53 @@ async def gmail_status():
     except Exception as e:
         return {"authorized": False, "message": f"Gmail API error: {str(e)}"}
 
+# Units management endpoints
+@api_router.get("/units", response_model=List[Unit])
+async def get_units():
+    """Get all units of measure"""
+    units = await db.units.find().to_list(length=1000)
+    if not units:
+        # Create default units if none exist
+        default_units = [
+            {"id": str(uuid.uuid4()), "name": "Kilogram", "abbreviation": "kg", "is_default": True, "created_at": datetime.utcnow()},
+            {"id": str(uuid.uuid4()), "name": "Litre", "abbreviation": "L", "is_default": True, "created_at": datetime.utcnow()},
+            {"id": str(uuid.uuid4()), "name": "Each", "abbreviation": "ea", "is_default": True, "created_at": datetime.utcnow()},
+            {"id": str(uuid.uuid4()), "name": "Carton", "abbreviation": "ctn", "is_default": True, "created_at": datetime.utcnow()},
+        ]
+        await db.units.insert_many(default_units)
+        units = await db.units.find().to_list(length=1000)
+    return [Unit(**unit) for unit in units]
+
+@api_router.post("/units", response_model=Unit)
+async def create_unit(unit: UnitCreate):
+    """Create a new unit of measure"""
+    unit_dict = unit.dict()
+    unit_dict["id"] = str(uuid.uuid4())
+    unit_dict["is_default"] = False
+    unit_dict["created_at"] = datetime.utcnow()
+    
+    await db.units.insert_one(unit_dict)
+    return Unit(**unit_dict)
+
+@api_router.delete("/units/{unit_id}")
+async def delete_unit(unit_id: str):
+    """Delete a unit of measure"""
+    # Check if unit is being used by any production items
+    items_using_unit = await db.production_items.find({"unit_of_measure": unit_id}).to_list(length=1)
+    if items_using_unit:
+        raise HTTPException(status_code=400, detail="Cannot delete unit that is being used by production items")
+    
+    # Don't allow deleting default units
+    unit = await db.units.find_one({"id": unit_id})
+    if unit and unit.get("is_default"):
+        raise HTTPException(status_code=400, detail="Cannot delete default units")
+    
+    result = await db.units.delete_one({"id": unit_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Unit not found")
+    
+    return {"message": "Unit deleted successfully"}
+
 @api_router.get("/")
 async def root():
     return {"message": "Production Kitchen Management API"}
