@@ -3058,6 +3058,7 @@ const ManagerDashboard = ({ user, appSettings }) => {
               )}
             </div>
           </div>
+          </div>
 
         )}
       </div>
