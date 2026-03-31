@@ -419,6 +419,26 @@ const ManagerDashboard = ({ user, appSettings }) => {
     }
   };
 
+  const fetchUnits = async () => {
+    try {
+      console.log('Fetching units from:', `${API}/units`);
+      const response = await axios.get(`${API}/units`);
+      setUnits(response.data);
+      console.log('Units loaded:', response.data.length, 'units');
+    } catch (error) {
+      console.error('Error fetching units:', error);
+      // Fallback to basic units
+      const basicUnits = [
+        { id: 'kilo', name: 'Kilogram', abbreviation: 'kg' },
+        { id: 'litre', name: 'Litre', abbreviation: 'L' },
+        { id: 'each', name: 'Each', abbreviation: 'ea' },
+        { id: 'carton', name: 'Carton', abbreviation: 'ctn' }
+      ];
+      setUnits(basicUnits);
+      console.log('Using fallback units:', basicUnits);
+    }
+  };
+
   const fetchDetailedCategories = async () => {
     try {
       const response = await axios.get(`${API}/categories/detailed`);
