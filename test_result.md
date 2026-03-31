@@ -589,8 +589,10 @@ frontend:
           comment: "✅ PASSED - DELIVERY TIME PICKER FUNCTIONALITY COMPREHENSIVE TESTING COMPLETED (100% success rate). DETAILED VERIFICATION: 1) VENUE STAFF LOGIN & ORDERING INTERFACE: Successfully logged in as Downtown Cafe venue staff, accessed ordering interface with all navigation tabs working (Recently Ordered, Most Ordered, categories, Cart, Orders), added items to cart successfully 2) DELIVERY DATE & TIME FORM TESTING: ✅ Delivery date picker PRESENT with label 'Preferred Delivery Date (Optional)', ✅ Delivery time picker PRESENT with label 'Preferred Delivery Time (Optional)', ✅ Helper text PRESENT: 'Leave empty if no specific time required', ✅ Both fields work independently - can set date and time separately, ✅ Delivery address field working correctly 3) ORDER PLACEMENT WITH TIME: Successfully placed order with specific delivery time (2:30 PM / 14:30), form accepts both date (09/24/2025) and time (14:30) values, order submission successful with time included 4) ORDER PLACEMENT WITHOUT TIME: Successfully placed order with date but NO time specified, time field left empty as intended, order submission successful without time 5) KITCHEN STAFF VIEW VERIFICATION: Successfully logged in as Production Kitchen staff, accessed kitchen dashboard with 'New Orders - Start Preparation' section, verified correct time display formats: orders WITH time show 'Date at Time' format (e.g., '9/24/2025 at 14:30'), orders WITHOUT time show only date (no random 8am times), no arbitrary times added when time wasn't selected 6) SUCCESS CRITERIA MET: ✅ Time picker appears alongside date picker in venue ordering, ✅ Orders can be placed with or without time, ✅ Kitchen staff sees correct time display (only if time was selected), ✅ No random '8am' times appear when time wasn't selected, ✅ JavaScript functionality working without errors. The delivery time picker functionality is fully implemented, working correctly, and meets all specified requirements."
 
 test_plan:
-  current_focus: []
-  stuck_tasks: []
+  current_focus: 
+    - "Units of Measure management feature in Manager Settings"
+  stuck_tasks:
+    - "Units of Measure management feature in Manager Settings"
   test_all: false
   test_priority: "high_first"
 
