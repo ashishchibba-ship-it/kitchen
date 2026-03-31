@@ -1439,10 +1439,11 @@ const ManagerDashboard = ({ user, appSettings }) => {
                             }}
                             className="w-24 p-1 border border-gray-300 rounded text-sm"
                           >
-                            <option value="kilo">Kilo</option>
-                            <option value="litre">Litre</option>
-                            <option value="carton">Carton</option>
-                            <option value="each">Each</option>
+                            {units.map(unit => (
+                              <option key={unit.id} value={unit.name.toLowerCase()}>
+                                {unit.abbreviation || unit.name}
+                              </option>
+                            ))}
                           </select>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
