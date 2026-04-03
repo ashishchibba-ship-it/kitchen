@@ -397,6 +397,20 @@ class OrderItem(BaseModel):
     unit_of_measure: str
     unit_price: float = 15.0  # Default price per unit
 
+class CustomInvoiceItem(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    description: str
+    quantity: float
+    unit: str
+    unit_price: float
+    line_total: float
+
+class CustomInvoiceItemCreate(BaseModel):
+    description: str
+    quantity: float
+    unit: str
+    unit_price: float
+
 class Order(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     venue_name: str
