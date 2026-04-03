@@ -1791,6 +1791,7 @@ async def export_invoice_pdf(invoice_id: str):
         items_headers = ["Item", "Quantity", "Unit", "Unit Price", "Total"]
         items_data = [items_headers]
         
+        # Add regular production items
         for item in invoice.get("items", []):
             item_total = item.get("quantity", 0) * item.get("unit_price", 0)
             row_data = [
@@ -1799,6 +1800,17 @@ async def export_invoice_pdf(invoice_id: str):
                 item.get("unit_of_measure", "kilo"),
                 f"${item.get('unit_price', 0):.2f}",
                 f"${item_total:.2f}"
+            ]
+            items_data.append(row_data)
+        
+        # Add custom invoice items
+        for custom_item in invoice.get("custom_items", []):
+            row_data = [
+                custom_item.get("description", "N/A"),
+                str(custom_item.get("quantity", 0)),
+                custom_item.get("unit", "each"),
+                f"${custom_item.get('unit_price', 0):.2f}",
+                f"${custom_item.get('line_total', 0):.2f}"
             ]
             items_data.append(row_data)
         
