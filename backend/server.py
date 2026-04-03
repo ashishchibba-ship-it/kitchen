@@ -417,6 +417,7 @@ class Order(BaseModel):
     venue_id: str
     delivery_address: str
     items: List[OrderItem]
+    custom_items: List[CustomInvoiceItem] = []  # New field for custom invoice items
     status: OrderStatus = OrderStatus.PENDING
     order_date: datetime = Field(default_factory=datetime.utcnow)
     delivery_date: Optional[date] = None
