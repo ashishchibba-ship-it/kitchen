@@ -2470,6 +2470,13 @@ const ManagerDashboard = ({ user, appSettings }) => {
                         >
                           Export PDF
                         </button>
+                        <button
+                          onClick={() => openEditInvoice(invoice)}
+                          className="text-green-600 hover:text-green-900"
+                          title="Edit Invoice"
+                        >
+                          Edit Invoice
+                        </button>
                       </td>
                     </tr>
                   ))}
