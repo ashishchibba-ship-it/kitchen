@@ -1048,61 +1048,6 @@ const ManagerDashboard = ({ user, appSettings }) => {
     }
   };
 
-  // Custom Invoice Items functions
-  const openEditInvoice = async (invoice) => {
-    setEditingInvoice(invoice);
-    // Fetch existing custom items for this order
-    try {
-      const order = orders.find(o => o.id === invoice.id);
-      setCustomItems(order?.custom_items || []);
-    } catch (error) {
-      console.error('Error loading custom items:', error);
-      setCustomItems([]);
-    }
-  };
-
-  const addCustomItem = async () => {
-    if (!newCustomItem.description || !newCustomItem.quantity || !newCustomItem.unit_price) {
-      alert('Please fill in all required fields');
-      return;
-    }
-
-    try {
-      const response = await axios.post(`${API}/orders/${editingInvoice.id}/custom-items`, {
-        description: newCustomItem.description,
-        quantity: parseFloat(newCustomItem.quantity),
-        unit: newCustomItem.unit || 'each',
-        unit_price: parseFloat(newCustomItem.unit_price)
-      });
-
-      setCustomItems([...customItems, response.data]);
-      setNewCustomItem({ description: '', quantity: '', unit: '', unit_price: '' });
-      
-      // Refresh orders to get updated totals
-      fetchOrders();
-      alert('Custom item added successfully!');
-    } catch (error) {
-      console.error('Error adding custom item:', error);
-      alert('Error adding custom item: ' + (error.response?.data?.detail || error.message));
-    }
-  };
-
-  const deleteCustomItem = async (itemId) => {
-    if (!confirm('Delete this custom item?')) return;
-
-    try {
-      await axios.delete(`${API}/orders/${editingInvoice.id}/custom-items/${itemId}`);
-      setCustomItems(customItems.filter(item => item.id !== itemId));
-      
-      // Refresh orders to get updated totals
-      fetchOrders();
-      alert('Custom item deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting custom item:', error);
-      alert('Error deleting custom item: ' + (error.response?.data?.detail || error.message));
-    }
-  };
-
   // Individual item completion tracking
   const toggleItemCompletion = (orderId, itemIndex) => {
     const key = `${orderId}-${itemIndex}`;
