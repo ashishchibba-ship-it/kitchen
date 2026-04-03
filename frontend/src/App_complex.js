@@ -2951,13 +2951,6 @@ const ManagerDashboard = ({ user, appSettings }) => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800">Units of Measure</h3>
-            <p className="text-sm text-gray-600">Manage custom units for your production items</p>
-            <p className="mt-4 text-blue-600">Feature temporarily disabled for testing</p>
-          </div>
-          </div>
-
         )}
       </div>
     </div>
