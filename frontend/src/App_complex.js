@@ -238,6 +238,16 @@ const ManagerDashboard = ({ user, appSettings }) => {
   });
   const [notificationPreferences, setNotificationPreferences] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  
+  // Custom Invoice editing state
+  const [editingInvoice, setEditingInvoice] = useState(null);
+  const [customItems, setCustomItems] = useState([]);
+  const [newCustomItem, setNewCustomItem] = useState({
+    description: '',
+    quantity: '',
+    unit: '',
+    unit_price: ''
+  });
   const [units, setUnits] = useState([]);
   const [localNotificationPreferences, setLocalNotificationPreferences] = useState([]);
   const [localProductionItems, setLocalProductionItems] = useState([]);
