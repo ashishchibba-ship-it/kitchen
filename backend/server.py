@@ -1987,6 +1987,114 @@ async def get_dashboard_stats():
         }
     }
 
+# Custom Invoice Items endpoints
+@api_router.post("/orders/{order_id}/custom-items", response_model=CustomInvoiceItem)
+async def add_custom_invoice_item(order_id: str, item: CustomInvoiceItemCreate):
+    """Add a custom item to an order's invoice"""
+    # Calculate line total
+    line_total = item.quantity * item.unit_price
+    
+    custom_item = CustomInvoiceItem(
+        description=item.description,
+        quantity=item.quantity,
+        unit=item.unit,
+        unit_price=item.unit_price,
+        line_total=line_total
+    )
+    
+    # Add to order
+    result = await db.orders.update_one(
+        {"id": order_id},
+        {"$push": {"custom_items": custom_item.dict()}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Recalculate order totals
+    await recalculate_order_totals(order_id)
+    
+    return custom_item
+
+@api_router.put("/orders/{order_id}/custom-items/{item_id}", response_model=CustomInvoiceItem)
+async def update_custom_invoice_item(order_id: str, item_id: str, item: CustomInvoiceItemCreate):
+    """Update a custom invoice item"""
+    # Calculate line total
+    line_total = item.quantity * item.unit_price
+    
+    updated_item = CustomInvoiceItem(
+        id=item_id,
+        description=item.description,
+        quantity=item.quantity,
+        unit=item.unit,
+        unit_price=item.unit_price,
+        line_total=line_total
+    )
+    
+    # Update the specific custom item
+    result = await db.orders.update_one(
+        {"id": order_id, "custom_items.id": item_id},
+        {"$set": {"custom_items.$": updated_item.dict()}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Order or custom item not found")
+    
+    # Recalculate order totals
+    await recalculate_order_totals(order_id)
+    
+    return updated_item
+
+@api_router.delete("/orders/{order_id}/custom-items/{item_id}")
+async def delete_custom_invoice_item(order_id: str, item_id: str):
+    """Delete a custom invoice item"""
+    result = await db.orders.update_one(
+        {"id": order_id},
+        {"$pull": {"custom_items": {"id": item_id}}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Recalculate order totals
+    await recalculate_order_totals(order_id)
+    
+    return {"message": "Custom item deleted successfully"}
+
+async def recalculate_order_totals(order_id: str):
+    """Recalculate order totals including custom items"""
+    order = await db.orders.find_one({"id": order_id})
+    if not order:
+        return
+    
+    # Calculate subtotal from regular items
+    regular_subtotal = sum(item['quantity'] * item['unit_price'] for item in order.get('items', []))
+    
+    # Calculate subtotal from custom items
+    custom_subtotal = sum(item['line_total'] for item in order.get('custom_items', []))
+    
+    # Total subtotal
+    subtotal = regular_subtotal + custom_subtotal
+    
+    # Get tax rate from settings
+    settings = await db.app_settings.find_one()
+    tax_rate = settings.get('tax_rate', 0.08) if settings else 0.08
+    
+    # Calculate tax and total
+    tax_amount = subtotal * tax_rate
+    total_amount = subtotal + tax_amount
+    
+    # Update order
+    await db.orders.update_one(
+        {"id": order_id},
+        {"$set": {
+            "subtotal": subtotal,
+            "tax_rate": tax_rate,
+            "tax_amount": tax_amount,
+            "total_amount": total_amount
+        }}
+    )
+
 @api_router.get("/gmail/auth-url")
 async def get_gmail_auth_url():
     """Get Gmail authorization URL for web application"""
